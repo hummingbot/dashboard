@@ -5,9 +5,14 @@ st.set_page_config(page_title=apptitle, page_icon="🦅", layout="wide")
 
 st.title("Welcome!")
 st.write("---")
-st.code("💡 This dashboard is using pycoingecko to retrieve information of volume and spread of different markets.")
-st.write("The purpose of this dashboard is to provide useful information for high frecuency trading traders")
+st.code("💡 The purpose of this dashboard is to provide useful information for high frequency trading traders")
+st.write("")
+st.write("Watch this video to understand how the dashboard works! 🦅")
+c1, c2, c3 = st.columns([1, 6, 1])
+with c2:
+    st.video("assets/loom_video.mp4")
 st.write("If you want to contribute, post your idea in #dev-channel of [hummingbot discord](https://discord.gg/CjxZtkrH)")
+st.write("---")
 
 
 
