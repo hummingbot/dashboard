@@ -6,7 +6,7 @@ __pycache__/
 # C extensions
 *.
 
-worksapce.xml
+.idea/
 
 # Distribution / packaging
 .Python
