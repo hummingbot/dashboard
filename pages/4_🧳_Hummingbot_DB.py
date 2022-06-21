@@ -18,7 +18,7 @@ def get_all_tables(database_name: str):
     return tables
 
 st.set_page_config(layout='wide')
-st.title("🫙 Hummingbot Database Analyzer")
+st.title("🧳 Hummingbot Database Analyzer")
 st.write("---")
 uploaded_file = st.file_uploader("Add your database")
 
