@@ -6,6 +6,8 @@ __pycache__/
 # C extensions
 *.
 
+*.ipynb
+
 .idea/*
 
 # Distribution / packaging
