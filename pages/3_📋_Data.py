@@ -59,7 +59,7 @@ st.write("### Exchanges filter 🦅")
 exchanges = st.multiselect(
     "Select the exchanges to analyze:",
     options=exchanges_df["name"],
-    default=CONFIG.MINER_EXCHANGES)
+    default=[exchange for exchange in CONFIG.MINER_EXCHANGES if exchange in exchanges_df["name"].unique()])
 
 
 with st.expander('Coins Tickers Data'):

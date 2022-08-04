@@ -48,7 +48,7 @@ st.sidebar.write("### Exchanges filter 🦅")
 exchanges = st.sidebar.multiselect(
     "Select the exchanges to analyze:",
     options=exchanges_df["name"],
-    default=CONFIG.MINER_EXCHANGES)
+    default=[exchange for exchange in CONFIG.MINER_EXCHANGES if exchange in exchanges_df["name"].unique()])
 
 height = len(coin_tickers_df["coin_name"].unique()) * 500
 fig = px.scatter(
