@@ -24,6 +24,10 @@ Visualize the bid-ask spread and volume of different tokens across the crypto ex
 
 Drop a SQLite trades file for a specific strategy configuration, so that you can inspect and analyze the trade data.
 
+### TVL vs MCAP Analysis
+
+Easily compare various DeFi protocols based on their market capitalization and total value locked, using DeFiLlama data.
+
 **How to find**: These files are located in the `/data` folder in Hummingbot, and are named `<strategy_name>.sqlite`.
 
 ### Data
