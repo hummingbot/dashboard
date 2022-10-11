@@ -28,7 +28,7 @@ class MinerUtils:
             "gateio": "gate",
             "ascendex": "bitmax"
         }
-        return converter[exchange]
+        return converter.get(exchange, None)
 
     def get_miner_stats_df(self):
         miner_data = requests.get(self.MARKETS_ENDPOINT).json()
