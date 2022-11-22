@@ -49,14 +49,14 @@ class MinerUtils:
             'bots': ('markets', ['bots']),
             'last_hour_bots': ('markets', ['last_hour_bots']),
             'filled_24h_volume': ('markets', ['filled_24h_volume']),
-            'weekly_reward_in_usd': ('markets', ['weekly_reward_in_usd']),
-            'weekly_reward': ('markets', ['weekly_reward']),
+            # 'weekly_reward_in_usd': ('markets', ['weekly_reward_in_usd']),
+            # 'weekly_reward': ('markets', ['weekly_reward']),
             'market_24h_usd_volume': ('markets', ['market_24h_usd_volume'])
         }
 
         r = glom(miner_data, spec)
         df = pd.DataFrame(r)
-        df = pd.concat([df, df.apply(lambda x: self.reward_splitter(x.base, x.weekly_reward), axis=1)], axis=1)
+        # df = pd.concat([df, df.apply(lambda x: self.reward_splitter(x.base, x.weekly_reward), axis=1)], axis=1)
         df["trading_pair"] = df.apply(lambda x: x.base + "-" + x.quote, axis=1)
         df["exchange_coingecko_id"] = df.apply(lambda x: self.exchange_coingecko_id(x.exchange), axis=1)
         return df
