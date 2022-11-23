@@ -11,7 +11,7 @@ import CONFIG
 
 @st.cache(suppress_st_warning=True, allow_output_mutation=True)
 def get_all_issues_df():
-    g = Github(login_or_token=st.secrets["github"]["token"])
+    g = Github()
     repo = g.get_repo("hummingbot/hummingbot")
     open_issues = repo.get_issues(state='open')
     processed_issues = []
