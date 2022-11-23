@@ -7,3 +7,6 @@ MINER_EXCHANGES = ["Binance", "FTX", "Coinbase Exchange", "Huobi Global", "OKX",
                    "Bittrex", "CoinFLEX", "Digifinex", "HitBTC", "Kraken", "Liquid", ]
 
 DEFAULT_MINER_COINS = ["Avalanche"]
+
+CERTIFIED_EXCHANGES = ["ascendex", "binance", "bybit", "gate.io", "hitbtc", "huobi", "kucoin", "okx", "gateway"]
+CERTIFIED_STRATEGIES = ["xemm", "cross exchange market making", "pmm", "pure market making"]

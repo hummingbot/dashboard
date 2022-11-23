@@ -8,6 +8,7 @@ __pycache__/
 
 *.ipynb
 
+secrets.toml
 .idea/*
 
 # Distribution / packaging
