@@ -34,11 +34,11 @@ def get_all_issues_df():
             "created_at": issue.created_at,
             "priority": priority,
             "is_bug": bug,
-            "url": issue.html_url
+            "url": issue.url
         })
 
     df = pd.DataFrame(processed_issues)
-    return df
+    return df[df["url"].str.contains("issues")]
 
 
 st.set_page_config(layout='wide')
