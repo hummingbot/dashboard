@@ -14,7 +14,7 @@ bleach==5.0.1
 blinker==1.4
 boltons==21.0.0
 cachetools==5.2.0
-ccxt==1.90.86
+ccxt==3.0.40
 certifi==2022.6.15
 cffi==1.15.1
 charset-normalizer==2.1.0
