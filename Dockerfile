@@ -39,4 +39,4 @@ ENV PATH="/home/myuser/venv/bin:$PATH"
 
 # /dev/shm is mapped to shared memory and should be used for gunicorn heartbeat
 # this will improve performance and avoid random freezes
-CMD ["streamlit","run","app.py"]
+CMD ["streamlit","run","main.py"]
