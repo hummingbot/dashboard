@@ -10,7 +10,7 @@ https://www.loom.com/share/72d05bcbaf4048a399e3f9247d756a63
 
 ### Deployed Apps
 
-https://share.streamlit.io/hummingbot/streamlit-apps/main/%F0%9F%9A%80_Home.py
+https://hummingbot-streamlit-apps-main-jnja50.streamlit.app
 
 ## Current Data Apps
 
