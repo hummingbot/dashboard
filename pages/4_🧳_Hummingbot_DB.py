@@ -3,13 +3,13 @@ import streamlit as st
 import sqlite3
 import pandas as pd
 
-@st.cache(suppress_st_warning=True, allow_output_mutation=True)
+@st.cache_data
 def get_table_data(database_name: str, table_name: str):
     conn = sqlite3.connect(database_name)
     orders = pd.read_sql_query(f"SELECT * FROM '{table_name}'", conn)
     return orders
 
-@st.cache(suppress_st_warning=True, allow_output_mutation=True)
+@st.cache_data
 def get_all_tables(database_name: str):
     con = sqlite3.connect(database_name)
     cursor = con.cursor()
