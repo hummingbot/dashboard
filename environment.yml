@@ -12,3 +12,6 @@ dependencies:
       - plotly
       - pycoingecko
       - glom
+      - defillama
+      - statsmodels
+      - pandas_ta
