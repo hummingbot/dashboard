@@ -39,11 +39,11 @@ class StrategyData:
 
     @property
     def start_time(self):
-        return self.trade_fill["timestamp"].min()
+        return self.orders["creation_timestamp"].min()
 
     @property
     def end_time(self):
-        return self.trade_fill["timestamp"].max()
+        return self.orders["last_update_timestamp"].max()
 
     @property
     def duration_minutes(self):
@@ -120,9 +120,10 @@ class BotData:
     trade_fill: pd.DataFrame
 
     def get_strategy_data(self, config_file_name: str):
+        orders_filtered = self.orders[self.orders["config_file_path"] == config_file_name].copy()
+        order_status_filtered = self.order_status[
+            self.order_status["order_id"].isin(orders_filtered["id"])].copy()
         trade_fill_filtered = self.trade_fill[self.trade_fill["config_file_path"] == config_file_name].copy()
-        orders_filtered = self.orders[self.orders["id"].isin(trade_fill_filtered["order_id"])].copy()
-        order_status_filtered = self.order_status[self.order_status["order_id"].isin(trade_fill_filtered["order_id"])].copy()
         return StrategyData(orders_filtered, order_status_filtered, trade_fill_filtered, config_file_name)
 
     @property
