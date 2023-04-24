@@ -150,7 +150,7 @@ class CandlesGraph:
             ),
             row=row, col=1,
         )
-        merged_df = pd.merge_asof(self.candles_df, strategy_data.trade_fill, left_on="datetime", right_on="timestamp", direction="nearest")
+        merged_df = pd.merge_asof(self.candles_df, strategy_data.trade_fill, left_on="datetime", right_on="timestamp", direction="backward")
         self.base_figure.add_trace(
             go.Scatter(
                 x=merged_df.datetime,
@@ -204,7 +204,8 @@ class CandlesGraph:
                 x=1
             ),
             height=1000,
-            xaxis_rangeslider_visible=False
+            xaxis_rangeslider_visible=False,
+            hovermode='x unified'
         )
         self.base_figure.update_yaxes(title_text="Price", row=1, col=1)
         if self.show_volume:
