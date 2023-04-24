@@ -1,6 +1,0 @@
-[theme]
-base="dark"
-font="monospace"
-[server]
-port=8501
-maxUploadSize = 2000

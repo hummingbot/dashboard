@@ -1,42 +1,70 @@
-# using ubuntu LTS version
-FROM ubuntu:20.04 AS builder-image
+# Set the base image
+FROM continuumio/miniconda3:latest AS builder
 
-# avoid stuck build due to user prompt
-ARG DEBIAN_FRONTEND=noninteractive
+# Install system dependencies
+RUN apt-get update && \
+    apt-get install -y sudo libusb-1.0 python3-dev && \
+    rm -rf /var/lib/apt/lists/*
 
-RUN apt-get update && apt-get install --no-install-recommends -y python3.9 python3.9-dev python3.9-venv python3-pip python3-wheel build-essential && \
-	apt-get clean && rm -rf /var/lib/apt/lists/*
+WORKDIR /home/streamlit-apps
 
-# create and activate virtual environment
-# using final folder name to avoid path issues with packages
-RUN python3.9 -m venv /home/myuser/venv
-ENV PATH="/home/myuser/venv/bin:$PATH"
+# Create conda environment
+COPY environment.yml /tmp/environment.yml
+RUN conda env create -f /tmp/environment.yml && \
+    conda clean -afy && \
+    rm /tmp/environment.yml
 
-# install requirements
-COPY requirements.txt .
-RUN pip3 install --no-cache-dir wheel
-RUN pip3 install --no-cache-dir -r requirements.txt
-
-FROM ubuntu:20.04 AS runner-image
-RUN apt-get update && apt-get install --no-install-recommends -y python3.9 python3-venv && \
-	apt-get clean && rm -rf /var/lib/apt/lists/*
-
-RUN useradd --create-home myuser
-COPY --from=builder-image /home/myuser/venv /home/myuser/venv
-
-USER myuser
-RUN mkdir /home/myuser/code
-WORKDIR /home/myuser/code
-COPY . .
+# Copy remaining files
+COPY main.py .
+COPY pages/ pages/
+COPY utils/ utils/
+COPY CONFIG.py .
+COPY .streamlit/ .streamlit/
 
 
-# make sure all messages always reach console
-ENV PYTHONUNBUFFERED=1
+SHELL [ "/bin/bash", "-lc" ]
+RUN echo "conda activate streamlit-apps" >> ~/.bashrc
 
-# activate virtual environment
-ENV VIRTUAL_ENV=/home/myuser/venv
-ENV PATH="/home/myuser/venv/bin:$PATH"
+# Build final image using artifacts from builder
+FROM continuumio/miniconda3:latest AS release
 
-# /dev/shm is mapped to shared memory and should be used for gunicorn heartbeat
-# this will improve performance and avoid random freezes
-CMD ["streamlit","run","main.py"]
+# Dockerfile author / maintainer
+LABEL maintainer="Fede Cardoso @dardonacci <federico@hummingbot.org>"
+
+# Build arguments
+ARG BRANCH=""
+ARG COMMIT=""
+ARG BUILD_DATE=""
+LABEL branch=${BRANCH}
+LABEL commit=${COMMIT}
+LABEL date=${BUILD_DATE}
+
+# Set ENV variables
+ENV COMMIT_SHA=${COMMIT}
+ENV COMMIT_BRANCH=${BRANCH}
+ENV BUILD_DATE=${DATE}
+
+ENV INSTALLATION_TYPE=docker
+
+# Install system dependencies
+RUN apt-get update && \
+    apt-get install -y && \
+    rm -rf /var/lib/apt/lists/*
+
+# Create mount points
+RUN mkdir -p /home/streamlit-apps/data
+
+WORKDIR /home/streamlit-apps
+
+# Copy all build artifacts from builder image
+COPY --from=builder /opt/conda/ /opt/conda/
+COPY --from=builder /home/ /home/
+
+EXPOSE 8501
+
+# Setting bash as default shell because we have .bashrc with customized PATH (setting SHELL affects RUN, CMD and ENTRYPOINT, but not manual commands e.g. `docker run image COMMAND`!)
+SHELL [ "/bin/bash", "-lc" ]
+
+# Set the default command to run when starting the container
+
+CMD conda activate streamlit-apps && streamlit run main.py

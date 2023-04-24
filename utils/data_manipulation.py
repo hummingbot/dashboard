@@ -14,7 +14,7 @@ class StrategyData:
         self.trade_fill["net_amount"] = self.trade_fill['amount'] * self.trade_fill['trade_type'].apply(lambda x: 1 if x == 'BUY' else -1)
         self.trade_fill["net_amount_quote"] = self.trade_fill['net_amount'] * self.trade_fill['price']
         self.trade_fill["cum_net_amount"] = self.trade_fill["net_amount"].cumsum()
-        self.trade_fill["unrealized_trade_pnl"] = - self.trade_fill["net_amount_quote"].cumsum()
+        self.trade_fill["unrealized_trade_pnl"] = -1 * self.trade_fill["net_amount_quote"].cumsum()
         self.trade_fill["inventory_cost"] = self.trade_fill["cum_net_amount"] * self.trade_fill["price"]
         self.trade_fill["realized_trade_pnl"] = self.trade_fill["unrealized_trade_pnl"] + self.trade_fill["inventory_cost"]
 
@@ -39,11 +39,11 @@ class StrategyData:
 
     @property
     def start_time(self):
-        return self.orders["creation_timestamp"].min()
+        return self.trade_fill["timestamp"].min()
 
     @property
     def end_time(self):
-        return self.orders["last_update_timestamp"].max()
+        return self.trade_fill["timestamp"].max()
 
     @property
     def duration_minutes(self):
