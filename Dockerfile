@@ -9,10 +9,10 @@ RUN apt-get update && \
 WORKDIR /home/streamlit-apps
 
 # Create conda environment
-COPY environment.yml /tmp/environment.yml
-RUN conda env create -f /tmp/environment.yml && \
+COPY environment_conda.yml /tmp/environment.yml
+RUN conda env create -f /tmp/environment_conda.yml && \
     conda clean -afy && \
-    rm /tmp/environment.yml
+    rm /tmp/environment_conda.yml
 
 # Copy remaining files
 COPY main.py .
