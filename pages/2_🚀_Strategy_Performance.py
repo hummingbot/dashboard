@@ -104,7 +104,7 @@ with row:
 
 col41, col42, col43 = st.columns(3)
 
-exchange_name = "binance"
+exchange_name = strategy_data.market
 trading_pair = strategy_data.symbol.replace("-", "")
 
 c1, c2 = st.columns([1, 5])
