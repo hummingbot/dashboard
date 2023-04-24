@@ -1,0 +1,10 @@
+- ccxt
+- streamlit
+- watchdog
+- plotly
+- pycoingecko
+- glom
+- defillama
+- statsmodels
+- pandas_ta
+- sqlalchemy
