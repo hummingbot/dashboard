@@ -68,41 +68,6 @@ with col12:
     if selected_config_file is not None:
         strategy_data = all_bots_data.get_strategy_data(
             selected_config_file)
-row = st.container()
-col11, col12, col13 = st.columns([1, 2, 3])
-with row:
-    with col11:
-        st.header(f"🏦 Market")
-        st.metric(label="Exchange", value=strategy_data.market.capitalize())
-        st.metric(label="Trading pair", value=strategy_data.symbol)
-    with col12:
-        st.header("📋 General stats")
-        col121, col122 = st.columns(2)
-        with col121:
-            st.metric(label='Start date', value=strategy_data.start_time.strftime("%Y-%m-%d %H:%M"))
-            st.metric(label='End date', value=strategy_data.end_time.strftime("%Y-%m-%d %H:%M"))
-            st.metric(label='Duration (Days)', value=round(strategy_data.duration_minutes / (60 * 24), 4))
-        with col122:
-            st.metric(label='Start Price', value=round(strategy_data.start_price, 4))
-            st.metric(label='End Price', value=round(strategy_data.end_price, 4))
-            st.metric(label='Price change', value=f"{round(strategy_data.price_change * 100, 2)} %")
-    with col13:
-        st.header("📈 Performance")
-        col131, col132, col133 = st.columns(3)
-        with col131:
-            st.metric(label='Total Trades', value=strategy_data.total_orders)
-            st.metric(label='Total Buy Trades', value=strategy_data.total_buy_trades)
-            st.metric(label='Total Sell Trades', value=strategy_data.total_sell_trades)
-        with col132:
-            st.metric(label='Inventory change in Base asset', value=round(strategy_data.inventory_change_base_asset, 4))
-            st.metric(label='Total Buy Trades Amount', value=strategy_data.total_buy_amount)
-            st.metric(label='Total Sell Trades Amount', value=strategy_data.total_sell_amount)
-        with col133:
-            st.metric(label='Trade PNL USD', value=round(strategy_data.trade_pnl_usd, 2))
-            st.metric(label='Average Buy Price', value=round(strategy_data.average_buy_price, 4))
-            st.metric(label='Average Sell Price', value=round(strategy_data.average_sell_price, 4))
-
-col41, col42, col43 = st.columns(3)
 
 exchange_name = strategy_data.market
 trading_pair = strategy_data.symbol.replace("-", "")
@@ -112,13 +77,48 @@ with c1:
     interval = st.selectbox("Candles Interval:", intervals.keys(), index=3)
 
 date_array = pd.date_range(start=strategy_data.start_time, end=strategy_data.end_time, periods=60)
-ohlc_extra_time = 60 * 60 * 24
+ohlc_extra_time = 60
 with st.spinner("Loading candles..."):
     candles_df = get_ohlc(trading_pair, exchange_name, interval, int(strategy_data.start_time.timestamp() - ohlc_extra_time),
                           int(strategy_data.end_time.timestamp() + ohlc_extra_time))
 start_time, end_time = st.select_slider("Select a time range to analyze", options=date_array.tolist(), value=(date_array[0], date_array[-1]))
 candles_df_filtered = candles_df[(candles_df["timestamp"] >= int(start_time.timestamp() * 1000)) & (candles_df["timestamp"] <= int(end_time.timestamp() * 1000))]
 strategy_data_filtered = strategy_data.get_filtered_strategy_data(start_time, end_time)
+
+row = st.container()
+col11, col12, col13 = st.columns([1, 2, 3])
+with row:
+    with col11:
+        st.header(f"🏦 Market")
+        st.metric(label="Exchange", value=strategy_data_filtered.market.capitalize())
+        st.metric(label="Trading pair", value=strategy_data_filtered.symbol)
+    with col12:
+        st.header("📋 General stats")
+        col121, col122 = st.columns(2)
+        with col121:
+            st.metric(label='Start date', value=strategy_data_filtered.start_time.strftime("%Y-%m-%d %H:%M"))
+            st.metric(label='End date', value=strategy_data_filtered.end_time.strftime("%Y-%m-%d %H:%M"))
+            st.metric(label='Duration (Hours)', value=round(strategy_data_filtered.duration_seconds / 3600, 2))
+        with col122:
+            st.metric(label='Start Price', value=round(strategy_data_filtered.start_price, 4))
+            st.metric(label='End Price', value=round(strategy_data_filtered.end_price, 4))
+            st.metric(label='Price change', value=f"{round(strategy_data_filtered.price_change * 100, 2)} %")
+    with col13:
+        st.header("📈 Performance")
+        col131, col132, col133 = st.columns(3)
+        with col131:
+            st.metric(label='Total Trades', value=strategy_data_filtered.total_orders)
+            st.metric(label='Total Buy Trades', value=strategy_data_filtered.total_buy_trades)
+            st.metric(label='Total Sell Trades', value=strategy_data_filtered.total_sell_trades)
+        with col132:
+            st.metric(label='Inventory change in Base asset', value=round(strategy_data_filtered.inventory_change_base_asset, 4))
+            st.metric(label='Total Buy Trades Amount', value=strategy_data_filtered.total_buy_amount)
+            st.metric(label='Total Sell Trades Amount', value=strategy_data_filtered.total_sell_amount)
+        with col133:
+            st.metric(label='Trade PNL USD', value=round(strategy_data_filtered.trade_pnl_usd, 2))
+            st.metric(label='Average Buy Price', value=round(strategy_data_filtered.average_buy_price, 4))
+            st.metric(label='Average Sell Price', value=round(strategy_data_filtered.average_sell_price, 4))
+
 cg = CandlesGraph(candles_df_filtered, show_volume=True, extra_rows=2)
 cg.add_buy_trades(strategy_data_filtered.buys)
 cg.add_sell_trades(strategy_data_filtered.sells)
