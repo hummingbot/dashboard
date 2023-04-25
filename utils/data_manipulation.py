@@ -11,17 +11,17 @@ class StrategyData:
     config_file_name: str
 
     def __post_init__(self):
-        self.trade_fill["net_amount"] = self.trade_fill['amount'] * self.trade_fill['trade_type'].apply(lambda x: 1 if x == 'BUY' else -1)
-        self.trade_fill["net_amount_quote"] = self.trade_fill['net_amount'] * self.trade_fill['price']
-        self.trade_fill["cum_net_amount"] = self.trade_fill["net_amount"].cumsum()
-        self.trade_fill["unrealized_trade_pnl"] = -1 * self.trade_fill["net_amount_quote"].cumsum()
-        self.trade_fill["inventory_cost"] = self.trade_fill["cum_net_amount"] * self.trade_fill["price"]
-        self.trade_fill["realized_trade_pnl"] = self.trade_fill["unrealized_trade_pnl"] + self.trade_fill["inventory_cost"]
+        self.trade_fill.loc[:, "net_amount"] = self.trade_fill['amount'] * self.trade_fill['trade_type'].apply(lambda x: 1 if x == 'BUY' else -1)
+        self.trade_fill.loc[:, "net_amount_quote"] = self.trade_fill['net_amount'] * self.trade_fill['price']
+        self.trade_fill.loc[:, "cum_net_amount"] = self.trade_fill["net_amount"].cumsum()
+        self.trade_fill.loc[:, "unrealized_trade_pnl"] = -1 * self.trade_fill["net_amount_quote"].cumsum()
+        self.trade_fill.loc[:, "inventory_cost"] = self.trade_fill["cum_net_amount"] * self.trade_fill["price"]
+        self.trade_fill.loc[:, "realized_trade_pnl"] = self.trade_fill["unrealized_trade_pnl"] + self.trade_fill["inventory_cost"]
 
     def get_filtered_strategy_data(self, start_time: datetime.datetime, end_time: datetime.datetime):
-        trade_fill = self.trade_fill[(self.trade_fill["timestamp"] >= start_time) & (self.trade_fill["timestamp"] <= end_time)]
-        order_status = self.order_status[self.order_status["order_id"].isin(trade_fill["order_id"])].copy()
-        orders = self.orders[self.orders["id"].isin(trade_fill["order_id"])].copy()
+        orders = self.orders[(self.orders["creation_timestamp"] >= start_time) & (self.orders["creation_timestamp"] <= end_time)].copy()
+        trade_fill = self.trade_fill[self.trade_fill["order_id"].isin(orders["id"])].copy()
+        order_status = self.order_status[self.order_status["order_id"].isin(orders["id"])].copy()
         return StrategyData(
             orders=orders,
             order_status=order_status,
@@ -46,8 +46,8 @@ class StrategyData:
         return self.orders["last_update_timestamp"].max()
 
     @property
-    def duration_minutes(self):
-        return (self.end_time - self.start_time).seconds / 60
+    def duration_seconds(self):
+        return (self.end_time - self.start_time).total_seconds()
 
     @property
     def start_price(self):
