@@ -150,7 +150,8 @@ class CandlesGraph:
             ),
             row=row, col=1,
         )
-        merged_df = pd.merge_asof(self.candles_df, strategy_data.trade_fill, left_on="datetime", right_on="timestamp", direction="backward")
+        # TODO: Review impact in different subgraphs
+        merged_df = pd.merge_asof(self.candles_df, strategy_data.trade_fill, left_on="datetime", right_on="timestamp", direction="forward")
         self.base_figure.add_trace(
             go.Scatter(
                 x=merged_df.datetime,
