@@ -36,9 +36,30 @@ Reference data for the various apps this collection.
 
 ## Installation
 
-See instructions located at https://docs.streamlit.io/library/get-started/installation.
+1. Install Anaconda or Miniconda
 
-More info coming soon.
+2. Clone this repo and navigate to the created directory
+```
+git clone https://github.com/hummingbot/streamlit-apps.git
+cd streamlit-apps
+```
+
+3. Run this command to create a `conda` environment and install dependencies
+```
+conda env create -f environment.yml
+```
+
+4. Activate the environment
+```
+conda activate streamlit-apps
+```
+
+5. Run the app
+```
+streamlit run main.py
+```
+
+For more info, see instructions located at https://docs.streamlit.io/library/get-started/installation.
 
 ## Contributions
 
