@@ -74,7 +74,7 @@ trading_pair = strategy_data.symbol.replace("-", "")
 
 c1, c2 = st.columns([1, 5])
 with c1:
-    interval = st.selectbox("Candles Interval:", intervals.keys(), index=3)
+    interval = st.selectbox("Candles Interval:", intervals.keys(), index=0)
 
 date_array = pd.date_range(start=strategy_data.start_time, end=strategy_data.end_time, periods=60)
 ohlc_extra_time = 60
