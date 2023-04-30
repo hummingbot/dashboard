@@ -9,7 +9,7 @@ RUN apt-get update && \
 WORKDIR /home/streamlit-apps
 
 # Create conda environment
-COPY environment_conda.yml /tmp/environment.yml
+COPY environment_conda.yml /tmp/environment_conda.yml
 RUN conda env create -f /tmp/environment_conda.yml && \
     conda clean -afy && \
     rm /tmp/environment_conda.yml
