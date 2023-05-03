@@ -1,4 +1,4 @@
-name: streamlit-apps
+name: dashboard
 channels:
   - conda-forge
 dependencies:
