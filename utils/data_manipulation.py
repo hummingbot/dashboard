@@ -83,6 +83,14 @@ class SingleMarketStrategyData:
         )
 
     @property
+    def base_asset(self):
+        return self.trading_pair.split("-")[0]
+
+    @property
+    def quote_asset(self):
+        return self.trading_pair.split("-")[1]
+
+    @property
     def start_time(self):
         return self.orders["creation_timestamp"].min()
 
@@ -145,11 +153,19 @@ class SingleMarketStrategyData:
         return (self.end_price - self.start_price) / self.start_price
 
     @property
-    def trade_pnl_usd(self):
+    def trade_pnl_quote(self):
         buy_volume = self.buys["amount"].sum() * self.average_buy_price
         sell_volume = self.sells["amount"].sum() * self.average_sell_price
         inventory_change_volume = self.inventory_change_base_asset * self.end_price
         return sell_volume - buy_volume + inventory_change_volume
+
+    @property
+    def cum_fees_in_quote(self):
+        return self.trade_fill["trade_fee_in_quote"].sum()
+
+    @property
+    def net_pnl_quote(self):
+        return self.trade_pnl_quote - self.cum_fees_in_quote
 
     @property
     def inventory_change_base_asset(self):
