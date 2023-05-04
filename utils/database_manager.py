@@ -84,6 +84,10 @@ class DatabaseManager:
         with self.session_maker() as session:
             query = self._get_trade_fills_query(config_file_path, start_date, end_date)
             trade_fills = pd.read_sql_query(query, session.connection())
+            trade_fills["amount"] = trade_fills["amount"] / 1e6
+            trade_fills["price"] = trade_fills["price"] / 1e6
+            trade_fills["trade_fee_in_quote"] = trade_fills["trade_fee_in_quote"] / 1e6
+            trade_fills["cum_fees_in_quote"] = trade_fills["trade_fee_in_quote"].cumsum()
             trade_fills.loc[:, "net_amount"] = trade_fills['amount'] * trade_fills['trade_type'].apply(
                 lambda x: 1 if x == 'BUY' else -1)
             trade_fills.loc[:, "net_amount_quote"] = trade_fills['net_amount'] * trade_fills['price']
@@ -91,6 +95,7 @@ class DatabaseManager:
             trade_fills.loc[:, "unrealized_trade_pnl"] = -1 * trade_fills["net_amount_quote"].cumsum()
             trade_fills.loc[:, "inventory_cost"] = trade_fills["cum_net_amount"] * trade_fills["price"]
             trade_fills.loc[:, "realized_trade_pnl"] = trade_fills["unrealized_trade_pnl"] + trade_fills["inventory_cost"]
+            trade_fills.loc[:, "net_realized_pnl"] = trade_fills["realized_trade_pnl"] - trade_fills["cum_fees_in_quote"]
             trade_fills["market"] = trade_fills["market"].apply(lambda x: x.lower().replace("_papertrade", ""))
 
         return trade_fills
