@@ -1,5 +1,5 @@
 [theme]
-base="dark"
+base="light"
 font="monospace"
 [server]
 port=8501
