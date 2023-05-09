@@ -8,7 +8,7 @@ Watch this video to understand how it works:
 https://www.loom.com/share/72d05bcbaf4048a399e3f9247d756a63
 
 See an example of a live, deployed dashboard:
-https://hummingbot-streamlit-apps-main-jnja50.streamlit.app
+https://hummingbot-streamlit-app-main-jnja50.streamlit.app
 
 ## Dashboards
 
@@ -44,8 +44,8 @@ Reference data for the various apps this collection.
 
 2. Clone this repo and navigate to the created directory
 ```bash
-git clone https://github.com/hummingbot/streamlit-apps.git
-cd streamlit-apps
+git clone https://github.com/hummingbot/dashboard.git
+cd dashboard
 ```
 
 3. Run this command to create a `conda` environment and install dependencies
@@ -55,7 +55,7 @@ conda env create -f environment_conda.yml
 
 4. Activate the environment
 ```bash
-conda activate streamlit-apps
+conda activate dashboard
 ```
 
 5. Run the app
