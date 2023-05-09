@@ -1,47 +1,51 @@
-# Hummingbot StreamLit Apps
+# Hummingbot Dashboards
 
-Collection of Hummingbot-related data apps and dashboards, built using [StreamLit](https://streamlit.io/).
+Collection of Hummingbot-related dashboards, built using [StreamLit](https://streamlit.io/).
 
 This repository is maintained by Hummingbot Foundation as a companion for users of [Hummingbot](https://github.com/hummingbot/hummingbot), the open source framework for building high-frequency crypto trading bots.
 
-### Getting Started Video
-
+Watch this video to understand how it works:
 https://www.loom.com/share/72d05bcbaf4048a399e3f9247d756a63
 
-### Deployed Apps
+See an example of a live, deployed dashboard:
+https://hummingbot-streamlit-app-main-jnja50.streamlit.app
 
-https://hummingbot-streamlit-apps-main-jnja50.streamlit.app
+## Dashboards
 
-## Current Data Apps
+Here are the current dashboards in the collection:
 
-Here are the current data apps in the collection:
+### 🚀 Strategy Performance (WIP)
 
-### XE Token Analyzer
+Dashboard that helps you analyze the performance of a running Hummingbot instance
 
-Visualize the bid-ask spread and volume of different tokens across the crypto exchange landscape. This app is most helpful for Hummingbot users running the [Cross-Exchange Market Making](https://hummingbot.org/strategies/cross-exchange-market-making/) and [Arbitrage](https://hummingbot.org/strategies/arbitrage/) strategies.
+### 🧙 XE Token Analyzer
 
-### Hummingbot DB
+Dashboard that helps you visualize the bid-ask spread and volume of different tokens across the crypto exchange landscape. 
 
-Drop a SQLite trades file for a specific strategy configuration, so that you can inspect and analyze the trade data.
+This app is most helpful for Hummingbot users running the [Cross-Exchange Market Making](https://hummingbot.org/strategies/cross-exchange-market-making/) and [Arbitrage](https://hummingbot.org/strategies/arbitrage/) strategies.
 
-### TVL vs MCAP Analysis
+### 🧳 Hummingbot DB
+
+Inspect and analyze the orders and trades data contained in a SQLite database for a strategy or script. 
+
+These files are located in the `/data` folder in Hummingbot, and are named `<strategy_name>.sqlite`.
+
+### 🦉 TVL vs MCAP Analysis
 
 Easily compare various DeFi protocols based on their market capitalization and total value locked, using DeFiLlama data.
 
-**How to find**: These files are located in the `/data` folder in Hummingbot, and are named `<strategy_name>.sqlite`.
-
-### Data
+### 📋 Data
 
 Reference data for the various apps this collection.
 
 ## Installation
 
-1. Install Anaconda or Miniconda
+1. Install [Anaconda](https://www.anaconda.com/) or [Miniconda](https://docs.conda.io/en/latest/miniconda.html)
 
 2. Clone this repo and navigate to the created directory
-```
-git clone https://github.com/hummingbot/streamlit-apps.git
-cd streamlit-apps
+```bash
+git clone https://github.com/hummingbot/dashboard.git
+cd dashboard
 ```
 
 3. Run this command to create a `conda` environment and install dependencies
@@ -50,19 +54,25 @@ conda env create -f environment_conda.yml
 ```
 
 4. Activate the environment
-```
-conda activate streamlit-apps
+```bash
+conda activate dashboard
 ```
 
 5. Run the app
-```
+```bash
 streamlit run main.py
 ```
 
-For more info, see instructions located at https://docs.streamlit.io/library/get-started/installation.
+6. Create a symlink to your Hummingbot `/data` directory
+```bash
+# replace `/path/to/hummingbot` with the actual path
+ln -s /path/to/hummingbot/data data
+```
+
+For more info about Streamlit installation, see the instructions located at https://docs.streamlit.io/library/get-started/installation.
 
 ## Contributions
 
 We welcome new data apps, bug fixes, and improvements by the community!
 
-To submit a contribution, issue a pull request and follow the general guidelines listed at https://hummingbot.org/developers/contributions.
+To submit a contribution, issue a pull request, following the guidelines listed at https://hummingbot.org/developers/contributions.
