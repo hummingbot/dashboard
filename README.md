@@ -46,7 +46,7 @@ cd streamlit-apps
 
 3. Run this command to create a `conda` environment and install dependencies
 ```
-conda env create -f environment.yml
+conda env create -f environment_conda.yml
 ```
 
 4. Activate the environment
