@@ -58,16 +58,18 @@ conda env create -f environment_conda.yml
 conda activate dashboard
 ```
 
-5. Run the app
-```bash
-streamlit run main.py
-```
-
-6. Create a symlink to your Hummingbot `/data` directory
+5. Create a symlink to your Hummingbot `/data` directory
 ```bash
 # replace `/path/to/hummingbot` with the actual path
 ln -s /path/to/hummingbot/data data
 ```
+
+6. Run the app
+```bash
+streamlit run main.py
+```
+
+
 
 For more info about Streamlit installation, see the instructions located at https://docs.streamlit.io/library/get-started/installation.
 
