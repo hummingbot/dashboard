@@ -78,6 +78,8 @@ class DatabaseManager:
             query = self._get_orders_query(config_file_path, start_date, end_date)
             orders = pd.read_sql_query(query, session.connection())
             orders["market"] = orders["market"].apply(lambda x: x.lower().replace("_papertrade", ""))
+            orders["amount"] = orders["amount"] / 1e6
+            orders["price"] = orders["price"] / 1e6
         return orders
 
     def get_trade_fills(self, config_file_path=None, start_date=None, end_date=None):
