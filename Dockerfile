@@ -6,7 +6,7 @@ RUN apt-get update && \
     apt-get install -y sudo libusb-1.0 python3-dev && \
     rm -rf /var/lib/apt/lists/*
 
-WORKDIR /home/streamlit-apps
+WORKDIR /home/dashboard
 
 # Create conda environment
 COPY environment_conda.yml /tmp/environment_conda.yml
@@ -23,7 +23,7 @@ COPY .streamlit/ .streamlit/
 
 
 SHELL [ "/bin/bash", "-lc" ]
-RUN echo "conda activate streamlit-apps" >> ~/.bashrc
+RUN echo "conda activate dashboard" >> ~/.bashrc
 
 # Build final image using artifacts from builder
 FROM continuumio/miniconda3:latest AS release
@@ -52,9 +52,9 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Create mount points
-RUN mkdir -p /home/streamlit-apps/data
+RUN mkdir -p /home/dashboard/data
 
-WORKDIR /home/streamlit-apps
+WORKDIR /home/dashboard
 
 # Copy all build artifacts from builder image
 COPY --from=builder /opt/conda/ /opt/conda/
@@ -67,4 +67,4 @@ SHELL [ "/bin/bash", "-lc" ]
 
 # Set the default command to run when starting the container
 
-CMD conda activate streamlit-apps && streamlit run main.py
+CMD conda activate dashboard && streamlit run main.py
