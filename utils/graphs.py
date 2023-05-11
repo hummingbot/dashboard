@@ -14,7 +14,8 @@ class CandlesGraph:
         rows, heights = self.get_n_rows_and_heights(extra_rows)
         self.rows = rows
         specs = [[{"secondary_y": True}]] * rows
-        self.base_figure = make_subplots(rows=rows, cols=1, shared_xaxes=True, vertical_spacing=0.05, row_heights=heights, specs=specs)
+        self.base_figure = make_subplots(rows=rows, cols=1, shared_xaxes=True, vertical_spacing=0.005,
+                                         row_heights=heights, specs=specs)
         self.add_candles_graph()
         if self.show_volume:
             self.add_volume()
@@ -22,9 +23,9 @@ class CandlesGraph:
 
     def get_n_rows_and_heights(self, extra_rows):
         rows = 1 + extra_rows + self.show_volume
-        row_heights = [0.3] * (extra_rows)
+        row_heights = [0.4] * (extra_rows)
         if self.show_volume:
-            row_heights.insert(0, 0.2)
+            row_heights.insert(0, 0.05)
         row_heights.insert(0, 0.8)
         return rows, row_heights
 
@@ -72,7 +73,7 @@ class CandlesGraph:
                             color='red',
                             size=12,
                             line=dict(color='black', width=1),
-                            opacity=0.7,)),
+                            opacity=0.7, )),
             row=1, col=1,
         )
 
@@ -117,7 +118,8 @@ class CandlesGraph:
                 y=self.candles_df['volume'],
                 name="Volume",
                 opacity=0.5,
-                marker=dict(color='lightgreen')
+                marker=dict(color='lightgreen'),
+
             ),
             row=2, col=1,
         )
@@ -146,47 +148,83 @@ class CandlesGraph:
                 y=strategy_data.trade_fill["net_amount"],
                 name="Base Inventory Change",
                 opacity=0.5,
-                marker=dict(color=["lightgreen" if amount > 0 else "indianred" for amount in strategy_data.trade_fill["net_amount"]])
+                marker=dict(color=["lightgreen" if amount > 0 else "indianred" for amount in
+                                   strategy_data.trade_fill["net_amount"]])
             ),
             row=row, col=1,
         )
         # TODO: Review impact in different subgraphs
-        merged_df = pd.merge_asof(self.candles_df, strategy_data.trade_fill, left_on="datetime", right_on="timestamp", direction="forward")
+        merged_df = self.get_merged_df(strategy_data)
         self.base_figure.add_trace(
             go.Scatter(
                 x=merged_df.datetime,
                 y=merged_df["cum_net_amount"],
                 name="Cumulative Base Inventory Change",
-                mode='lines',
-                line=dict(color='black', width=1)),
-            row=row, col=1, secondary_y=True
-            )
-        self.base_figure.update_yaxes(title_text='Cum Base Inventory Change', row=3, col=1, secondary_y=True)
-        self.base_figure.update_yaxes(title_text='Base Inventory Change', row=3, col=1)
+                mode="lines+markers+text",
+                marker=dict(color="black", size=6),
+                line=dict(color="royalblue", width=2),
+                text=merged_df["cum_net_amount"],
+                textposition="top center",
+                texttemplate="%{text:.2f}"
+            ),
+            row=row, col=1
+        )
+        self.base_figure.update_yaxes(title_text='Base Inventory Change', row=row, col=1)
 
-    def add_trade_pnl(self, strategy_data: StrategyData, row=4):
-        merged_df = pd.merge_asof(self.candles_df, strategy_data.trade_fill, left_on="datetime", right_on="timestamp", direction="nearest")
-        merged_df["trade_pnl_continuos"] = merged_df["unrealized_trade_pnl"] + merged_df["cum_net_amount"] * merged_df["close"]
+    def add_net_pnl(self, strategy_data: StrategyData, row=4):
+        merged_df = self.get_merged_df(strategy_data)
+        self.base_figure.add_trace(
+            go.Scatter(
+                x=merged_df.datetime,
+                y=merged_df["net_pnl_continuos"],
+                name="Cumulative Net PnL",
+                mode="lines+markers+text",
+                marker=dict(color="black", size=6),
+                line=dict(color="mediumpurple", width=2),
+                text=merged_df["net_pnl_continuos"],
+                textposition="top center",
+                texttemplate="%{text:.1f}"
+            ),
+            row=row, col=1
+        )
+        self.base_figure.update_yaxes(title_text='Cum Net PnL', row=row, col=1)
 
+    def add_trade_pnl(self, strategy_data: StrategyData, row=5):
+        merged_df = self.get_merged_df(strategy_data)
         self.base_figure.add_trace(
             go.Scatter(
                 x=merged_df.datetime,
                 y=merged_df["trade_pnl_continuos"],
-                name="Cumulative Trade PnL Continuos",
-                mode='lines',
-                line=dict(color='chocolate', width=2)),
+                name="Cumulative Trade PnL",
+                mode="lines+markers+text",
+                marker=dict(color="black", size=6),
+                line=dict(color="crimson", width=2),
+                text=merged_df["trade_pnl_continuos"],
+                textposition="top center",
+                texttemplate="%{text:.1f}"
+            ),
             row=row, col=1
-            )
+        )
+        self.base_figure.update_yaxes(title_text='Cum Trade PnL', row=row, col=1)
+
+    def add_trade_fee(self, strategy_data: StrategyData, row=6):
+        merged_df = self.get_merged_df(strategy_data)
+
         self.base_figure.add_trace(
             go.Scatter(
                 x=merged_df.datetime,
-                y=merged_df["realized_trade_pnl"],
-                name="Cumulative Trade PnL by Trade",
-                mode='lines',
-                line=dict(color='cornflowerblue', width=2)),
+                y=merged_df["cum_fees_in_quote"],
+                name="Cumulative Fees",
+                mode="lines+markers+text",
+                marker=dict(color="black", size=6),
+                line=dict(color="seagreen", width=2),
+                text=merged_df["cum_fees_in_quote"],
+                textposition="top center",
+                texttemplate="%{text:.1f}"
+            ),
             row=row, col=1
         )
-        self.base_figure.update_yaxes(title_text='Cum Trade PnL', row=4, col=1)
+        self.base_figure.update_yaxes(title_text='Cum Trade Fees', row=row, col=1)
 
     def update_layout(self):
         self.base_figure.update_layout(
@@ -204,7 +242,7 @@ class CandlesGraph:
                 xanchor="right",
                 x=1
             ),
-            height=1000,
+            height=1500,
             xaxis_rangeslider_visible=False,
             hovermode='x unified'
         )
@@ -212,6 +250,12 @@ class CandlesGraph:
         if self.show_volume:
             self.base_figure.update_yaxes(title_text="Volume", row=2, col=1)
         self.base_figure.update_xaxes(title_text="Time", row=self.rows, col=1)
+
+    def get_merged_df(self, strategy_data: StrategyData):
+        merged_df = pd.merge_asof(self.candles_df, strategy_data.trade_fill, left_on="datetime", right_on="timestamp", direction="forward")
+        merged_df["trade_pnl_continuos"] = merged_df["unrealized_trade_pnl"] + merged_df["cum_net_amount"] * merged_df["close"]
+        merged_df["net_pnl_continuos"] = merged_df["trade_pnl_continuos"] - merged_df["cum_fees_in_quote"]
+        return merged_df
 
 
 def get_bar_plot_volume_of_trades(strategy_data: StrategyData):
