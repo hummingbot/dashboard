@@ -34,7 +34,8 @@ def get_database(db_name: str):
 
 @st.cache_data(ttl=60)
 def get_ohlc(trading_pair: str, exchange: str, interval: str, start_timestamp: int, end_timestamp: int):
-    connector = getattr(ccxt, exchange)()
+    # TODO: Remove hardcoded exchange by using the new data collected by the bot.
+    connector = getattr(ccxt, "binance")()
     limit = max(int((end_timestamp - start_timestamp) / intervals[interval]), 10)
     bars = connector.fetch_ohlcv(trading_pair.replace("-", ""), timeframe=interval, since=start_timestamp * 1000, limit=limit)
     df = pd.DataFrame(bars, columns=["timestamp", "open", "high", "low", "close", "volume"])
