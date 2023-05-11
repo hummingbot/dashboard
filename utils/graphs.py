@@ -252,7 +252,7 @@ class CandlesGraph:
         self.base_figure.update_xaxes(title_text="Time", row=self.rows, col=1)
 
     def get_merged_df(self, strategy_data: StrategyData):
-        merged_df = pd.merge_asof(self.candles_df, strategy_data.trade_fill, left_on="datetime", right_on="timestamp", direction="forward")
+        merged_df = pd.merge_asof(self.candles_df, strategy_data.trade_fill, left_on="datetime", right_on="timestamp", direction="backward")
         merged_df["trade_pnl_continuos"] = merged_df["unrealized_trade_pnl"] + merged_df["cum_net_amount"] * merged_df["close"]
         merged_df["net_pnl_continuos"] = merged_df["trade_pnl_continuos"] - merged_df["cum_fees_in_quote"]
         return merged_df
