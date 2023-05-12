@@ -183,7 +183,7 @@ class CandlesGraph:
                 line=dict(color="mediumpurple", width=2),
                 text=merged_df["net_pnl_continuos"],
                 textposition="top center",
-                texttemplate="%{text:.1f}"
+                texttemplate="%{text:.2f}"
             ),
             row=row, col=1
         )
@@ -220,7 +220,7 @@ class CandlesGraph:
                 line=dict(color="seagreen", width=2),
                 text=merged_df["cum_fees_in_quote"],
                 textposition="top center",
-                texttemplate="%{text:.1f}"
+                texttemplate="%{text:.2f}"
             ),
             row=row, col=1
         )
