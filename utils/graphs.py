@@ -3,7 +3,7 @@ from plotly.subplots import make_subplots
 import pandas_ta as ta  # noqa: F401
 import streamlit as st
 
-from utils.data_manipulation import StrategyData
+from utils.data_manipulation import StrategyData, SingleMarketStrategyData
 import plotly.graph_objs as go
 
 
@@ -176,40 +176,40 @@ class CandlesGraph:
 
         self.base_figure.add_trace(
             go.Scatter(
-                x=merged_df["timestamp"],
-                y=merged_df["net_pnl_continuos"].apply(lambda x: round(x, 3)),
-                name="Cumulative Net PnL",
-                mode="lines",
-                marker=dict(color="black", size=6),
-                line=dict(color="black", width=2),
-                text=merged_df["net_pnl_continuos"],
-                textposition="top center",
-                texttemplate="%{text:.3f}"
-            ),
-            row=row, col=1
-        )
-        self.base_figure.add_trace(
-            go.Scatter(
-                x=merged_df["timestamp"],
-                y=merged_df["cum_fees_in_quote"].apply(lambda x: round(x, 3)),
-                name="Cumulative Fees",
-                mode="lines",
+                x=merged_df["datetime"],
+                y=merged_df["cum_fees_in_quote"].apply(lambda x: round(-x, 2)),
+                name="Cum Fees",
+                mode='lines',
+                line_color='teal',
                 fill="tozeroy",  # Fill to the line below (trade pnl)
-                line=dict(color="yellow", width=2),
-                text=merged_df["cum_fees_in_quote"],
+                stackgroup='one'
             ),
             row=row, col=1
         )
 
         self.base_figure.add_trace(
             go.Scatter(
-                x=merged_df["timestamp"],
-                y=merged_df["trade_pnl_continuos"].apply(lambda x: round(x, 3)),
-                name="Cumulative Trade PnL",
-                mode="lines",
+                x=merged_df["datetime"],
+                y=merged_df["trade_pnl_continuos"].apply(lambda x: round(x, 2)),
+                name="Cum Trade PnL",
+                mode='lines',
+                line_color='pink',
                 fill="tonexty",  # Fill to the line below (net pnl)
-                line=dict(color="salmon", width=2),
-                text=merged_df["trade_pnl_continuos"],
+                stackgroup='one'
+            ),
+            row=row, col=1
+        )
+        self.base_figure.add_trace(
+            go.Scatter(
+                x=merged_df["datetime"],
+                y=merged_df["net_pnl_continuos"].apply(lambda x: round(x, 2)),
+                name="Cum Net PnL",
+                mode="lines+markers+text",
+                marker=dict(color="black", size=6),
+                line=dict(color="black", width=2),
+                textposition="top center",
+                text=merged_df["net_pnl_continuos"],
+                texttemplate="%{text:.1f}"
             ),
             row=row, col=1
         )
