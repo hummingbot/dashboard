@@ -123,9 +123,7 @@ with st.container():
             cg.add_buy_trades(strategy_data_filtered.buys)
             cg.add_sell_trades(strategy_data_filtered.sells)
             cg.add_base_inventory_change(strategy_data_filtered)
-            cg.add_net_pnl(strategy_data_filtered)
-            cg.add_trade_pnl(strategy_data_filtered)
-            cg.add_trade_fee(strategy_data_filtered)
+            cg.add_pnl(strategy_data_filtered)
             fig = cg.figure()
             st.plotly_chart(fig, use_container_width=True)
 
