@@ -171,60 +171,49 @@ class CandlesGraph:
         )
         self.base_figure.update_yaxes(title_text='Base Inventory Change', row=row, col=1)
 
-    def add_net_pnl(self, strategy_data: StrategyData, row=4):
+    def add_pnl(self, strategy_data: SingleMarketStrategyData, row=4):
         merged_df = self.get_merged_df(strategy_data)
+
         self.base_figure.add_trace(
             go.Scatter(
-                x=merged_df.datetime,
-                y=merged_df["net_pnl_continuos"],
+                x=merged_df["timestamp"],
+                y=merged_df["net_pnl_continuos"].apply(lambda x: round(x, 3)),
                 name="Cumulative Net PnL",
-                mode="lines+markers+text",
+                mode="lines",
                 marker=dict(color="black", size=6),
-                line=dict(color="mediumpurple", width=2),
+                line=dict(color="black", width=2),
                 text=merged_df["net_pnl_continuos"],
                 textposition="top center",
-                texttemplate="%{text:.2f}"
+                texttemplate="%{text:.3f}"
             ),
             row=row, col=1
         )
-        self.base_figure.update_yaxes(title_text='Cum Net PnL', row=row, col=1)
-
-    def add_trade_pnl(self, strategy_data: StrategyData, row=5):
-        merged_df = self.get_merged_df(strategy_data)
         self.base_figure.add_trace(
             go.Scatter(
-                x=merged_df.datetime,
-                y=merged_df["trade_pnl_continuos"],
-                name="Cumulative Trade PnL",
-                mode="lines+markers+text",
-                marker=dict(color="black", size=6),
-                line=dict(color="crimson", width=2),
-                text=merged_df["trade_pnl_continuos"],
-                textposition="top center",
-                texttemplate="%{text:.1f}"
-            ),
-            row=row, col=1
-        )
-        self.base_figure.update_yaxes(title_text='Cum Trade PnL', row=row, col=1)
-
-    def add_trade_fee(self, strategy_data: StrategyData, row=6):
-        merged_df = self.get_merged_df(strategy_data)
-
-        self.base_figure.add_trace(
-            go.Scatter(
-                x=merged_df.datetime,
-                y=merged_df["cum_fees_in_quote"],
+                x=merged_df["timestamp"],
+                y=merged_df["cum_fees_in_quote"].apply(lambda x: round(x, 3)),
                 name="Cumulative Fees",
-                mode="lines+markers+text",
-                marker=dict(color="black", size=6),
-                line=dict(color="seagreen", width=2),
+                mode="lines",
+                fill="tozeroy",  # Fill to the line below (trade pnl)
+                line=dict(color="yellow", width=2),
                 text=merged_df["cum_fees_in_quote"],
-                textposition="top center",
-                texttemplate="%{text:.2f}"
             ),
             row=row, col=1
         )
-        self.base_figure.update_yaxes(title_text='Cum Trade Fees', row=row, col=1)
+
+        self.base_figure.add_trace(
+            go.Scatter(
+                x=merged_df["timestamp"],
+                y=merged_df["trade_pnl_continuos"].apply(lambda x: round(x, 3)),
+                name="Cumulative Trade PnL",
+                mode="lines",
+                fill="tonexty",  # Fill to the line below (net pnl)
+                line=dict(color="salmon", width=2),
+                text=merged_df["trade_pnl_continuos"],
+            ),
+            row=row, col=1
+        )
+        self.base_figure.update_yaxes(title_text='PNL', row=row, col=1)
 
     def update_layout(self):
         self.base_figure.update_layout(
