@@ -1,4 +1,4 @@
-# Hummingbot Dashboards
+# Hummingbot Dashboard
 
 Collection of Hummingbot-related dashboards, built using [StreamLit](https://streamlit.io/).
 
