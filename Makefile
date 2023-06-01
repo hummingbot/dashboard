@@ -10,7 +10,7 @@ env_remove:
 	conda env remove -n dashboard
 
 env_create:
-	conda env create -f environment.yml
+	conda env create -f environment_conda.yml
 
 docker_build:
 	docker build -t dashboard:latest .
