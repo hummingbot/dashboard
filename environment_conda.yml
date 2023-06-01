@@ -15,3 +15,4 @@ dependencies:
       - defillama
       - statsmodels
       - pandas_ta
+      - pyyaml
