@@ -53,18 +53,22 @@ with st.container():
         st.warning("No databases available to analyze. Please run a backtesting first.")
     else:
         db_manager = get_database(selected_db_name)
+        config_files = db_manager.get_config_files()
+        if config_files == []:
+            with col1:
+                st.warning('No trades have been recorded in the selected database')
         with col2:
-            selected_config_file = st.selectbox("Select a config file to analyze:", db_manager.get_config_files())
+            selected_config_file = st.selectbox("Select a config file to analyze:", config_files)
             if selected_config_file is not None:
                 exchanges_trading_pairs = db_manager.get_exchanges_trading_pairs_by_config_file(selected_config_file)
                 strategy_data = db_manager.get_strategy_data(selected_config_file)
-
+                
         with st.container():
             col1, col2, col3 = st.columns(3)
             with col1:
-                selected_exchange = st.selectbox("Select an exchange:", list(exchanges_trading_pairs.keys()))
+                selected_exchange = st.selectbox("Select an exchange:", [] if selected_config_file is None else list(exchanges_trading_pairs.keys()))
             with col2:
-                selected_trading_pair = st.selectbox("Select a trading pair:", exchanges_trading_pairs[selected_exchange])
+                selected_trading_pair = st.selectbox("Select a trading pair:", [] if selected_config_file is None else exchanges_trading_pairs[selected_exchange])
             with col3:
                 interval = st.selectbox("Candles Interval:", intervals.keys(), index=0)
 
