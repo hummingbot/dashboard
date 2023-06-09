@@ -123,7 +123,11 @@ else:
                                 client.import_strategy(strategy=strategy)
                                 client.stop(strategy)
                     status = st.button("Get Status", key=f"status-{instance_name}")
+                    stop_strategy = st.button("Stop Strategy", key=f"stop-{instance_name}")
                 with c1:
                     if status:
                         status = client.status()
                         st.write(status.msg)
+                    if stop_strategy:
+                        client.stop(strategy)
+                        st.success("Strategy stopped")
