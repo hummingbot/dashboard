@@ -34,6 +34,14 @@ These files are located in the `/data` folder in Hummingbot, and are named `<str
 
 Easily compare various DeFi protocols based on their market capitalization and total value locked, using DeFiLlama data.
 
+### 🗂 Candles Downloader
+
+Download historical exchange data as OHLVC candles. Supports multiple trading pairs and custom time ranges/intervals.
+
+Current Hummingbot connectors supported:
+* `binance`
+* `binance_perpetual`
+
 ### 📋 Data
 
 Reference data for the various apps this collection.
@@ -70,6 +78,13 @@ ln -s /path/to/hummingbot/data data
 ```
 
 For more info about Streamlit installation, see the instructions located at https://docs.streamlit.io/library/get-started/installation.
+
+## Updates
+
+To update the `dashboard` environment for new dependencies, run:
+```
+conda env update -f environment_conda.yml
+```
 
 ## Contributions
 

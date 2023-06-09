@@ -8,3 +8,4 @@
 - statsmodels
 - pandas_ta
 - sqlalchemy
+- pyyaml
