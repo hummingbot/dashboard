@@ -16,3 +16,4 @@ dependencies:
       - statsmodels
       - pandas_ta
       - pyyaml
+      - commlib-py
