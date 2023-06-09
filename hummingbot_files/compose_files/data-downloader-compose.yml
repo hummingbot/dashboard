@@ -1,12 +1,12 @@
 version: "3.9"
 services:
   bot:
-    container_name: data_downloader
+    container_name: candles_downloader
     image: dardonacci/hummingbot:development
     volumes:
       - "../../data/candles:/home/hummingbot/data"
-      - "../conf:/home/hummingbot/conf"
-      - "../conf/connectors:/home/hummingbot/conf/connectors"
+      - "../bot_configs/data_downloader:/home/hummingbot/conf"
+      - "../bot_configs/data_downloader/connectors:/home/hummingbot/conf/connectors"
     environment:
       - CONFIG_PASSWORD=a
       - CONFIG_FILE_NAME=download_candles.py
