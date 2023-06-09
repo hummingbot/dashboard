@@ -1,6 +1,4 @@
 import os
-import sqlite3
-
 import ccxt
 
 import pandas as pd
