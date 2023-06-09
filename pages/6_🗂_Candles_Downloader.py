@@ -19,7 +19,6 @@ st.write("---")
 c1, c2, c3 = st.columns([2, 2, 0.5])
 with c1:
     exchange = st.selectbox("Exchange", ["binance_perpetual", "binance"], index=0)
-    # TODO: Add more trading pairs querying the exchange API
     trading_pairs = st.text_input("Trading Pairs (separated with commas)", value="BTC-USDT,ETH-USDT")
 with c2:
     intervals = st.multiselect("Intervals", options=["1m", "3m", "5m", "15m", "1h", "4h", "1d"], default=["1m", "3m", "1h"])
@@ -27,7 +26,6 @@ with c2:
 with c3:
     get_data_button = st.button("Download Candles!")
     clean_container_folder_button = st.button("Clean Candles Folder")
-
 
 if clean_container_folder_button:
     st.warning("Cleaning Candles Data folder...", icon="⚠️")
@@ -45,6 +43,8 @@ if get_data_button:
     }
     time.sleep(0.5)
     docker_manager.create_download_candles_container(candles_container_config)
+    st.info("Downloading candles with a Docker container in the background. "
+            "When this process is ready you will see the candles inside data/candles", icon="🕓")
     st.write("---")
 
 st.write("---")
