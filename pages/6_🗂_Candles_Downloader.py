@@ -5,7 +5,7 @@ import streamlit as st
 
 import constants
 from utils import os_utils
-from utils.docker_manager import DockerManager
+from docker_manager import DockerManager
 
 st.set_page_config(
     page_title="Candles Downloader",
@@ -42,7 +42,8 @@ if get_data_button:
         "DAYS_TO_DOWNLOAD": days_to_download,
     }
     time.sleep(0.5)
-    docker_manager.create_download_candles_container(candles_container_config)
+    docker_manager.create_download_candles_container(candles_config=candles_container_config,
+                                                     yml_path=constants.DOWNLOAD_CANDLES_CONFIG_YML)
     st.info("Downloading candles with a Docker container in the background. "
             "When this process is ready you will see the candles inside data/candles", icon="🕓")
 
