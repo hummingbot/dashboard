@@ -17,3 +17,5 @@ dependencies:
       - pandas_ta
       - pyyaml
       - commlib-py
+      - git+https://github.com/hummingbot/hbot-remote-client-py.git
+      - git+https://github.com/hummingbot/docker-manager.git
