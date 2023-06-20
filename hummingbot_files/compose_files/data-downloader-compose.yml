@@ -5,8 +5,8 @@ services:
     image: dardonacci/hummingbot:development
     volumes:
       - "../../data/candles:/home/hummingbot/data"
-      - "../bot_configs/data_downloader:/home/hummingbot/conf"
-      - "../bot_configs/data_downloader/connectors:/home/hummingbot/conf/connectors"
+      - "../bot_configs/data_downloader/conf:/home/hummingbot/conf"
+      - "../bot_configs/data_downloader/conf/connectors:/home/hummingbot/conf/connectors"
     environment:
       - CONFIG_PASSWORD=a
       - CONFIG_FILE_NAME=download_candles.py
