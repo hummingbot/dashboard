@@ -1,10 +1,9 @@
 import pandas as pd
-
 from hbotrc import BotCommands
-
 import streamlit as st
+from docker_manager import DockerManager
 
-from utils.docker_manager import DockerManager
+import constants
 
 st.set_page_config(
     page_title="Hummingbot Dashboard",
@@ -30,7 +29,10 @@ with c12:
     st.write()
     create_instance = st.button("Create Instance")
     if create_instance:
-        docker_manager.create_hummingbot_instance(instance_name)
+        bot_name = f"hummingbot-{instance_name}"
+        docker_manager.create_hummingbot_instance(instance_name=bot_name,
+                                                  base_conf_folder=f"{constants.BOTS_FOLDER}/data_downloader/conf",
+                                                  target_conf_folder=f"{constants.BOTS_FOLDER}/{bot_name}")
 
 st.write("---")
 
@@ -109,7 +111,8 @@ else:
                 c1, c2 = st.columns([0.8, 0.2])
                 with c1:
                     if bot_stopped:
-                        strategy = st.text_input("Strategy config or Script to run (strategy will be .yml and script .py)",
+                        strategy = st.text_input("Strategy config or Script to run (strategy will be the name of the config file"
+                                                 "and script script_name.py)",
                                                  key=f"strategy-{instance_name}")
                         st.info("The bot is currently stopped. Start a strategy to get the bot status")
                 with c2:
@@ -120,7 +123,7 @@ else:
                             if is_script:
                                 client.start(script=strategy)
                             else:
-                                client.import_strategy(strategy=strategy)
+                                client.import_strategy(strategy=strategy.replace(".yml", ""))
                                 client.stop(strategy)
                     status = st.button("Get Status", key=f"status-{instance_name}")
                     stop_strategy = st.button("Stop Strategy", key=f"stop-{instance_name}")
