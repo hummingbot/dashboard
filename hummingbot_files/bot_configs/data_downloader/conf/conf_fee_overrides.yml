@@ -21,7 +21,7 @@ binance_maker_percent_fee:  # 0.75
 binance_taker_percent_fee:  # 0.75
 binance_buy_percent_fee_deducted_from_returns:  # True
 
-# List of supported Exchanges for which the user's conf/conf_fee_override.yml
+# List of supported Exchanges for which the user's data_downloader/conf_fee_override.yml
 # will work. This file currently needs to be in sync with hummingbot list of
 # supported exchanges
 altmarkets_buy_percent_fee_deducted_from_returns:
@@ -296,3 +296,9 @@ hotbit_maker_fixed_fees:
 hotbit_taker_fixed_fees:
 btc_markets_maker_fixed_fees:
 btc_markets_taker_fixed_fees:
+polkadex_percent_fee_token:
+polkadex_maker_percent_fee:
+polkadex_taker_percent_fee:
+polkadex_buy_percent_fee_deducted_from_returns:
+polkadex_maker_fixed_fees:
+polkadex_taker_fixed_fees:

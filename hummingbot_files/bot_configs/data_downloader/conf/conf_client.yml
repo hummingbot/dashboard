@@ -37,7 +37,7 @@ mqtt_bridge:
   mqtt_commands: true
   mqtt_events: true
   mqtt_external_events: true
-  mqtt_autostart: false
+  mqtt_autostart: true
 
 # Error log sharing
 send_error_logs: true

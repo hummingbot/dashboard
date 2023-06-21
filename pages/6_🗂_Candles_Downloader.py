@@ -5,7 +5,7 @@ import streamlit as st
 
 import constants
 from utils import os_utils
-from utils.docker_manager import DockerManager
+from docker_manager import DockerManager
 
 st.set_page_config(
     page_title="Candles Downloader",
@@ -42,34 +42,30 @@ if get_data_button:
         "DAYS_TO_DOWNLOAD": days_to_download,
     }
     time.sleep(0.5)
-    docker_manager.create_download_candles_container(candles_container_config)
+    docker_manager.create_download_candles_container(candles_config=candles_container_config,
+                                                     yml_path=constants.DOWNLOAD_CANDLES_CONFIG_YML)
     st.info("Downloading candles with a Docker container in the background. "
             "When this process is ready you will see the candles inside data/candles", icon="🕓")
-    st.write("---")
 
 st.write("---")
 st.write("## ⚙️Containers Management")
 try:
-
-    c1, c2 = st.columns([0.85, 0.15])
+    active_containers = docker_manager.get_active_containers()
+    c1, c2 = st.columns([0.9, 0.1])
     with c1:
-        st.write("Active Containers:")
-        st.info(docker_manager.get_active_containers())
-
+        if "candles_downloader" in active_containers:
+            st.success("Hummingbot Candles Downloader is running")
         st.write("Exited Containers:")
         st.warning(docker_manager.get_exited_containers())
     with c2:
-        stop_containers_button = st.button("Stop Containers")
-        if stop_containers_button:
-            docker_manager.stop_active_containers()
-
+        if "candles_downloader" in active_containers:
+            stop_containers_button = st.button("Stop Candles Downloader")
+            if stop_containers_button:
+                docker_manager.stop_container("candles_downloader")
         clean_exited_containers_button = st.button("Clean Containers")
         if clean_exited_containers_button:
             docker_manager.clean_exited_containers()
 
-        refresh_button = st.button("Refresh")
-        if refresh_button:
-            pass
 except CalledProcessError as error:
     st.write("### Docker is not running. Please start docker in your machine.")
 
