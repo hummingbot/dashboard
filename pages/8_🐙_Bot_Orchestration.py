@@ -1,3 +1,5 @@
+import time
+
 import pandas as pd
 from hbotrc import BotCommands
 import streamlit as st
@@ -124,7 +126,8 @@ else:
                                 client.start(script=strategy)
                             else:
                                 client.import_strategy(strategy=strategy.replace(".yml", ""))
-                                client.stop(strategy)
+                                time.sleep(0.5)
+                                client.start(strategy)
                     status = st.button("Get Status", key=f"status-{instance_name}")
                     stop_strategy = st.button("Stop Strategy", key=f"stop-{instance_name}")
                 with c1:
