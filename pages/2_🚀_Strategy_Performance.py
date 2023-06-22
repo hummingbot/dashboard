@@ -115,7 +115,7 @@ with st.container():
                 fig = cg.figure()
                 st.plotly_chart(fig, use_container_width=True)
             else:
-                st.warning("Market data is not available so the candles graph is not available. "
+                st.warning("Market data is not available so the candles graph is not going to be rendered. "
                            "Make sure that you are using the latest version of Hummingbot and market data recorder activated.")
 
             st.subheader("💵Trades")
