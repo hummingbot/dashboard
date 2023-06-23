@@ -6,8 +6,6 @@ __pycache__/
 # C extensions
 *.
 
-*.ipynb
-
 secrets.toml
 .idea/*
 
