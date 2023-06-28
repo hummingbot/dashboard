@@ -192,3 +192,8 @@ color:
 # c_tick() method, that means for example that if the tick size is 1, the logic of the strategy 
 # will run every second.
 tick_size: 1.0
+
+market_data_collection:
+  market_data_collection_enabled: true
+  market_data_collection_interval: 60
+  market_data_collection_depth: 20
