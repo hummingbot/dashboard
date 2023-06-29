@@ -19,13 +19,12 @@ class DirectionalStrategyBase:
 
     @staticmethod
     def filter_df_by_time(df, start: Optional[str] = None, end: Optional[str] = None):
-        timeframe_conditions = []
         if start is not None:
-            timeframe_conditions.append(df["timestamp"] >= datetime.strptime(start, "%Y-%m-%d"))
-        if end is not None:
-            timeframe_conditions.append(df["timestamp"] <= datetime.strptime(end, "%Y-%m-%d"))
-        if len(timeframe_conditions) > 0:
-            df = df.loc[timeframe_conditions[0] & timeframe_conditions[1]]
+            start_condition = df["timestamp"] >= datetime.strptime(start, "%Y-%m-%d")
         else:
-            df = df.copy()
-        return df
+            start_condition = True
+        if end is not None:
+            end_condition = df["timestamp"] <= datetime.strptime(end, "%Y-%m-%d")
+        else:
+            end_condition = True
+        return df.loc[start_condition & end_condition]
