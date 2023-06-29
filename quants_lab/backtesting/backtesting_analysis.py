@@ -11,8 +11,9 @@ class BacktestingAnalysis:
     def __init__(self, positions: pd.DataFrame, candles_df: Optional[pd.DataFrame] = None):
         self.candles_df = candles_df
         self.positions = positions
+        self.base_figure = None
 
-    def create_base_figure(self, candlestick=True, volume=True, extra_rows=1):
+    def create_base_figure(self, candlestick=True, volume=True, positions=False, extra_rows=1):
         rows, heights = self.get_n_rows_and_heights(extra_rows, volume)
         self.rows = rows
         specs = [[{"secondary_y": True}]] * rows
@@ -22,6 +23,8 @@ class BacktestingAnalysis:
             self.add_candles_graph()
         if volume:
             self.add_volume()
+        if positions:
+            self.add_positions()
         self.update_layout(volume)
 
     def add_positions(self):
@@ -38,7 +41,8 @@ class BacktestingAnalysis:
                                               marker_color=active_signals.loc[(active_signals['side'] != 0), 'color'],
                                               marker_symbol=active_signals.loc[(active_signals['side'] != 0), 'symbol'],
                                               marker_size=20,
-                                              marker_line={'color': 'black', 'width': 0.7}))
+                                              marker_line={'color': 'black', 'width': 0.7}),
+                                   row=1, col=1)
 
         for index, row in active_signals.iterrows():
             self.base_figure.add_shape(type="rect",
@@ -48,7 +52,8 @@ class BacktestingAnalysis:
                                        y0=row.close,
                                        x1=row.close_time,
                                        y1=row.tp,
-                                       line=dict(color="green"))
+                                       line=dict(color="green"),
+                                       row=1, col=1)
             # Add SL
             self.base_figure.add_shape(type="rect",
                                        fillcolor="red",
@@ -57,7 +62,8 @@ class BacktestingAnalysis:
                                        y0=row.close,
                                        x1=row.close_time,
                                        y1=row.sl,
-                                       line=dict(color="red"))
+                                       line=dict(color="red"),
+                                       row=1, col=1)
 
     def get_n_rows_and_heights(self, extra_rows, volume=True):
         rows = 1 + extra_rows + volume
