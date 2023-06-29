@@ -17,35 +17,37 @@ st.title("⚙️ Backtesting")
 
 df_to_show = data_management.get_dataframe(
     exchange='binance_perpetual',
-    trading_pair='IOTA-USDT',
+    trading_pair="ETH-USDT",
     interval='1h',
 )
 
+
 strategy = Bollinger(
-    exchange="binance_perpetual",
-    trading_pair="ETH-USDT",
-    interval="1h",
-    bb_length=24,
-    bb_std=2.0,
-)
+        exchange="binance_perpetual",
+        trading_pair="ETH-USDT",
+        interval="3m",
+        bb_length=66,
+        bb_std=2.8,
+        bb_long_threshold=0.17,
+        bb_short_threshold=1.23,
+    )
 
 backtesting = Backtesting(strategy=strategy)
 
-
-backtesting_result = backtesting.run_backtesting(
+positions = backtesting.run_backtesting(
+    start='2021-04-01',
+    # end='2023-06-02',
     order_amount=50,
     leverage=20,
     initial_portfolio=100,
-    take_profit_multiplier=3.5,
-    stop_loss_multiplier=1.5,
-    time_limit=60 * 60 * 12,
+    take_profit_multiplier=4.3,
+    stop_loss_multiplier=3.0,
+    time_limit=60 * 60 * 24,
     std_span=None,
 )
-
-
-backtesting_analysis = BacktestingAnalysis(df_to_show, backtesting_result, extra_rows=1, show_volume=False)
+backtesting_analysis = BacktestingAnalysis(positions=positions, candles_df=df_to_show)
+backtesting_analysis.create_base_figure(volume=False, positions=True, extra_rows=1)
 backtesting_analysis.add_trade_pnl(row=2)
-# backtesting_analysis.add_positions()
 
 c1, c2 = st.columns([0.2, 0.8])
 with c1:
