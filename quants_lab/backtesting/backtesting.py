@@ -1,21 +1,24 @@
-from typing import Callable
+from typing import Optional
 
 import pandas as pd
 
 from quants_lab.backtesting.backtesting_analysis import BacktestingAnalysis
 from quants_lab.labeling.triple_barrier_method import triple_barrier_method
+from quants_lab.strategy.directional_strategy_base import DirectionalStrategyBase
 
 
 class Backtesting:
-    def __init__(self, candles_df):
-        self.candles_df = candles_df
+    def __init__(self, strategy: DirectionalStrategyBase):
+        self.strategy = strategy
 
     def run_backtesting(self,
-                        strategy: Callable,
                         order_amount, leverage, initial_portfolio,
                         take_profit_multiplier, stop_loss_multiplier, time_limit,
-                        std_span, taker_fee=0.0003, maker_fee=0.00012):
-        df = strategy(self.candles_df.copy())
+                        std_span, taker_fee=0.0003, maker_fee=0.00012,
+                        start: Optional[str] = None, end: Optional[str] = None):
+        df = self.strategy.get_data(start=start, end=end)
+        df = self.strategy.add_indicators(df)
+        df = self.strategy.add_signals(df)
         df = triple_barrier_method(
             df=df,
             std_span=std_span,
