@@ -16,8 +16,10 @@ st.set_page_config(
 st.title("🚀 Strategy Performance")
 
 intervals = {
-    # "1m": 60,
+    "1m": 60,
     "3m": 60 * 3,
+    "5m": 60 * 5,
+    "15m": 60 * 15,
     "30m": 60 * 30,
     "1h": 60 * 60,
     "6h": 60 * 60 * 6,
@@ -28,17 +30,6 @@ intervals = {
 def get_database(db_name: str):
     db_manager = DatabaseManager(db_name)
     return db_manager
-
-
-@st.cache_data(ttl=60)
-def get_ohlc(trading_pair: str, exchange: str, interval: str, start_timestamp: int, end_timestamp: int):
-    # TODO: Remove hardcoded exchange by using the new data collected by the bot.
-    connector = getattr(ccxt, "binance")()
-    limit = max(int((end_timestamp - start_timestamp) / intervals[interval]), 10)
-    bars = connector.fetch_ohlcv(trading_pair.replace("-", ""), timeframe=interval, since=start_timestamp * 1000, limit=limit)
-    df = pd.DataFrame(bars, columns=["timestamp", "open", "high", "low", "close", "volume"])
-    df["datetime"] = pd.to_datetime(df["timestamp"], unit="ms")
-    return df
 
 
 with st.container():
@@ -68,22 +59,16 @@ with st.container():
             with col2:
                 selected_trading_pair = st.selectbox("Select a trading pair:", [] if selected_config_file is None else exchanges_trading_pairs[selected_exchange])
             with col3:
-                interval = st.selectbox("Candles Interval:", intervals.keys(), index=0)
+                interval = st.selectbox("Candles Interval:", intervals.keys(), index=2)
 
         if selected_exchange and selected_trading_pair:
-            single_market_strategy_data = strategy_data.get_single_market_strategy_data(selected_exchange, selected_trading_pair)
+            single_market_strategy_data = strategy_data.get_single_market_strategy_data(selected_exchange,
+                                                                                        selected_trading_pair)
             date_array = pd.date_range(start=strategy_data.start_time, end=strategy_data.end_time, periods=60)
-            ohlc_extra_time = 60
-            with st.spinner("Loading candles..."):
-                candles_df = get_ohlc(single_market_strategy_data.trading_pair, single_market_strategy_data.exchange, interval,
-                                      int(strategy_data.start_time.timestamp() - ohlc_extra_time),
-                                      int(strategy_data.end_time.timestamp() + ohlc_extra_time))
             start_time, end_time = st.select_slider("Select a time range to analyze", options=date_array.tolist(),
                                                     value=(date_array[0], date_array[-1]))
-            candles_df_filtered = candles_df[(candles_df["timestamp"] >= int(start_time.timestamp() * 1000)) & (
-                        candles_df["timestamp"] <= int(end_time.timestamp() * 1000))]
-            strategy_data_filtered = single_market_strategy_data.get_filtered_strategy_data(start_time, end_time)
 
+            strategy_data_filtered = single_market_strategy_data.get_filtered_strategy_data(start_time, end_time)
             row = st.container()
             col11, col12, col13 = st.columns([1, 2, 3])
             with row:
@@ -120,14 +105,18 @@ with st.container():
                         st.metric(label='End Price', value=round(strategy_data_filtered.end_price, 4))
                         st.metric(label='Average Buy Price', value=round(strategy_data_filtered.average_buy_price, 4))
                         st.metric(label='Average Sell Price', value=round(strategy_data_filtered.average_sell_price, 4))
-
-            cg = CandlesGraph(candles_df_filtered, show_volume=True, extra_rows=2)
-            cg.add_buy_trades(strategy_data_filtered.buys)
-            cg.add_sell_trades(strategy_data_filtered.sells)
-            cg.add_base_inventory_change(strategy_data_filtered)
-            cg.add_pnl(strategy_data_filtered)
-            fig = cg.figure()
-            st.plotly_chart(fig, use_container_width=True)
+            if strategy_data_filtered.market_data is not None:
+                candles_df = strategy_data_filtered.get_market_data_resampled(interval=f"{intervals[interval]}S")
+                cg = CandlesGraph(candles_df, show_volume=False, extra_rows=2)
+                cg.add_buy_trades(strategy_data_filtered.buys)
+                cg.add_sell_trades(strategy_data_filtered.sells)
+                cg.add_pnl(strategy_data_filtered, row=2)
+                cg.add_base_inventory_change(strategy_data_filtered, row=3)
+                fig = cg.figure()
+                st.plotly_chart(fig, use_container_width=True)
+            else:
+                st.warning("Market data is not available so the candles graph is not going to be rendered. "
+                           "Make sure that you are using the latest version of Hummingbot and market data recorder activated.")
 
             st.subheader("💵Trades")
             st.write(strategy_data_filtered.trade_fill)
