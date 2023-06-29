@@ -1,3 +1,5 @@
+from typing import Optional
+
 import pandas as pd
 from plotly.subplots import make_subplots
 import pandas_ta as ta  # noqa: F401
@@ -6,19 +8,21 @@ import numpy as np
 
 
 class BacktestingAnalysis:
-    def __init__(self, candles_df: pd.DataFrame, positions: pd.DataFrame, show_volume=True, extra_rows=1):
+    def __init__(self, positions: pd.DataFrame, candles_df: Optional[pd.DataFrame] = None):
         self.candles_df = candles_df
         self.positions = positions
-        self.show_volume = show_volume
-        rows, heights = self.get_n_rows_and_heights(extra_rows)
+
+    def create_base_figure(self, candlestick=True, volume=True, extra_rows=1):
+        rows, heights = self.get_n_rows_and_heights(extra_rows, volume)
         self.rows = rows
         specs = [[{"secondary_y": True}]] * rows
         self.base_figure = make_subplots(rows=rows, cols=1, shared_xaxes=True, vertical_spacing=0.05,
                                          row_heights=heights, specs=specs)
-        self.add_candles_graph()
-        if self.show_volume:
+        if candlestick:
+            self.add_candles_graph()
+        if volume:
             self.add_volume()
-        self.update_layout()
+        self.update_layout(volume)
 
     def add_positions(self):
         # Add long and short positions
@@ -55,10 +59,10 @@ class BacktestingAnalysis:
                                        y1=row.sl,
                                        line=dict(color="red"))
 
-    def get_n_rows_and_heights(self, extra_rows):
-        rows = 1 + extra_rows + self.show_volume
+    def get_n_rows_and_heights(self, extra_rows, volume=True):
+        rows = 1 + extra_rows + volume
         row_heights = [0.5] * (extra_rows)
-        if self.show_volume:
+        if volume:
             row_heights.insert(0, 0.2)
         row_heights.insert(0, 0.8)
         return rows, row_heights
@@ -103,7 +107,7 @@ class BacktestingAnalysis:
         )
         self.base_figure.update_yaxes(title_text='Cum Trade PnL', row=row, col=1)
 
-    def update_layout(self):
+    def update_layout(self, volume=True):
         self.base_figure.update_layout(
             title={
                 'text': "Backtesting Analysis",
@@ -124,7 +128,7 @@ class BacktestingAnalysis:
             hovermode='x unified'
         )
         self.base_figure.update_yaxes(title_text="Price", row=1, col=1)
-        if self.show_volume:
+        if volume:
             self.base_figure.update_yaxes(title_text="Volume", row=2, col=1)
         self.base_figure.update_xaxes(title_text="Time", row=self.rows, col=1)
 
