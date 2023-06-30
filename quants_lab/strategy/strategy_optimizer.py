@@ -1,4 +1,5 @@
 import optuna
+import traceback
 from quants_lab.backtesting.backtesting import Backtesting
 from quants_lab.backtesting.backtesting_analysis import BacktestingAnalysis
 from quants_lab.strategy.mean_reversion.bollinger import Bollinger
@@ -62,11 +63,13 @@ def objective(trial):
         trial.set_user_attr("avg_trading_time_in_hours", backtesting_analysis.avg_trading_time_in_minutes() / 60)
         return backtesting_analysis.net_profit_pct()
     except Exception as e:
-        print(e)
-        raise TrialPruned()
+        traceback.print_exc()
+        raise TrialPruned() from e
 
 
-study = optuna.create_study(direction="maximize", study_name=STUDY_NAME, storage="sqlite:///backtesting_report.db",
+study = optuna.create_study(direction="maximize",
+                            study_name=STUDY_NAME,
+                            storage="sqlite:///backtesting_report.db",
                             load_if_exists=True)
 
 study.optimize(objective, n_trials=2000)
