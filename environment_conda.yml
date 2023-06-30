@@ -18,5 +18,6 @@ dependencies:
       - pyyaml
       - commlib-py
       - jupyter
+      - optuna
       - git+https://github.com/hummingbot/hbot-remote-client-py.git
       - git+https://github.com/hummingbot/docker-manager.git
