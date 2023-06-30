@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import Optional
+import optuna
 
 
 class DirectionalStrategyBase:
@@ -28,3 +29,12 @@ class DirectionalStrategyBase:
         else:
             end_condition = True
         return df.loc[start_condition & end_condition]
+
+    @staticmethod
+    def optimize(study_name, objective, n_trials=1000):
+        study = optuna.create_study(direction="maximize",
+                                    study_name=study_name,
+                                    storage="sqlite:///backtesting_report.db",
+                                    load_if_exists=True)
+
+        study.optimize(objective, n_trials=n_trials)

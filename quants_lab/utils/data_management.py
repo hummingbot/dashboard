@@ -1,5 +1,5 @@
 import os
-
+import sqlite3
 import pandas as pd
 
 
@@ -20,3 +20,21 @@ def get_dataframe(exchange: str, trading_pair: str, interval: str) -> pd.DataFra
     df = pd.read_csv(file_path)
     df["timestamp"] = pd.to_datetime(df["timestamp"], unit="ms")
     return df
+
+
+def load_optuna_tables():
+    # Create a SQLite connector
+    conn = sqlite3.connect('backtesting_report.db')
+    tables = ['studies', 'trials', 'trial_user_attributes', 'trial_params', 'trial_values']
+
+    # Create a dictionary to store the table dataframes
+    dataframes = {}
+
+    # Load each table into a dataframe
+    for table_name in tables:
+        df = pd.read_sql_query(f"SELECT * FROM {table_name}", conn)
+        dataframes[table_name] = df
+
+    # Close the cursor and connection
+    conn.close()
+    return dataframes
