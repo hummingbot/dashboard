@@ -50,7 +50,7 @@ if get_data_button:
 st.write("---")
 st.write("## ⚙️Containers Management")
 try:
-    active_containers = docker_manager.get_active_containers()
+    active_containers = docker_manager.get_active_containers_name()
     c1, c2 = st.columns([0.9, 0.1])
     with c1:
         if "candles_downloader" in active_containers:

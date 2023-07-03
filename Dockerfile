@@ -18,7 +18,7 @@ RUN conda env create -f /tmp/environment_conda.yml && \
 COPY main.py .
 COPY pages/ pages/
 COPY utils/ utils/
-COPY CONFIG.py .
+COPY *.py .
 COPY .streamlit/ .streamlit/
 
 

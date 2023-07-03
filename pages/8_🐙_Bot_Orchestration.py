@@ -21,7 +21,14 @@ docker_manager = DockerManager()
 active_containers = docker_manager.get_active_containers()
 exited_containers = docker_manager.get_exited_containers()
 
+active_containers_name = [c.name for c in active_containers]
+active_hummingbot_instances = [c for c in active_containers if any([t.split(":")[0] in constants.HUMMINGBOT_IMAGE_TAGS for t in c.image.tags])]
+exited_hummingbot_instances = [
+        c for c in exited_containers if any([t.split(":")[0] in constants.HUMMINGBOT_IMAGE_TAGS for t in c.image.tags])
+        ]
 
+active_hummingbot_instances_name = [(c.name, 'active') for c in active_hummingbot_instances]
+exited_hummingbot_instances_name = [(c.name, 'exited') for c in exited_hummingbot_instances]
 
 st.write("## 🚀Create Hummingbot Instance")
 c11, c12 = st.columns([0.8, 0.2])
@@ -43,11 +50,8 @@ st.write("## 🦅Hummingbot Instances")
 st.write("This section will let you control your hummingbot instances.")
 
 c1, c2 = st.columns([0.8, 0.2])
-active_hummingbot_instances = [(container, "active") for container in active_containers if "hummingbot-" in container
-                               and "broker" not in container]
-exited_hummingbot_instances = [(container, "exited") for container in exited_containers if "hummingbot-" in container
-                               and "broker" not in container]
-all_instances = active_hummingbot_instances + exited_hummingbot_instances
+
+all_instances = active_hummingbot_instances_name + exited_hummingbot_instances_name
 if len(all_instances) > 0:
     with c1:
         df = pd.DataFrame(all_instances, columns=["instance_name", "status"])
@@ -75,7 +79,7 @@ else:
 
 st.write("---")
 st.write("## 📩Hummingbot Broker")
-if "hummingbot-broker" not in active_containers:
+if "hummingbot-broker" not in active_containers_name:
     c1, c2 = st.columns([0.9, 0.1])
     with c1:
         st.error("Hummingbot Broker is not running")
@@ -93,15 +97,15 @@ else:
         stop_broker = st.button("Stop Hummingbot Broker")
         if stop_broker:
             docker_manager.stop_container("hummingbot-broker")
-    if len(active_hummingbot_instances) > 0:
+    if len(active_hummingbot_instances_name) > 0:
         broker_clients = {instance_name[0]: BotCommands(
                                     host='localhost',
                                     port=1883,
                                     username='admin',
                                     password='38828943.Dardonacci',
                                     bot_id=instance_name[0],
-                                ) for instance_name in active_hummingbot_instances}
-        instance_names = [instance_name[0] for instance_name in active_hummingbot_instances]
+                                ) for instance_name in active_hummingbot_instances_name}
+        instance_names = [instance_name[0] for instance_name in active_hummingbot_instances_name]
         tabs = st.tabs([instance_name for instance_name in instance_names])
         for i, tab in enumerate(tabs):
             with tab:

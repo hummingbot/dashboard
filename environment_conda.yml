@@ -10,6 +10,7 @@ dependencies:
       - streamlit
       - watchdog
       - plotly
+      - numpy
       - pycoingecko
       - glom
       - defillama
@@ -18,4 +19,5 @@ dependencies:
       - pyyaml
       - commlib-py
       - git+https://github.com/hummingbot/hbot-remote-client-py.git
-      - git+https://github.com/hummingbot/docker-manager.git
+      - git+https://github.com/devamin/docker-manager.git@feat/docker-python-sdk
+
