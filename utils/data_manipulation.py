@@ -8,17 +8,24 @@ class StrategyData:
     orders: pd.DataFrame
     order_status: pd.DataFrame
     trade_fill: pd.DataFrame
+    market_data: pd.DataFrame = None
 
     def get_single_market_strategy_data(self, exchange: str, trading_pair: str):
         orders = self.orders[(self.orders["market"] == exchange) & (self.orders["symbol"] == trading_pair)].copy()
         trade_fill = self.trade_fill[self.trade_fill["order_id"].isin(orders["id"])].copy()
         order_status = self.order_status[self.order_status["order_id"].isin(orders["id"])].copy()
+        if self.market_data is not None:
+            market_data = self.market_data[(self.market_data["exchange"] == exchange) &
+                                           (self.market_data["trading_pair"] == trading_pair)].copy()
+        else:
+            market_data = None
         return SingleMarketStrategyData(
             exchange=exchange,
             trading_pair=trading_pair,
             orders=orders,
             order_status=order_status,
             trade_fill=trade_fill,
+            market_data=market_data,
         )
 
     @property
@@ -69,18 +76,35 @@ class SingleMarketStrategyData:
     orders: pd.DataFrame
     order_status: pd.DataFrame
     trade_fill: pd.DataFrame
+    market_data: pd.DataFrame = None
 
     def get_filtered_strategy_data(self, start_date: datetime.datetime, end_date: datetime.datetime):
-        orders = self.orders[(self.orders["creation_timestamp"] >= start_date) & (self.orders["creation_timestamp"] <= end_date)].copy()
+        orders = self.orders[
+            (self.orders["creation_timestamp"] >= start_date) & (self.orders["creation_timestamp"] <= end_date)].copy()
         trade_fill = self.trade_fill[self.trade_fill["order_id"].isin(orders["id"])].copy()
         order_status = self.order_status[self.order_status["order_id"].isin(orders["id"])].copy()
+        if self.market_data is not None:
+            market_data = self.market_data[
+                (self.market_data.index >= start_date) & (self.market_data.index <= end_date)].copy()
+        else:
+            market_data = None
         return SingleMarketStrategyData(
             exchange=self.exchange,
             trading_pair=self.trading_pair,
             orders=orders,
             order_status=order_status,
             trade_fill=trade_fill,
+            market_data=market_data,
         )
+
+    def get_market_data_resampled(self, interval):
+        data_resampled = self.market_data.resample(interval).agg({
+            "mid_price": "ohlc",
+            "best_bid": "last",
+            "best_ask": "last",
+        })
+        data_resampled.columns = data_resampled.columns.droplevel(0)
+        return data_resampled
 
     @property
     def base_asset(self):

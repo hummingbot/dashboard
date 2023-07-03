@@ -1,4 +1,5 @@
 import os
+import streamlit as st
 
 import pandas as pd
 from sqlalchemy import create_engine
@@ -73,6 +74,18 @@ class DatabaseManager:
             query += f" WHERE {' AND '.join(conditions)}"
         return query
 
+    @staticmethod
+    def _get_market_data_query(start_date=None, end_date=None):
+        query = "SELECT * FROM MarketData"
+        conditions = []
+        if start_date:
+            conditions.append(f"timestamp >= '{start_date * 1e6}'")
+        if end_date:
+            conditions.append(f"timestamp <= '{end_date * 1e6}'")
+        if conditions:
+            query += f" WHERE {' AND '.join(conditions)}"
+        return query
+
     def get_orders(self, config_file_path=None, start_date=None, end_date=None):
         with self.session_maker() as session:
             query = self._get_orders_query(config_file_path, start_date, end_date)
@@ -80,6 +93,8 @@ class DatabaseManager:
             orders["market"] = orders["market"].apply(lambda x: x.lower().replace("_papertrade", ""))
             orders["amount"] = orders["amount"] / 1e6
             orders["price"] = orders["price"] / 1e6
+            orders['creation_timestamp'] = pd.to_datetime(orders['creation_timestamp'], unit="ms")
+            orders['last_update_timestamp'] = pd.to_datetime(orders['last_update_timestamp'], unit="ms")
         return orders
 
     def get_trade_fills(self, config_file_path=None, start_date=None, end_date=None):
@@ -98,6 +113,7 @@ class DatabaseManager:
             trade_fills.loc[:, "inventory_cost"] = trade_fills["cum_net_amount"] * trade_fills["price"]
             trade_fills.loc[:, "realized_trade_pnl"] = trade_fills["unrealized_trade_pnl"] + trade_fills["inventory_cost"]
             trade_fills.loc[:, "net_realized_pnl"] = trade_fills["realized_trade_pnl"] - trade_fills["cum_fees_in_quote"]
+            trade_fills["timestamp"] = pd.to_datetime(trade_fills["timestamp"], unit="ms")
             trade_fills["market"] = trade_fills["market"].apply(lambda x: x.lower().replace("_papertrade", ""))
 
         return trade_fills
@@ -108,12 +124,24 @@ class DatabaseManager:
             order_status = pd.read_sql_query(query, session.connection())
         return order_status
 
+    def get_market_data(self, start_date=None, end_date=None):
+        with self.session_maker() as session:
+            query = self._get_market_data_query(start_date, end_date)
+            market_data = pd.read_sql_query(query, session.connection())
+            market_data["timestamp"] = pd.to_datetime(market_data["timestamp"] / 1e6, unit="ms")
+            market_data.set_index("timestamp", inplace=True)
+            market_data["mid_price"] = market_data["mid_price"] / 1e6
+            market_data["best_bid"] = market_data["best_bid"] / 1e6
+            market_data["best_ask"] = market_data["best_ask"] / 1e6
+        return market_data
+
     def get_strategy_data(self, config_file_path=None, start_date=None, end_date=None):
         orders = self.get_orders(config_file_path, start_date, end_date)
         trade_fills = self.get_trade_fills(config_file_path, start_date, end_date)
         order_status = self.get_order_status(orders['id'].tolist(), start_date, end_date)
-        orders['creation_timestamp'] = pd.to_datetime(orders['creation_timestamp'], unit="ms")
-        orders['last_update_timestamp'] = pd.to_datetime(orders['last_update_timestamp'], unit="ms")
-        trade_fills["timestamp"] = pd.to_datetime(trade_fills["timestamp"], unit="ms")
-        strategy_data = StrategyData(orders, order_status, trade_fills)
+        try:
+            market_data = self.get_market_data(start_date, end_date)
+        except Exception as e:
+            market_data = None
+        strategy_data = StrategyData(orders, order_status, trade_fills, market_data)
         return strategy_data

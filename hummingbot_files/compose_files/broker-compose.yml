@@ -1,0 +1,43 @@
+version: '3.9'
+
+services:
+  emqx:
+    container_name: hummingbot-broker
+    image: emqx:5
+    restart: unless-stopped
+    environment:
+      - EMQX_NAME=emqx
+      - EMQX_HOST=node1.emqx.local
+      - EMQX_CLUSTER__DISCOVERY_STRATEGY=static
+      - EMQX_CLUSTER__STATIC__SEEDS=[emqx@node1.emqx.local]
+      - EMQX_LOADED_PLUGINS="emqx_recon,emqx_retainer,emqx_management,emqx_dashboard"
+    volumes:
+      - emqx-data:/opt/emqx/data
+      - emqx-log:/opt/emqx/log
+      - emqx-etc:/opt/emqx/etc
+    ports:
+      - "1883:1883"  # mqtt:tcp
+      - "8883:8883"  # mqtt:tcp:ssl
+      - "8083:8083"  # mqtt:ws
+      - "8084:8084"  # mqtt:ws:ssl
+      - "8081:8081"  # http:management
+      - "18083:18083"  # http:dashboard
+      - "61613:61613"  # web-stomp gateway
+    networks:
+      emqx-bridge:
+        aliases:
+          - node1.emqx.local
+    healthcheck:
+      test: [ "CMD", "/opt/emqx/bin/emqx_ctl", "status" ]
+      interval: 5s
+      timeout: 25s
+      retries: 5
+
+networks:
+  emqx-bridge:
+    driver: bridge
+
+volumes:
+  emqx-data: { }
+  emqx-log: { }
+  emqx-etc: { }

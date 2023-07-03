@@ -35,7 +35,7 @@ class CandlesGraph:
     def add_candles_graph(self):
         self.base_figure.add_trace(
             go.Candlestick(
-                x=self.candles_df['datetime'],
+                x=self.candles_df.index,
                 open=self.candles_df['open'],
                 high=self.candles_df['high'],
                 low=self.candles_df['low'],
@@ -85,7 +85,7 @@ class CandlesGraph:
         df.ta.bbands(length=length, std=std, append=True)
         self.base_figure.add_trace(
             go.Scatter(
-                x=df['datetime'],
+                x=df.index,
                 y=df[f'BBU_{length}_{std}'],
                 name='Bollinger Bands',
                 mode='lines',
@@ -94,7 +94,7 @@ class CandlesGraph:
         )
         self.base_figure.add_trace(
             go.Scatter(
-                x=df['datetime'],
+                x=df.index,
                 y=df[f'BBM_{length}_{std}'],
                 name='Bollinger Bands',
                 mode='lines',
@@ -103,7 +103,7 @@ class CandlesGraph:
         )
         self.base_figure.add_trace(
             go.Scatter(
-                x=df['datetime'],
+                x=df.index,
                 y=df[f'BBL_{length}_{std}'],
                 name='Bollinger Bands',
                 mode='lines',
@@ -114,7 +114,7 @@ class CandlesGraph:
     def add_volume(self):
         self.base_figure.add_trace(
             go.Bar(
-                x=self.candles_df['datetime'],
+                x=self.candles_df.index,
                 y=self.candles_df['volume'],
                 name="Volume",
                 opacity=0.5,
@@ -132,7 +132,7 @@ class CandlesGraph:
         df.ta.ema(length=length, append=True)
         self.base_figure.add_trace(
             go.Scatter(
-                x=df['datetime'],
+                x=df.index,
                 y=df[f'EMA_{length}'],
                 name='EMA',
                 mode='lines',
@@ -157,15 +157,15 @@ class CandlesGraph:
         merged_df = self.get_merged_df(strategy_data)
         self.base_figure.add_trace(
             go.Scatter(
-                x=merged_df.datetime,
+                x=merged_df.index,
                 y=merged_df["cum_net_amount"],
                 name="Cumulative Base Inventory Change",
-                mode="lines+markers+text",
+                mode="lines+markers",
                 marker=dict(color="black", size=6),
                 line=dict(color="royalblue", width=2),
-                text=merged_df["cum_net_amount"],
-                textposition="top center",
-                texttemplate="%{text:.2f}"
+                # text=merged_df["cum_net_amount"],
+                # textposition="top center",
+                # texttemplate="%{text:.2f}"
             ),
             row=row, col=1
         )
@@ -173,10 +173,9 @@ class CandlesGraph:
 
     def add_pnl(self, strategy_data: SingleMarketStrategyData, row=4):
         merged_df = self.get_merged_df(strategy_data)
-
         self.base_figure.add_trace(
             go.Scatter(
-                x=merged_df["datetime"],
+                x=merged_df.index,
                 y=merged_df["cum_fees_in_quote"].apply(lambda x: round(-x, 2)),
                 name="Cum Fees",
                 mode='lines',
@@ -189,7 +188,7 @@ class CandlesGraph:
 
         self.base_figure.add_trace(
             go.Scatter(
-                x=merged_df["datetime"],
+                x=merged_df.index,
                 y=merged_df["trade_pnl_continuos"].apply(lambda x: round(x, 2)),
                 name="Cum Trade PnL",
                 mode='lines',
@@ -201,15 +200,15 @@ class CandlesGraph:
         )
         self.base_figure.add_trace(
             go.Scatter(
-                x=merged_df["datetime"],
+                x=merged_df.index,
                 y=merged_df["net_pnl_continuos"].apply(lambda x: round(x, 2)),
                 name="Cum Net PnL",
-                mode="lines+markers+text",
+                mode="lines+markers",
                 marker=dict(color="black", size=6),
                 line=dict(color="black", width=2),
-                textposition="top center",
-                text=merged_df["net_pnl_continuos"],
-                texttemplate="%{text:.1f}"
+                # textposition="top center",
+                # text=merged_df["net_pnl_continuos"],
+                # texttemplate="%{text:.1f}"
             ),
             row=row, col=1
         )
@@ -241,7 +240,7 @@ class CandlesGraph:
         self.base_figure.update_xaxes(title_text="Time", row=self.rows, col=1)
 
     def get_merged_df(self, strategy_data: StrategyData):
-        merged_df = pd.merge_asof(self.candles_df, strategy_data.trade_fill, left_on="datetime", right_on="timestamp", direction="backward")
+        merged_df = pd.merge_asof(self.candles_df, strategy_data.trade_fill, left_index=True, right_on="timestamp", direction="backward")
         merged_df["trade_pnl_continuos"] = merged_df["unrealized_trade_pnl"] + merged_df["cum_net_amount"] * merged_df["close"]
         merged_df["net_pnl_continuos"] = merged_df["trade_pnl_continuos"] - merged_df["cum_fees_in_quote"]
         return merged_df
