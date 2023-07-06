@@ -75,6 +75,9 @@ streamlit run main.py
 ```bash
 # replace `/path/to/hummingbot` with the actual path
 ln -s /path/to/hummingbot/data data
+
+# if you need to remove the symlink
+unlink data
 ```
 
 For more info about Streamlit installation, see the instructions located at https://docs.streamlit.io/library/get-started/installation.
