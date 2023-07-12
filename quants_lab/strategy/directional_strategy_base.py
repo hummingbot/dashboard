@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import Optional
+import pandas as pd
 
 
 class DirectionalStrategyBase:
@@ -22,9 +23,9 @@ class DirectionalStrategyBase:
         if start is not None:
             start_condition = df["timestamp"] >= datetime.strptime(start, "%Y-%m-%d")
         else:
-            start_condition = True
+            start_condition = pd.Series([True]*len(df))
         if end is not None:
             end_condition = df["timestamp"] <= datetime.strptime(end, "%Y-%m-%d")
         else:
-            end_condition = True
-        return df.loc[start_condition & end_condition]
+            end_condition = pd.Series([True]*len(df))
+        return df[start_condition & end_condition]
