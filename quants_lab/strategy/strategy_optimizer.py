@@ -5,19 +5,21 @@ from quants_lab.strategy.mean_reversion.bollinger import Bollinger
 from quants_lab.strategy.mean_reversion.macd_bb import MACDBB
 from optuna.exceptions import TrialPruned
 
-STUDY_NAME = "bollinger"
+from quants_lab.strategy.mean_reversion.stat_arb import StatArb
+
+STUDY_NAME = "stat_arb"
 
 
 def objective(trial):
-    strategy = Bollinger(
-        exchange="binance_perpetual",
-        trading_pair="ETH-USDT",
-        interval="3m",
-        bb_length=trial.suggest_int("bb_length", 20, 300),
-        bb_std=trial.suggest_float("bb_std", 1.0, 3.0),
-        bb_long_threshold=trial.suggest_float("bb_long_threshold", -0.5, 0.3),
-        bb_short_threshold=trial.suggest_float("bb_short_threshold", 0.7, 1.5),
-    )
+    # strategy = Bollinger(
+    #     exchange="binance_perpetual",
+    #     trading_pair="ETH-USDT",
+    #     interval="3m",
+    #     bb_length=trial.suggest_int("bb_length", 20, 300),
+    #     bb_std=trial.suggest_float("bb_std", 1.0, 3.0),
+    #     bb_long_threshold=trial.suggest_float("bb_long_threshold", -0.5, 0.3),
+    #     bb_short_threshold=trial.suggest_float("bb_short_threshold", 0.7, 1.5),
+    # )
 
     # fast_macd = trial.suggest_int("fast_macd", 10, 50)
     # strategy = MACDBB(
@@ -31,16 +33,19 @@ def objective(trial):
     #     fast_macd=fast_macd,
     #     slow_macd=trial.suggest_int("slow_macd", fast_macd + 1, 100),
     #     signal_macd=trial.suggest_int("signal_macd", 8, 54)
-    #
     # )
+    strategy = StatArb(trading_pair="ETH-USDT",
+                       periods=trial.suggest_int("periods", 10, 150),
+                       deviation_threshold=trial.suggest_float("deviation_threshold", 0.9, 2.0))
     try:
         backtesting = Backtesting(strategy=strategy)
         backtesting_result = backtesting.run_backtesting(
+            start='2021-04-01',
             order_amount=50,
             leverage=20,
             initial_portfolio=100,
-            take_profit_multiplier=trial.suggest_float("take_profit_multiplier", 1.0, 5.0),
-            stop_loss_multiplier=trial.suggest_float("stop_loss_multiplier", 1.0, 5.0),
+            take_profit_multiplier=trial.suggest_float("take_profit_multiplier", 1.0, 3.0),
+            stop_loss_multiplier=trial.suggest_float("stop_loss_multiplier", 1.0, 3.0),
             time_limit=60 * 60 * trial.suggest_int("time_limit", 1, 24),
             std_span=None,
         )

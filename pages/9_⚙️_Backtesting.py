@@ -3,6 +3,7 @@ import pandas_ta as ta
 import streamlit as st
 
 from quants_lab.strategy.mean_reversion.bollinger import Bollinger
+from quants_lab.strategy.mean_reversion.stat_arb import StatArb
 from quants_lab.utils import data_management
 from quants_lab.backtesting.backtesting import Backtesting
 from quants_lab.backtesting.backtesting_analysis import BacktestingAnalysis
@@ -22,26 +23,18 @@ df_to_show = data_management.get_dataframe(
 )
 
 
-strategy = Bollinger(
-        exchange="binance_perpetual",
-        trading_pair="ETH-USDT",
-        interval="3m",
-        bb_length=66,
-        bb_std=2.8,
-        bb_long_threshold=0.17,
-        bb_short_threshold=1.23,
-    )
+strategy = StatArb(trading_pair="ETH-USDT", periods=24, deviation_threshold=1.5)
 
 backtesting = Backtesting(strategy=strategy)
 
 positions = backtesting.run_backtesting(
-    start='2021-04-01',
+    # start='2022-01-01',
     # end='2023-06-02',
     order_amount=50,
     leverage=20,
     initial_portfolio=100,
-    take_profit_multiplier=4.3,
-    stop_loss_multiplier=3.0,
+    take_profit_multiplier=3.0,
+    stop_loss_multiplier=1.5,
     time_limit=60 * 60 * 24,
     std_span=None,
 )
