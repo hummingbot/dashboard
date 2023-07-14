@@ -55,6 +55,7 @@ with st.container():
         st.warning("No databases available to analyze. Please run a backtesting first.")
     else:
         db_manager = get_database(selected_db_name)
+        # TODO: Handle corrupt db files
         config_files = db_manager.get_config_files()
         if config_files == []:
             with col1:
@@ -64,7 +65,7 @@ with st.container():
             if selected_config_file is not None:
                 exchanges_trading_pairs = db_manager.get_exchanges_trading_pairs_by_config_file(selected_config_file)
                 strategy_data = db_manager.get_strategy_data(selected_config_file)
-                
+
         with st.container():
             col1, col2, col3 = st.columns(3)
             with col1:
@@ -82,42 +83,45 @@ with st.container():
                                                     value=(date_array[0], date_array[-1]))
 
             strategy_data_filtered = single_market_strategy_data.get_filtered_strategy_data(start_time, end_time)
+            # TODO: Define sidebar metrics vs. st.metrics in main page
+            st.sidebar.code(f"""
+# Market statistics
+EXCHANGE={strategy_data_filtered.exchange.capitalize()}
+TRADING_PAIR={strategy_data_filtered.trading_pair.upper()}
+
+# General stats
+DURATION={round(strategy_data_filtered.duration_seconds / 3600, 2)} HOURS
+START_DATE={strategy_data_filtered.start_time.strftime("%Y-%m-%d %H:%M")}
+END_DATE={strategy_data_filtered.end_time.strftime("%Y-%m-%d %H:%M")}
+PRICE_CHANGE={round(strategy_data_filtered.price_change * 100, 2)} %
+""")
+
             row = st.container()
-            col11, col12, col13 = st.columns([1, 2, 3])
             with row:
-                with col11:
-                    st.header(f"🏦 Market")
-                    st.metric(label="Exchange", value=strategy_data_filtered.exchange.capitalize())
-                    st.metric(label="Trading pair", value=strategy_data_filtered.trading_pair.upper())
-                with col12:
-                    st.header("📋 General stats")
-                    col121, col122 = st.columns(2)
-                    with col121:
-                        st.metric(label='Duration (Hours)', value=round(strategy_data_filtered.duration_seconds / 3600, 2))
-                        st.metric(label='Start date', value=strategy_data_filtered.start_time.strftime("%Y-%m-%d %H:%M"))
-                        st.metric(label='End date', value=strategy_data_filtered.end_time.strftime("%Y-%m-%d %H:%M"))
-                    with col122:
-                        st.metric(label='Price change', value=f"{round(strategy_data_filtered.price_change * 100, 2)} %")
-                with col13:
-                    st.header("📈 Performance")
-                    col131, col132, col133, col134 = st.columns(4)
-                    with col131:
-                        st.metric(label=f'Net PNL {strategy_data_filtered.quote_asset}', value=round(strategy_data_filtered.net_pnl_quote, 2))
-                        st.metric(label=f'Trade PNL {strategy_data_filtered.quote_asset}', value=round(strategy_data_filtered.trade_pnl_quote, 2))
-                        st.metric(label=f'Fees {strategy_data_filtered.quote_asset}', value=round(strategy_data_filtered.cum_fees_in_quote, 2))
-                    with col132:
-                        st.metric(label='Total Trades', value=strategy_data_filtered.total_orders)
-                        st.metric(label='Total Buy Trades', value=strategy_data_filtered.total_buy_trades)
-                        st.metric(label='Total Sell Trades', value=strategy_data_filtered.total_sell_trades)
-                    with col133:
-                        st.metric(label='Inventory change in Base asset',
-                                  value=round(strategy_data_filtered.inventory_change_base_asset, 4))
-                        st.metric(label='Total Buy Trades Amount', value=round(strategy_data_filtered.total_buy_amount, 2))
-                        st.metric(label='Total Sell Trades Amount', value=round(strategy_data_filtered.total_sell_amount, 2))
-                    with col134:
-                        st.metric(label='End Price', value=round(strategy_data_filtered.end_price, 4))
-                        st.metric(label='Average Buy Price', value=round(strategy_data_filtered.average_buy_price, 4))
-                        st.metric(label='Average Sell Price', value=round(strategy_data_filtered.average_sell_price, 4))
+                st.header("📈 Performance")
+                col131, col132, col133, col134 = st.columns(4)
+                with col131:
+                    st.metric(label=f'Net PNL {strategy_data_filtered.quote_asset}',
+                              value=round(strategy_data_filtered.net_pnl_quote, 2))
+                    st.metric(label=f'Trade PNL {strategy_data_filtered.quote_asset}',
+                              value=round(strategy_data_filtered.trade_pnl_quote, 2))
+                    st.metric(label=f'Fees {strategy_data_filtered.quote_asset}',
+                              value=round(strategy_data_filtered.cum_fees_in_quote, 2))
+                with col132:
+                    st.metric(label='Total Trades', value=strategy_data_filtered.total_orders)
+                    st.metric(label='Total Buy Trades', value=strategy_data_filtered.total_buy_trades)
+                    st.metric(label='Total Sell Trades', value=strategy_data_filtered.total_sell_trades)
+                with col133:
+                    st.metric(label='Inventory change in Base asset',
+                              value=round(strategy_data_filtered.inventory_change_base_asset, 4))
+                    st.metric(label='Total Buy Trades Amount',
+                              value=round(strategy_data_filtered.total_buy_amount, 2))
+                    st.metric(label='Total Sell Trades Amount',
+                              value=round(strategy_data_filtered.total_sell_amount, 2))
+                with col134:
+                    st.metric(label='End Price', value=round(strategy_data_filtered.end_price, 4))
+                    st.metric(label='Average Buy Price', value=round(strategy_data_filtered.average_buy_price, 4))
+                    st.metric(label='Average Sell Price', value=round(strategy_data_filtered.average_sell_price, 4))
             if strategy_data_filtered.market_data is not None:
                 candles_df = strategy_data_filtered.get_market_data_resampled(interval=f"{intervals[interval]}S")
                 cg = CandlesGraph(candles_df, show_volume=False, extra_rows=2)
