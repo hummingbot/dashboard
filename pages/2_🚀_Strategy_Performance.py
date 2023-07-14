@@ -1,4 +1,5 @@
 import os
+import base64
 
 import pandas as pd
 import streamlit as st
@@ -24,6 +25,19 @@ intervals = {
     "6h": 60 * 60 * 6,
     "1d": 60 * 60 * 24,
 }
+
+
+def download_csv(dataframe):
+    csv = dataframe.to_csv(index=False)
+    b64 = base64.b64encode(csv.encode()).decode()
+    href = f'<a href="data:file/csv;base64,{b64}" download="data.csv">Download CSV File</a>'
+    st.markdown(href, unsafe_allow_html=True)
+
+
+def execute_query(db_manager, query):
+    with db_manager.session_maker() as session:
+        return pd.read_sql_query(query, session.connection())
+
 
 @st.cache_resource
 def get_database(db_name: str):
@@ -117,11 +131,14 @@ with st.container():
                 st.warning("Market data is not available so the candles graph is not going to be rendered. "
                            "Make sure that you are using the latest version of Hummingbot and market data recorder activated.")
 
-            st.subheader("💵Trades")
-            st.write(strategy_data_filtered.trade_fill)
-
-            st.subheader("📩 Orders")
-            st.write(strategy_data_filtered.orders)
-
-            st.subheader("⌕ Order Status")
-            st.write(strategy_data_filtered.order_status)
+        # TODO: Avoid reloading all page every time you use this
+        with st.container():
+            st.subheader("The sky is the limit")
+            query = st.text_area("SQL Query")
+            run_query = st.button("Run query!")
+            if run_query and query is not None:
+                with db_manager.session_maker() as session:
+                    results = execute_query(db_manager, query)
+                if results is not None:
+                    download_csv(results)
+                    st.dataframe(results)
