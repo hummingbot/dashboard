@@ -71,8 +71,8 @@ else:
         if selected_config_file:
             selected_exchange = st.selectbox("Exchange:", selected_db.configs[selected_config_file].keys())
     with col4:
-        if selected_config_file:
-            selected_trading_pair = st.selectbox("Trading Pair:", options=selected_db.configs[selected_config_file].values())
+        if selected_exchange:
+            selected_trading_pair = st.selectbox("Trading Pair:", options=selected_db.configs[selected_config_file][selected_exchange])
 
     single_market = True
     if single_market:
