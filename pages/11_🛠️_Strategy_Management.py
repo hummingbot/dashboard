@@ -17,26 +17,26 @@ st.set_page_config(
 st.title("Strategy management")
 create_tab, modify_tab, backtesting_tab = st.tabs(["Create", "Modify", "Backtest"])
 with create_tab:
+    st.subheader("Create your own strategy")
+    st.markdown("In this module you'll be able to create your own strategy. Start by choosing a strategy type:")
+    selected_type = st.selectbox("Strategy", ["Directional Strategies"])
+    strategy_name = st.text_input("Strategy name:", "RandomStrategy")
+    selected_exchange = st.selectbox("Exchange:", constants.EXCHANGES)
+    selected_trading_pair = st.selectbox("Trading pair:", constants.TRADING_PAIRS)
+    selected_interval = st.selectbox("Interval:", constants.INTERVALS)
+
     col1, col2 = st.columns(2)
     with col1:
-        st.subheader("Create your own strategy")
-        st.markdown("In this module you'll be able to create your own strategy. Start by choosing a strategy type:")
-        selected_type = st.selectbox("Strategy", ["Directional Strategies"])
-        strategy_name = st.text_input("Strategy name:", "RandomStrategy")
-        selected_exchange = st.selectbox("Exchange:", constants.EXCHANGES)
-        selected_trading_pair = st.selectbox("Trading pair:", constants.TRADING_PAIRS)
-        selected_interval = st.selectbox("Interval:", constants.INTERVALS)
+        st.session_state.strategy_code = st_ace(key="create_code",
+                                                value=directional_strategy_template(strategy_name=strategy_name,
+                                                                                    exchange=selected_exchange,
+                                                                                    trading_pair=selected_trading_pair,
+                                                                                    interval=selected_interval),
+                                                language='python',
+                                                keybinding='vscode',
+                                                theme='pastel_on_dark')
     with col2:
         st.video("https://www.youtube.com/watch?v=ZM6phvAmaFI")
-
-    st.session_state.strategy_code = st_ace(key="create_code",
-                                            value=directional_strategy_template(strategy_name=strategy_name,
-                                                                                exchange=selected_exchange,
-                                                                                trading_pair=selected_trading_pair,
-                                                                                interval=selected_interval),
-                                            language='python',
-                                            keybinding='vscode',
-                                            theme='pastel_on_dark')
     st.subheader("Save your progress")
     col1, col2, col3, col4 = st.columns([1, 1, 0.3, 0.3])
     with col1:
