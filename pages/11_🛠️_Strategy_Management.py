@@ -13,11 +13,20 @@ st.set_page_config(
 st.title("Strategy management")
 create_tab, modify_tab = st.tabs(["Create", "Modify"])
 with create_tab:
-    strategy_name = st.text_input("Strategy name:", "RandomStrategy")
-    selected_exchange = st.selectbox("Exchange:", constants.EXCHANGES)
-    selected_trading_pair = st.selectbox("Trading pair:", constants.TRADING_PAIRS)
-    selected_interval = st.selectbox("Interval:", constants.INTERVALS)
-    st.session_state.strategy_code = st_ace(value=directional_strategy_template(strategy_name=strategy_name,
+    col1, col2 = st.columns(2)
+    with col1:
+        st.subheader("Create your own strategy")
+        st.markdown("In this module you'll be able to create your own strategy. Start by choosing a strategy type:")
+        selected_type = st.selectbox("Strategy", ["Directional Strategies"])
+        strategy_name = st.text_input("Strategy name:", "RandomStrategy")
+        selected_exchange = st.selectbox("Exchange:", constants.EXCHANGES)
+        selected_trading_pair = st.selectbox("Trading pair:", constants.TRADING_PAIRS)
+        selected_interval = st.selectbox("Interval:", constants.INTERVALS)
+    with col2:
+        st.video("https://www.youtube.com/watch?v=ZM6phvAmaFI")
+
+    st.session_state.strategy_code = st_ace(key="create_code",
+                                            value=directional_strategy_template(strategy_name=strategy_name,
                                                                                 exchange=selected_exchange,
                                                                                 trading_pair=selected_trading_pair,
                                                                                 interval=selected_interval),
@@ -33,6 +42,7 @@ with create_tab:
     with col3:
         st.write("<br>", unsafe_allow_html=True)
         if st.button("Save strategy"):
+            # TODO: Warning if this overwrites
             save_script(name=f"{file_name}.py",
                         content=st.session_state.strategy_code,
                         path=file_path)
