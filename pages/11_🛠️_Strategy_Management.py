@@ -81,7 +81,6 @@ with backtesting_tab:
         candles_list = load_candles("data/candles")
         selected_candles = st.selectbox("Choose your candles:", candles_list)
         candles = pd.read_csv(selected_candles)
-        # if st.button("Backtest!"):
         strategy = selected_class[1]()
         backtesting = Backtesting(strategy=strategy)
         st.subheader("Backtesting params")
