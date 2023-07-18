@@ -1,6 +1,8 @@
 import os
 import glob
 from typing import Union
+import inspect
+import importlib.util
 
 
 # TODO: Find a nice library to do this
@@ -24,6 +26,11 @@ def save_script(name: str, content: str, path: str = "quants_lab/strategy/custom
         file.write(content)
 
 
+def load_candles(directory: str) -> list:
+    candles_files = glob.glob(directory + "/**/*.csv", recursive=True)
+    return candles_files
+
+
 def load_scripts(directory: str) -> list:
     py_files = glob.glob(directory + "/**/*.py", recursive=True)
     py_files = [path for path in py_files if not path.endswith("__init__.py")]
@@ -41,6 +48,24 @@ def open_and_read_file(path: str) -> str:
     except IOError:
         print(f"Error reading file '{path}'.")
         return ""
+
+
+def load_classes_from_file(file_path):
+    # module_name = inspect.getmodulename(file_path)
+    module_name = "Drupman"
+    file_path = "quants_lab/strategy/custom_scripts/Drupman.py"
+    # Load the module
+    spec = importlib.util.spec_from_file_location(module_name, file_path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    # Get all the classes from the module
+    classes = []
+    for name, obj in inspect.getmembers(module):
+        if inspect.isclass(obj):
+            classes.append((name, obj))
+
+    return [(name, cls) for name, cls in classes if name != 'DirectionalStrategyBase']
 
 
 def directional_strategy_template(strategy_name: str,
