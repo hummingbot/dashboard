@@ -1,5 +1,6 @@
 import pandas_ta as ta # noqa
 import streamlit as st
+import pandas as pd
 import constants
 from streamlit_ace import st_ace
 from quants_lab.utils.scripts import *
@@ -58,15 +59,16 @@ with modify_tab:
     scripts = load_scripts(directory=file_path)
     if scripts:
         selected_script = st.selectbox("Choose your script:", scripts)
-        modified_script = st_ace(value=open_and_read_file(selected_script),
-                                 language='python',
-                                 keybinding='vscode',
-                                 theme='pastel_on_dark')
-        if st.button("Save changes"):
-            save_script(name=selected_script.split("/")[-1],
-                        content=modified_script,
-                        path=file_path)
-
+        if st.button("Load/Refresh"):
+            modified_script = st_ace(key="modify_code",
+                                     value=open_and_read_file(selected_script),
+                                     language='python',
+                                     keybinding='vscode',
+                                     theme='pastel_on_dark')
+            if st.button("Save changes"):
+                save_script(name=selected_script.split("/")[-1],
+                            content=modified_script,
+                            path=file_path)
     else:
         st.info("We couldn't find any script here")
 with backtesting_tab:
