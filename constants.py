@@ -1,3 +1,15 @@
 CANDLES_DATA_PATH = "data/candles"
 DOWNLOAD_CANDLES_CONFIG_YML = "hummingbot_files/scripts_configs/data_downloader_config.yml"
 BOTS_FOLDER = "hummingbot_files/bot_configs"
+EXCHANGES = ["binance", "binance_perpetual", "kucoin"]
+TRADING_PAIRS = ["BTC-USDT", "ETH-USDT"]
+INTERVALS = {
+    "1m": 60,
+    "3m": 60 * 3,
+    "5m": 60 * 5,
+    "15m": 60 * 15,
+    "30m": 60 * 30,
+    "1h": 60 * 60,
+    "6h": 60 * 60 * 6,
+    "1d": 60 * 60 * 24,
+}
