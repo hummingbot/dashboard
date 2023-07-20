@@ -3,6 +3,9 @@ import subprocess
 import importlib.util
 import inspect
 import os
+
+from pydantic import BaseModel
+
 from quants_lab.strategy.directional_strategy_base import DirectionalStrategyBase  # update this to the actual import
 import yaml
 
@@ -58,16 +61,35 @@ def get_python_files_from_directory(directory: str) -> list:
 
 
 def load_directional_strategies(path):
-    strategy_classes = []
+    strategies = {}
     for filename in os.listdir(path):
-        if filename.endswith('.py'):
+        if filename.endswith('.py') and "__init__" not in filename:
             module_name = filename[:-3]  # strip the .py to get the module name
+            strategies[module_name] = {"module": module_name}
             file_path = os.path.join(path, filename)
             spec = importlib.util.spec_from_file_location(module_name, file_path)
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
             for name, cls in inspect.getmembers(module, inspect.isclass):
                 if issubclass(cls, DirectionalStrategyBase) and cls is not DirectionalStrategyBase:
-                    strategy_classes.append(cls)
-    return strategy_classes
+                    strategies[module_name]["class"] = cls
+                if issubclass(cls, BaseModel) and cls is not BaseModel:
+                    strategies[module_name]["config"] = cls
+    return strategies
 
+
+def get_function_from_file(file_path: str, function_name: str):
+    # Create a module specification from the file path and load it
+    spec = importlib.util.spec_from_file_location("module.name", file_path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    # Get the function from the module
+    function = getattr(module, function_name)
+    return function
+
+
+def execute_bash_command(command: str, shell: bool = True, wait: bool = False):
+    process = subprocess.Popen(command, shell=shell)
+    if wait:
+        process.wait()
