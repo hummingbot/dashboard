@@ -14,7 +14,7 @@ class BollingerConf(BaseModel):
     bb_short_threshold: float = Field(default=1.0, ge=0.5, le=3.0)
 
 
-class Bollinger(DirectionalStrategyBase):
+class Bollinger(DirectionalStrategyBase[BollingerConf]):
     def get_raw_data(self):
         df = self.get_candles(
             exchange=self.config.exchange,

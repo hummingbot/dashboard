@@ -13,11 +13,11 @@ class MACDBBConfig(BaseModel):
     bb_long_threshold: float = Field(default=0.0, ge=-3.0, le=0.5)
     bb_short_threshold: float = Field(default=1.0, ge=0.5, le=3.0)
     fast_macd: int = Field(default=21, ge=2, le=100)
-    slow_macd: int = Field(default=42, ge=fast_macd, le=1000)
+    slow_macd: int = Field(default=42, ge=30, le=1000)
     signal_macd: int = Field(default=9, ge=2, le=100)
 
 
-class MacdBollinger(DirectionalStrategyBase):
+class MacdBollinger(DirectionalStrategyBase[MACDBBConfig]):
     def get_raw_data(self):
         df = self.get_candles(
             exchange=self.config.exchange,

@@ -15,7 +15,7 @@ class StatArbConfig(BaseModel):
     z_score_short: float = Field(default=-2, ge=-5, le=0)
 
 
-class StatArb(DirectionalStrategyBase):
+class StatArb(DirectionalStrategyBase[StatArbConfig]):
     def get_raw_data(self):
         df = self.get_candles(
             exchange=self.config.exchange,

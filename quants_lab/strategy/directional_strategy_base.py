@@ -1,14 +1,16 @@
 import os
 from datetime import datetime
-from typing import Optional
+from typing import Optional, TypeVar, Generic
 import pandas as pd
 from pydantic import BaseModel
 
 from quants_lab.labeling.triple_barrier_method import triple_barrier_method
 
+ConfigType = TypeVar("ConfigType", bound=BaseModel)
 
-class DirectionalStrategyBase:
-    def __init__(self, config):
+
+class DirectionalStrategyBase(Generic[ConfigType]):
+    def __init__(self, config: ConfigType):
         self.config = config
 
     def get_data(self, start: Optional[str] = None, end: Optional[str] = None):
