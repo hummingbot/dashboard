@@ -1,28 +1,32 @@
 import pandas_ta as ta
+from pydantic import BaseModel, Field
+
 from quants_lab.strategy.directional_strategy_base import DirectionalStrategyBase
 
-from quants_lab.utils import data_management
+
+class BollingerConf(BaseModel):
+    exchange: str = Field(default="binance_perpetual")
+    trading_pair: str = Field(default="ETH-USDT")
+    interval: str = Field(default="1h")
+    bb_length: int = Field(default=100, ge=2, le=1000)
+    bb_std: float = Field(default=2.0, ge=0.5, le=4.0)
+    bb_long_threshold: float = Field(default=0.0, ge=-3.0, le=0.5)
+    bb_short_threshold: float = Field(default=1.0, ge=0.5, le=3.0)
 
 
 class Bollinger(DirectionalStrategyBase):
-    def __init__(self,
-                 exchange="binance_perpetual",
-                 trading_pair="ETH-USDT",
-                 interval="1h",
-                 bb_length=24,
-                 bb_std=2.0,
-                 bb_long_threshold=0.0,
-                 bb_short_threshold=1.0,):
-        self.exchange = exchange
-        self.trading_pair = trading_pair
-        self.interval = interval
-        self.bb_length = bb_length
-        self.bb_std = bb_std
-        self.bb_long_threshold = bb_long_threshold
-        self.bb_short_threshold = bb_short_threshold
+    def __init__(self, config: BollingerConf):
+        super().__init__(config)
+        self.exchange = config.exchange
+        self.trading_pair = config.trading_pair
+        self.interval = config.interval
+        self.bb_length = config.bb_length
+        self.bb_std = config.bb_std
+        self.bb_long_threshold = config.bb_long_threshold
+        self.bb_short_threshold = config.bb_short_threshold
 
     def get_raw_data(self):
-        df = data_management.get_dataframe(
+        df = self.get_candles(
             exchange=self.exchange,
             trading_pair=self.trading_pair,
             interval=self.interval,
