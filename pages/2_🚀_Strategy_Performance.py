@@ -17,17 +17,17 @@ st.set_page_config(
 )
 
 
-def sidebar_metrics(strategy_data_filtered):
+def sidebar_metrics(strategy_data_filtered_sidebar):
     return f"""
 # Market statistics
-EXCHANGE={strategy_data_filtered.exchange.capitalize()}
-TRADING_PAIR={strategy_data_filtered.trading_pair.upper()}
+EXCHANGE={strategy_data_filtered_sidebar.exchange.capitalize()}
+TRADING_PAIR={strategy_data_filtered_sidebar.trading_pair.upper()}
 
 # General stats
-DURATION={round(strategy_data_filtered.duration_seconds / 3600, 2)} HOURS
-START_DATE={strategy_data_filtered.start_time.strftime("%Y-%m-%d %H:%M")}
-END_DATE={strategy_data_filtered.end_time.strftime("%Y-%m-%d %H:%M")}
-PRICE_CHANGE={round(strategy_data_filtered.price_change * 100, 2)} %
+DURATION={round(strategy_data_filtered_sidebar.duration_seconds / 3600, 2)} HOURS
+START_DATE={strategy_data_filtered_sidebar.start_time.strftime("%Y-%m-%d %H:%M")}
+END_DATE={strategy_data_filtered_sidebar.end_time.strftime("%Y-%m-%d %H:%M")}
+PRICE_CHANGE={round(strategy_data_filtered_sidebar.price_change * 100, 2)} %
 """
 
 
