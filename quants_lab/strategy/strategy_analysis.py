@@ -7,7 +7,7 @@ import plotly.graph_objs as go
 import numpy as np
 
 
-class BacktestingAnalysis:
+class StrategyAnalysis:
     def __init__(self, positions: pd.DataFrame, candles_df: Optional[pd.DataFrame] = None):
         self.candles_df = candles_df
         self.positions = positions
