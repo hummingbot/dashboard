@@ -138,20 +138,24 @@ else:
             with col3:
                 total_rows = len(strategy_data_filtered.get_market_data_resampled(interval=f"{intervals[interval]}S"))
                 total_pages = math.ceil(total_rows / rows_per_page)
-                selected_page = st.select_slider("Select page", list(range(total_pages)), key="page_slider")
-
-            if selected_page is not None:
-                start_idx = selected_page * rows_per_page
-                end_idx = start_idx + rows_per_page
-                candles_df = strategy_data_filtered.get_market_data_resampled(interval=f"{intervals[interval]}S").iloc[
-                             start_idx:end_idx]
-                cg = CandlesGraph(candles_df, show_volume=False, extra_rows=2)
-                cg.add_buy_trades(strategy_data_filtered.buys)
-                cg.add_sell_trades(strategy_data_filtered.sells)
-                cg.add_pnl(strategy_data_filtered, row=2)
-                cg.add_base_inventory_change(strategy_data_filtered, row=3)
-                fig = cg.figure()
-                st.plotly_chart(fig, use_container_width=True)
+                if total_pages > 1:
+                    selected_page = st.select_slider("Select page", list(range(total_pages)), key="page_slider")
+                else:
+                    selected_page = 0
+            start_idx = selected_page * rows_per_page
+            end_idx = start_idx + rows_per_page
+            candles_df = strategy_data_filtered.get_market_data_resampled(interval=f"{intervals[interval]}S").iloc[
+                         start_idx:end_idx]
+            start_time_page = candles_df.index.min()
+            end_time_page = candles_df.index.max()
+            page_data_filtered = single_market_strategy_data.get_filtered_strategy_data(start_time_page, end_time_page)
+            cg = CandlesGraph(candles_df, show_volume=False, extra_rows=2)
+            cg.add_buy_trades(page_data_filtered.buys)
+            cg.add_sell_trades(page_data_filtered.sells)
+            cg.add_pnl(page_data_filtered, row=2)
+            cg.add_base_inventory_change(page_data_filtered, row=3)
+            fig = cg.figure()
+            st.plotly_chart(fig, use_container_width=True)
         else:
             st.warning("Market data is not available so the candles graph is not going to be rendered. "
                        "Make sure that you are using the latest version of Hummingbot and market data recorder activated.")
