@@ -1,52 +1,43 @@
 import pandas_ta as ta
+from pydantic import BaseModel, Field
+
 from quants_lab.strategy.directional_strategy_base import DirectionalStrategyBase
 
-from quants_lab.utils import data_management
+
+class MACDBBConfig(BaseModel):
+    exchange: str = Field(default="binance_perpetual")
+    trading_pair: str = Field(default="ETH-USDT")
+    interval: str = Field(default="1h")
+    bb_length: int = Field(default=24, ge=2, le=1000)
+    bb_std: float = Field(default=2.0, ge=0.5, le=4.0)
+    bb_long_threshold: float = Field(default=0.0, ge=-3.0, le=0.5)
+    bb_short_threshold: float = Field(default=1.0, ge=0.5, le=3.0)
+    fast_macd: int = Field(default=21, ge=2, le=100)
+    slow_macd: int = Field(default=42, ge=fast_macd, le=1000)
+    signal_macd: int = Field(default=9, ge=2, le=100)
 
 
-class MACDBB(DirectionalStrategyBase):
-    def __init__(self,
-                 exchange="binance_perpetual",
-                 trading_pair="ETH-USDT",
-                 interval="1h",
-                 bb_length=24,
-                 bb_std=2.0,
-                 bb_long_threshold=0.05,
-                 bb_short_threshold=0.95,
-                 fast_macd=21,
-                 slow_macd=42,
-                 signal_macd=9):
-        self.exchange = exchange
-        self.trading_pair = trading_pair
-        self.interval = interval
-        self.bb_length = bb_length
-        self.bb_std = bb_std
-        self.bb_long_threshold = bb_long_threshold
-        self.bb_short_threshold = bb_short_threshold
-        self.fast_macd = fast_macd
-        self.slow_macd = slow_macd
-        self.signal_macd = signal_macd
-
+class MacdBollinger(DirectionalStrategyBase):
     def get_raw_data(self):
-        df = data_management.get_dataframe(
-            exchange=self.exchange,
-            trading_pair=self.trading_pair,
-            interval=self.interval,
+        df = self.get_candles(
+            exchange=self.config.exchange,
+            trading_pair=self.config.trading_pair,
+            interval=self.config.interval,
         )
         return df
 
     def preprocessing(self, df):
-        df.ta.bbands(length=self.bb_length, std=self.bb_std, append=True)
-        df.ta.macd(fast=self.fast_macd, slow=self.slow_macd, signal=self.signal_macd, append=True)
+        df.ta.bbands(length=self.config.bb_length, std=self.config.bb_std, append=True)
+        df.ta.macd(fast=self.config.fast_macd, slow=self.config.slow_macd, signal=self.config.signal_macd, append=True)
         return df
 
     def predict(self, df):
-        bbp = df[f"BBP_{self.bb_length}_{self.bb_std}"]
-        macdh = df[f"MACDh_{self.fast_macd}_{self.slow_macd}_{self.signal_macd}"]
-        macd = df[f"MACD_{self.fast_macd}_{self.slow_macd}_{self.signal_macd}"]
+        bbp = df[f"BBP_{self.config.bb_length}_{self.config.bb_std}"]
+        macdh = df[f"MACDh_{self.config.fast_macd}_{self.config.slow_macd}_{self.config.signal_macd}"]
+        macd = df[f"MACD_{self.config.fast_macd}_{self.config.slow_macd}_{self.config.signal_macd}"]
 
-        long_condition = (bbp < self.bb_long_threshold) & (macdh > 0) & (macd < 0)
-        short_condition = (bbp > self.bb_short_threshold) & (macdh < 0) & (macd > 0)
+        long_condition = (bbp < self.config.bb_long_threshold) & (macdh > 0) & (macd < 0)
+        short_condition = (bbp > self.config.bb_short_threshold) & (macdh < 0) & (macd > 0)
 
         df["side"] = 0
         df.loc[long_condition, "side"] = 1

@@ -15,32 +15,22 @@ class BollingerConf(BaseModel):
 
 
 class Bollinger(DirectionalStrategyBase):
-    def __init__(self, config: BollingerConf):
-        super().__init__(config)
-        self.exchange = config.exchange
-        self.trading_pair = config.trading_pair
-        self.interval = config.interval
-        self.bb_length = config.bb_length
-        self.bb_std = config.bb_std
-        self.bb_long_threshold = config.bb_long_threshold
-        self.bb_short_threshold = config.bb_short_threshold
-
     def get_raw_data(self):
         df = self.get_candles(
-            exchange=self.exchange,
-            trading_pair=self.trading_pair,
-            interval=self.interval,
+            exchange=self.config.exchange,
+            trading_pair=self.config.trading_pair,
+            interval=self.config.interval,
         )
         return df
 
     def preprocessing(self, df):
-        df.ta.bbands(length=self.bb_length, std=self.bb_std, append=True)
+        df.ta.bbands(length=self.config.bb_length, std=self.config.bb_std, append=True)
         return df
 
     def predict(self, df):
         df["side"] = 0
-        long_condition = df[f"BBP_{self.bb_length}_{self.bb_std}"] < self.bb_long_threshold
-        short_condition = df[f"BBP_{self.bb_length}_{self.bb_std}"] > self.bb_short_threshold
+        long_condition = df[f"BBP_{self.config.bb_length}_{self.config.bb_std}"] < self.config.bb_long_threshold
+        short_condition = df[f"BBP_{self.config.bb_length}_{self.config.bb_std}"] > self.config.bb_short_threshold
         df.loc[long_condition, "side"] = 1
         df.loc[short_condition, "side"] = -1
         return df
