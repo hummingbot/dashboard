@@ -1,6 +1,9 @@
-import os
+import glob
 import subprocess
-
+import importlib.util
+import inspect
+import os
+from quants_lab.strategy.directional_strategy_base import DirectionalStrategyBase  # update this to the actual import
 import yaml
 
 
@@ -26,3 +29,50 @@ def read_yaml_file(file_path):
 
 def directory_exists(directory: str):
     return os.path.exists(directory)
+
+
+def save_file(name: str, content: str, path: str):
+    complete_file_path = os.path.join(path, name)
+    os.makedirs(path, exist_ok=True)
+    with open(complete_file_path, "w") as file:
+        file.write(content)
+
+
+def load_file(path: str) -> str:
+    try:
+        with open(path, 'r') as file:
+            contents = file.read()
+        return contents
+    except FileNotFoundError:
+        print(f"File '{path}' not found.")
+        return ""
+    except IOError:
+        print(f"Error reading file '{path}'.")
+        return ""
+
+
+def get_python_files_from_directory(directory: str) -> list:
+    py_files = glob.glob(directory + "/**/*.py", recursive=True)
+    py_files = [path for path in py_files if not path.endswith("__init__.py")]
+    return py_files
+
+
+def load_strategies(path):
+    strategy_classes = []
+    for filename in os.listdir(path):
+        if filename.endswith('.py'):
+            module_name = filename[:-3]  # strip the .py to get the module name
+            file_path = os.path.join(path, filename)
+            spec = importlib.util.spec_from_file_location(module_name, file_path)
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            for name, cls in inspect.getmembers(module, inspect.isclass):
+                if issubclass(cls, DirectionalStrategyBase) and cls is not DirectionalStrategyBase:
+                    strategy_classes.append(cls)
+    return strategy_classes
+
+strategies_path = '/path/to/your/strategies'  # update this to the path to your strategies
+strategy_classes = load_strategies(strategies_path)
+for strategy_cls in strategy_classes:
+    print(f"Class: {strategy_cls.__name__}")
+    print("Parameters: ", inspect.signature(strategy_cls).parameters)
