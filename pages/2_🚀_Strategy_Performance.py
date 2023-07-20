@@ -51,39 +51,39 @@ def get_databases():
 
 
 st.title("🚀 Strategy Performance")
-dbs = get_databases()
-db_names = [x.db_name for x in dbs.values() if x.status == 'OK']
+st.session_state["dbs"] = get_databases()
+db_names = [x.db_name for x in st.session_state["dbs"].values() if x.status == 'OK']
 if not db_names:
     st.warning("No trades have been recorded in the selected database")
     selected_db_name = None
     selected_db = None
 else:
     col1, col2, col3, col4 = st.columns(4)
+    st.sidebar.subheader("Filters")
     with col1:
-        selected_db_name = st.selectbox("Select a database to use:", db_names)
-        selected_db = dbs[selected_db_name]
+        selected_db_name = st.sidebar.selectbox("Select a database to use:", db_names)
+        st.session_state["selected_db"] = st.session_state["dbs"][selected_db_name]
     with col2:
-        if selected_db:
-            selected_config_file = st.selectbox("Select a config file to analyze:", selected_db.config_files)
+        if st.session_state.selected_db:
+            st.session_state.selected_config_file = st.sidebar.selectbox("Select a config file to analyze:", st.session_state.selected_db.config_files)
         else:
-            selected_config_file = None
+            st.session_state.selected_config_file = None
     with col3:
-        if selected_config_file:
-            selected_exchange = st.selectbox("Exchange:", selected_db.configs[selected_config_file].keys())
+        if st.session_state.selected_config_file:
+            st.session_state.selected_exchange = st.sidebar.selectbox("Exchange:", st.session_state.selected_db.configs[st.session_state.selected_config_file].keys())
     with col4:
-        if selected_exchange:
-            selected_trading_pair = st.selectbox("Trading Pair:", options=selected_db.configs[selected_config_file][selected_exchange])
+        if st.session_state.selected_exchange:
+            st.session_state.selected_trading_pair = st.sidebar.selectbox("Trading Pair:", options=st.session_state.selected_db.configs[st.session_state.selected_config_file][st.session_state.selected_exchange])
 
     single_market = True
     if single_market:
-        strategy_data = dbs[selected_db_name].get_strategy_data(selected_config_file)
-        single_market_strategy_data = strategy_data.get_single_market_strategy_data(selected_exchange, selected_trading_pair)
+        strategy_data = st.session_state["dbs"][selected_db_name].get_strategy_data(st.session_state.selected_config_file)
+        single_market_strategy_data = strategy_data.get_single_market_strategy_data(st.session_state.selected_exchange, st.session_state.selected_trading_pair)
         date_array = pd.date_range(start=strategy_data.start_time, end=strategy_data.end_time, periods=60)
         start_time, end_time = st.select_slider("Select a time range to analyze",
                                                 options=date_array.tolist(),
                                                 value=(date_array[0], date_array[-1]))
         strategy_data_filtered = single_market_strategy_data.get_filtered_strategy_data(start_time, end_time)
-
         st.sidebar.code(sidebar_metrics(strategy_data_filtered))
 
         with st.container():
@@ -154,7 +154,7 @@ else:
             query = st.text_area("SQL Query")
             run_query = st.button("Run query!")
             if run_query and query is not None:
-                results = execute_query(selected_db, query)
+                results = execute_query(st.session_state.selected_db, query)
                 if results is not None:
                     download_csv(results)
                     st.dataframe(results)
