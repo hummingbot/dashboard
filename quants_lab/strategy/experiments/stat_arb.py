@@ -34,7 +34,7 @@ class StatArb(DirectionalStrategyBase):
         df = pd.merge(df, df_target, on="timestamp", how='inner', suffixes=('', '_target'))
         return df
 
-    def add_indicators(self, df):
+    def preprocessing(self, df):
         df["pct_change_original"] = df["close"].pct_change()
         df["pct_change_target"] = df["close_target"].pct_change()
         df["spread"] = df["pct_change_target"] - df["pct_change_original"]
@@ -42,7 +42,7 @@ class StatArb(DirectionalStrategyBase):
         df["z_score"] = ta.zscore(df["cum_spread"], length=self.periods)
         return df
 
-    def add_signals(self, df):
+    def predict(self, df):
         df["side"] = 0
         short_condition = df["z_score"] < - self.deviation_threshold
         long_condition = df["z_score"] > self.deviation_threshold

@@ -15,10 +15,10 @@ class DirectionalStrategyBase:
     def get_raw_data(self):
         raise NotImplemented
 
-    def add_indicators(self, df):
+    def preprocessing(self, df):
         raise NotImplemented
 
-    def add_signals(self, df):
+    def predict(self, df):
         raise NotImplemented
 
     @staticmethod
@@ -57,9 +57,10 @@ class DirectionalStrategyBase:
                         std_span, order_amount=100, leverage=20, initial_portfolio=1000,
                         taker_fee=0.0003, maker_fee=0.00012,
                         start: Optional[str] = None, end: Optional[str] = None):
+        # TODO: Evaluate to move the get data outside the backtesting to optimize the performance.
         df = self.get_data(start=start, end=end)
-        df = self.add_indicators(df)
-        df = self.add_signals(df)
+        df = self.preprocessing(df)
+        df = self.predict(df)
         df = triple_barrier_method(
             df=df,
             std_span=std_span,

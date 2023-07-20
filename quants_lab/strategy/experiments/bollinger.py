@@ -29,11 +29,11 @@ class Bollinger(DirectionalStrategyBase):
         )
         return df
 
-    def add_indicators(self, df):
+    def preprocessing(self, df):
         df.ta.bbands(length=self.bb_length, std=self.bb_std, append=True)
         return df
 
-    def add_signals(self, df):
+    def predict(self, df):
         df["side"] = 0
         long_condition = df[f"BBP_{self.bb_length}_{self.bb_std}"] < self.bb_long_threshold
         short_condition = df[f"BBP_{self.bb_length}_{self.bb_std}"] > self.bb_short_threshold

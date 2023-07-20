@@ -35,12 +35,12 @@ class MACDBB(DirectionalStrategyBase):
         )
         return df
 
-    def add_indicators(self, df):
+    def preprocessing(self, df):
         df.ta.bbands(length=self.bb_length, std=self.bb_std, append=True)
         df.ta.macd(fast=self.fast_macd, slow=self.slow_macd, signal=self.signal_macd, append=True)
         return df
 
-    def add_signals(self, df):
+    def predict(self, df):
         bbp = df[f"BBP_{self.bb_length}_{self.bb_std}"]
         macdh = df[f"MACDh_{self.fast_macd}_{self.slow_macd}_{self.signal_macd}"]
         macd = df[f"MACD_{self.fast_macd}_{self.slow_macd}_{self.signal_macd}"]
