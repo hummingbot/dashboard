@@ -139,6 +139,15 @@ else:
             st.warning("Market data is not available so the candles graph is not going to be rendered. "
                        "Make sure that you are using the latest version of Hummingbot and market data recorder activated.")
 
+        st.subheader("💵Trades")
+        st.write(strategy_data_filtered.trade_fill)
+
+        st.subheader("📩 Orders")
+        st.write(strategy_data_filtered.orders)
+
+        st.subheader("⌕ Order Status")
+        st.write(strategy_data_filtered.order_status)
+
         # TODO: Avoid reloading all page every time you use this
         with st.container():
             st.subheader("The sky is the limit")
