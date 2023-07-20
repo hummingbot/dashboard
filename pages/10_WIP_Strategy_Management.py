@@ -79,36 +79,39 @@ with backtesting_tab:
         classes = load_classes_from_file(selected_script)
         selected_class = st.selectbox("Choose your strategy class:", classes)
         candles_list = load_candles("data/candles")
-        selected_candles = st.selectbox("Choose your candles:", candles_list)
-        candles = pd.read_csv(selected_candles)
-        strategy = selected_class[1]()
-        backtesting = Backtesting(strategy=strategy)
-        st.subheader("Backtesting params")
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            selected_order_amount = st.number_input("Order amount", 50)
-            selected_leverage = st.number_input("Leverage", 10)
-        with col2:
-            selected_initial_portfolio = st.number_input("Initial Portfolio", 100)
-            selected_time_limit = st.number_input("Time Limit (min)", 60)
-        with col3:
-            selected_tp_multiplier = st.number_input("Take Profit Multiplier", 1.0)
-            selected_sl_multiplier = st.number_input("Stop Loss Multiplier", 1.0)
-        if st.button("Run backtesting!"):
-            positions = backtesting.run_backtesting(
-                order_amount=selected_order_amount,
-                leverage=selected_leverage,
-                initial_portfolio=selected_initial_portfolio,
-                take_profit_multiplier=selected_tp_multiplier,
-                stop_loss_multiplier=selected_sl_multiplier,
-                time_limit=60 * selected_time_limit,
-                std_span=None,
-            )
-            backtesting_analysis = BacktestingAnalysis(positions=positions, candles_df=candles)
-            backtesting_analysis.create_base_figure(volume=False, positions=True, extra_rows=1)
-            backtesting_analysis.add_trade_pnl(row=2)
-            c1, c2 = st.columns([0.2, 0.8])
-            with c1:
-                st.text(backtesting_analysis.text_report())
-            with c2:
-                st.plotly_chart(backtesting_analysis.figure(), use_container_width=True)
+        if candles_list:
+            selected_candles = st.selectbox("Choose your candles:", candles_list)
+            candles = pd.read_csv(selected_candles)
+            strategy = selected_class[1]()
+            backtesting = Backtesting(strategy=strategy)
+            st.subheader("Backtesting params")
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                selected_order_amount = st.number_input("Order amount", 50)
+                selected_leverage = st.number_input("Leverage", 10)
+            with col2:
+                selected_initial_portfolio = st.number_input("Initial Portfolio", 100)
+                selected_time_limit = st.number_input("Time Limit (min)", 60)
+            with col3:
+                selected_tp_multiplier = st.number_input("Take Profit Multiplier", 1.0)
+                selected_sl_multiplier = st.number_input("Stop Loss Multiplier", 1.0)
+            if st.button("Run backtesting!"):
+                positions = backtesting.run_backtesting(
+                    order_amount=selected_order_amount,
+                    leverage=selected_leverage,
+                    initial_portfolio=selected_initial_portfolio,
+                    take_profit_multiplier=selected_tp_multiplier,
+                    stop_loss_multiplier=selected_sl_multiplier,
+                    time_limit=60 * selected_time_limit,
+                    std_span=None,
+                )
+                backtesting_analysis = BacktestingAnalysis(positions=positions, candles_df=candles)
+                backtesting_analysis.create_base_figure(volume=False, positions=True, extra_rows=1)
+                backtesting_analysis.add_trade_pnl(row=2)
+                c1, c2 = st.columns([0.2, 0.8])
+                with c1:
+                    st.text(backtesting_analysis.text_report())
+                with c2:
+                    st.plotly_chart(backtesting_analysis.figure(), use_container_width=True)
+        else:
+            st.warning("There are no candles to show 😞")
