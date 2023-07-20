@@ -13,8 +13,8 @@ class StrategyAnalysis:
         self.positions = positions
         self.base_figure = None
 
-    def create_base_figure(self, candlestick=True, volume=True, positions=False, extra_rows=1):
-        rows, heights = self.get_n_rows_and_heights(extra_rows, volume)
+    def create_base_figure(self, candlestick=True, volume=True, positions=False, trade_pnl=False, extra_rows=0):
+        rows, heights = self.get_n_rows_and_heights(extra_rows + volume + trade_pnl, volume)
         self.rows = rows
         specs = [[{"secondary_y": True}]] * rows
         self.base_figure = make_subplots(rows=rows, cols=1, shared_xaxes=True, vertical_spacing=0.05,
@@ -25,6 +25,8 @@ class StrategyAnalysis:
             self.add_volume()
         if positions:
             self.add_positions()
+        if trade_pnl:
+            self.add_trade_pnl()
         self.update_layout(volume)
 
     def add_positions(self):
@@ -101,7 +103,7 @@ class StrategyAnalysis:
             row=2, col=1,
         )
 
-    def add_trade_pnl(self, row=4):
+    def add_trade_pnl(self, row=2):
         self.base_figure.add_trace(
             go.Scatter(
                 x=self.positions['timestamp'],
