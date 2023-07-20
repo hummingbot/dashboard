@@ -87,6 +87,23 @@ else:
         st.sidebar.code(sidebar_metrics(strategy_data_filtered))
 
         with st.container():
+            col1, col2 = st.columns(2)
+            with col1:
+                st.header(f"🏦 Market")
+            with col2:
+                st.header("📋 General stats")
+            col1, col2, col3, col4 = st.columns(4)
+            with col1:
+                st.metric(label="Exchange", value=strategy_data_filtered.exchange.capitalize())
+            with col2:
+                st.metric(label="Trading pair", value=strategy_data_filtered.trading_pair.upper())
+            with col3:
+                st.metric(label='Start date', value=strategy_data_filtered.start_time.strftime("%Y-%m-%d %H:%M"))
+                st.metric(label='End date', value=strategy_data_filtered.end_time.strftime("%Y-%m-%d %H:%M"))
+            with col4:
+                st.metric(label='Duration (Hours)', value=round(strategy_data_filtered.duration_seconds / 3600, 2))
+                st.metric(label='Price change', value=f"{round(strategy_data_filtered.price_change * 100, 2)} %")
+
             st.header("📈 Performance")
             col131, col132, col133, col134 = st.columns(4)
             with col131:
