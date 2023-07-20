@@ -57,7 +57,7 @@ def get_python_files_from_directory(directory: str) -> list:
     return py_files
 
 
-def load_strategies(path):
+def load_directional_strategies(path):
     strategy_classes = []
     for filename in os.listdir(path):
         if filename.endswith('.py'):
@@ -71,8 +71,3 @@ def load_strategies(path):
                     strategy_classes.append(cls)
     return strategy_classes
 
-strategies_path = '/path/to/your/strategies'  # update this to the path to your strategies
-strategy_classes = load_strategies(strategies_path)
-for strategy_cls in strategy_classes:
-    print(f"Class: {strategy_cls.__name__}")
-    print("Parameters: ", inspect.signature(strategy_cls).parameters)
