@@ -6,7 +6,6 @@ dependencies:
   - sqlalchemy
   - pip
   - pip:
-      - ccxt
       - streamlit
       - watchdog
       - plotly
@@ -17,5 +16,9 @@ dependencies:
       - pandas_ta
       - pyyaml
       - commlib-py
+      - jupyter
+      - optuna
+      - optuna-dashboard
+      - streamlit-ace
       - git+https://github.com/hummingbot/hbot-remote-client-py.git
       - git+https://github.com/hummingbot/docker-manager.git
