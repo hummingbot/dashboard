@@ -8,7 +8,7 @@ from streamlit_ace import st_ace
 import constants
 from quants_lab.strategy.strategy_analysis import StrategyAnalysis
 from utils import os_utils
-from utils.file_templates import strategy_optimization_template
+from utils.file_templates import strategy_optimization_template, directional_strategy_template
 from utils.os_utils import load_directional_strategies, save_file, get_function_from_file
 import optuna
 
@@ -25,7 +25,32 @@ st.title("⚙️ Backtesting")
 create, modify, backtest, optimize, analyze = st.tabs(["Create", "Modify", "Backtest", "Optimize", "Analyze"])
 
 with create:
-    pass
+    # TODO:
+    #    * Add videos explaining how to the triple barrier method works and how the backtesting is designed,
+    #  link to video of how to create a strategy, etc in a toggle.
+    #    * Add functionality to start strategy creation from scratch or by duplicating an existing one
+    c1, c2 = st.columns([4, 1])
+    with c1:
+        # TODO: Allow change the strategy name and see the effect in the code
+        strategy_name = st.text_input("Strategy class name", value="CustomStrategy")
+    with c2:
+        update_strategy_name = st.button("Update Strategy Name")
+
+    c1, c2 = st.columns([4, 1])
+    with c1:
+        # TODO: every time that we save and run the optimizations, we should save the code in a file
+        #  so the user then can correlate the results with the code.
+        if update_strategy_name:
+            st.session_state.directional_strategy_code = st_ace(key="create_directional_strategy",
+                                               value=directional_strategy_template(strategy_name),
+                                               language='python',
+                                               keybinding='vscode',
+                                               theme='pastel_on_dark')
+    with c2:
+        if st.button("Save strategy"):
+            save_file(name=f"{strategy_name.lower()}.py", content=st.session_state.directional_strategy_code,
+                      path=constants.DIRECTIONAL_STRATEGIES_PATH)
+            st.success(f"Strategy {strategy_name} saved successfully")
 
 with modify:
     pass
@@ -108,20 +133,25 @@ with optimize:
                                        f"{strategy_to_optimize}_study_{today.day:02d}-{today.month:02d}-{today.year}")
         with c3:
             generate_optimization_code_button = st.button("Generate Optimization Code")
+            if st.button("Launch optuna dashboard"):
+                os_utils.execute_bash_command(f"optuna-dashboard sqlite:///data/backtesting/backtesting_report.db")
+                webbrowser.open("http://127.0.0.1:8080/dashboard", new=2)
 
+    c1, c2 = st.columns([4, 1])
     if generate_optimization_code_button:
-        c1, c2 = st.columns([4, 1])
         with c1:
             # TODO: every time that we save and run the optimizations, we should save the code in a file
             #  so the user then can correlate the results with the code.
-            optimization_code = st_ace(key="create_optimization_code",
-                                       value=strategy_optimization_template(strategy_info=strategies[strategy_to_optimize]),
+            st.session_state.optimization_code = st_ace(key="create_optimization_code",
+                                       value=strategy_optimization_template(
+                                           strategy_info=strategies[strategy_to_optimize]),
                                        language='python',
                                        keybinding='vscode',
                                        theme='pastel_on_dark')
+    if "optimization_code" in st.session_state:
         with c2:
             if st.button("Run optimization"):
-                save_file(name=f"{STUDY_NAME}.py", content=optimization_code, path=constants.OPTIMIZATIONS_PATH)
+                save_file(name=f"{STUDY_NAME}.py", content=st.session_state.optimization_code, path=constants.OPTIMIZATIONS_PATH)
                 study = optuna.create_study(direction="maximize", study_name=STUDY_NAME,
                                             storage="sqlite:///data/backtesting/backtesting_report.db",
                                             load_if_exists=True)
@@ -129,15 +159,13 @@ with optimize:
                                                    function_name="objective")
 
 
-            def optimization_process():
-                study.optimize(objective, n_trials=2000)
+                def optimization_process():
+                    study.optimize(objective, n_trials=2000)
 
 
-            optimization_thread = threading.Thread(target=optimization_process)
-            optimization_thread.start()
-            if st.button("Launch optuna dashboard"):
-                os_utils.execute_bash_command(f"optuna-dashboard sqlite:///data/backtesting/backtesting_report.db")
-                webbrowser.open("http://127.0.0.1:8080/dashboard", new=2)
+                optimization_thread = threading.Thread(target=optimization_process)
+                optimization_thread.start()
+
 
 with analyze:
     # TODO:
