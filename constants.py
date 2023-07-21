@@ -13,3 +13,5 @@ INTERVALS = {
     "6h": 60 * 60 * 6,
     "1d": 60 * 60 * 24,
 }
+EXCHANGES = ['binance', 'binance_perpetual', 'kucoin']
+TRADING_PAIRS = ['BTC-USDT', 'ETH-USDT']
