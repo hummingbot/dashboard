@@ -66,7 +66,7 @@ def get_optuna_suggest_str(field_name: str, properties: Dict):
         "string": "trial.suggest_categorical",
     }
     config_num = f"('{field_name}', {properties.get('minimum', '_')}, {properties.get('maximum', '_')})"
-    config_cat = f"('{field_name}', ['{properties.get('default', '_')}', '_'])"
+    config_cat = f"('{field_name}', ['{properties.get('default', '_')}',])"
     optuna_trial_str = map_by_type[properties["type"]] + config_num if properties["type"] != "string" \
         else map_by_type[properties["type"]] + config_cat
 
@@ -80,8 +80,7 @@ def strategy_optimization_template(strategy_info: dict):
     field_schema = strategy_config.schema()["properties"]
     fields_str = [get_optuna_suggest_str(field_name, properties) for field_name, properties in field_schema.items()]
     fields_str = "".join([f"                    {field_str},\n" for field_str in fields_str])
-    return f"""
-import traceback
+    return f"""import traceback
 
 from optuna import TrialPruned    
 
