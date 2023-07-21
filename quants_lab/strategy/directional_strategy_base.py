@@ -10,6 +10,9 @@ ConfigType = TypeVar("ConfigType", bound=BaseModel)
 
 
 class DirectionalStrategyBase(Generic[ConfigType]):
+    # TODO:
+    #   * Add a data structure to request candles from CSV files as part of the config
+    #   * Evaluate to move the get data outside the backtesting to optimize the performance.
     def __init__(self, config: ConfigType):
         self.config = config
 
@@ -62,7 +65,6 @@ class DirectionalStrategyBase(Generic[ConfigType]):
                         std_span, order_amount=100, leverage=20, initial_portfolio=1000,
                         taker_fee=0.0003, maker_fee=0.00012,
                         start: Optional[str] = None, end: Optional[str] = None):
-        # TODO: Evaluate to move the get data outside the backtesting to optimize the performance.
         df = self.get_data(start=start, end=end)
         df = self.preprocessing(df)
         df = self.predict(df)
