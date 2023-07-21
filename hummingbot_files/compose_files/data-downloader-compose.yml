@@ -2,7 +2,7 @@ version: "3.9"
 services:
   bot:
     container_name: candles_downloader
-    image: dardonacci/hummingbot:development
+    image: hummingbot/hummingbot:development
     volumes:
       - "../../data/candles:/home/hummingbot/data"
       - "../bot_configs/data_downloader/conf:/home/hummingbot/conf"

@@ -2,7 +2,7 @@
 ###   client_config_map config   ###
 ####################################
 
-instance_id: 039758736d451914503a45ff596e168902d62557
+instance_id: e90c0d6f2b1e2d54fa0c0a69612b07174320963b
 
 log_level: INFO
 
@@ -67,42 +67,42 @@ pmm_script_mode: {}
 #     BTC: 0.1
 #     USDT: 1000
 balance_asset_limit:
-  bybit_testnet: {}
-  lbank: {}
-  binance_us: {}
-  crypto_com: {}
-  ascend_ex_paper_trade: {}
-  hotbit: {}
-  gate_io_paper_trade: {}
-  bitmex_testnet: {}
-  ndax_testnet: {}
-  huobi: {}
-  probit_kr: {}
-  altmarkets: {}
-  hitbtc: {}
-  foxbit: {}
-  ascend_ex: {}
-  binance: {}
-  okx: {}
-  ciex: {}
-  bitmex: {}
-  bitfinex: {}
-  probit: {}
-  kraken: {}
   kucoin: {}
-  bitmart: {}
-  bybit: {}
-  bittrex: {}
-  btc_markets: {}
+  ciex: {}
+  ascend_ex_paper_trade: {}
+  crypto_com: {}
   mock_paper_exchange: {}
-  kucoin_paper_trade: {}
-  ndax: {}
+  btc_markets: {}
+  bitmart: {}
+  hitbtc: {}
   loopring: {}
   mexc: {}
-  whitebit: {}
-  coinbase_pro: {}
-  binance_paper_trade: {}
+  polkadex: {}
+  bybit: {}
+  foxbit: {}
+  gate_io_paper_trade: {}
+  kucoin_paper_trade: {}
+  altmarkets: {}
+  ascend_ex: {}
+  bittrex: {}
+  probit_kr: {}
+  binance: {}
+  bybit_testnet: {}
+  okx: {}
+  bitmex: {}
+  binance_us: {}
+  probit: {}
   gate_io: {}
+  lbank: {}
+  whitebit: {}
+  bitmex_testnet: {}
+  kraken: {}
+  huobi: {}
+  binance_paper_trade: {}
+  ndax_testnet: {}
+  coinbase_pro: {}
+  ndax: {}
+  bitfinex: {}
 
 # Fixed gas price (in Gwei) for Ethereum transactions
 manual_gas_price: 50.0
@@ -192,8 +192,3 @@ color:
 # c_tick() method, that means for example that if the tick size is 1, the logic of the strategy 
 # will run every second.
 tick_size: 1.0
-
-market_data_collection:
-  market_data_collection_enabled: true
-  market_data_collection_interval: 60
-  market_data_collection_depth: 20
