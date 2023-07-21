@@ -5,7 +5,7 @@ import math
 import pandas as pd
 import streamlit as st
 
-from constants import intervals
+from constants import INTERVALS
 from utils.database_manager import DatabaseManager
 from utils.graphs import CandlesGraph
 
@@ -132,11 +132,11 @@ else:
         if strategy_data_filtered.market_data is not None:
             col1, col2, col3 = st.columns([1, 1, 2])
             with col1:
-                interval = st.selectbox("Candles Interval:", intervals.keys(), index=2)
+                interval = st.selectbox("Candles Interval:", INTERVALS.keys(), index=2)
             with col2:
                 rows_per_page = st.number_input("Candles per Page", value=100, min_value=1, max_value=5000)
             with col3:
-                total_rows = len(strategy_data_filtered.get_market_data_resampled(interval=f"{intervals[interval]}S"))
+                total_rows = len(strategy_data_filtered.get_market_data_resampled(interval=f"{INTERVALS[interval]}S"))
                 total_pages = math.ceil(total_rows / rows_per_page)
                 if total_pages > 1:
                     selected_page = st.select_slider("Select page", list(range(total_pages)), key="page_slider")
@@ -144,7 +144,7 @@ else:
                     selected_page = 0
             start_idx = selected_page * rows_per_page
             end_idx = start_idx + rows_per_page
-            candles_df = strategy_data_filtered.get_market_data_resampled(interval=f"{intervals[interval]}S").iloc[
+            candles_df = strategy_data_filtered.get_market_data_resampled(interval=f"{INTERVALS[interval]}S").iloc[
                          start_idx:end_idx]
             start_time_page = candles_df.index.min()
             end_time_page = candles_df.index.max()
