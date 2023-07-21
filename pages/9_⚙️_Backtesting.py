@@ -97,7 +97,7 @@ with optimize:
     # TODO:
     #  * Add videos explaining how to use the optimization tool, quick intro to optuna, etc in a toggle
     with st.container():
-        c1, c2 = st.columns([1, 1])
+        c1, c2, c3 = st.columns([1, 1, 1])
         with c1:
             strategies = load_directional_strategies(constants.DIRECTIONAL_STRATEGIES_PATH)
             strategy_to_optimize = st.selectbox("Select strategy to optimize", strategies.keys())
@@ -106,26 +106,27 @@ with optimize:
             # TODO: add hints about the study name
             STUDY_NAME = st.text_input("Study name",
                                        f"{strategy_to_optimize}_study_{today.day:02d}-{today.month:02d}-{today.year}")
-    c1, c2 = st.columns([4, 1])
-    with c1:
-        # TODO: every time that we save and run the optimizations, we should save the code in a file
-        #  so the user then can correlate the results with the code
-        st.session_state.strategy_code = st_ace(key="create_code",
-                                                value=strategy_optimization_template(
-                                                    strategy_info=strategies[strategy_to_optimize]),
-                                                language='python',
-                                                keybinding='vscode',
-                                                theme='pastel_on_dark')
-    with c2:
-        if st.button("Save optimizations"):
-            save_file(name=f"{STUDY_NAME}.py", content=st.session_state.strategy_code,
-                      path=constants.OPTIMIZATIONS_PATH)
-        if st.button("Run optimizations"):
-            study = optuna.create_study(direction="maximize", study_name=STUDY_NAME,
-                                        storage="sqlite:///data/backtesting/backtesting_report.db",
-                                        load_if_exists=True)
-            objective = get_function_from_file(file_path=f"{constants.OPTIMIZATIONS_PATH}/{STUDY_NAME}.py",
-                                               function_name="objective")
+        with c3:
+            generate_optimization_code_button = st.button("Generate Optimization Code")
+
+    if generate_optimization_code_button:
+        c1, c2 = st.columns([4, 1])
+        with c1:
+            # TODO: every time that we save and run the optimizations, we should save the code in a file
+            #  so the user then can correlate the results with the code.
+            optimization_code = st_ace(key="create_optimization_code",
+                                       value=strategy_optimization_template(strategy_info=strategies[strategy_to_optimize]),
+                                       language='python',
+                                       keybinding='vscode',
+                                       theme='pastel_on_dark')
+        with c2:
+            if st.button("Run optimization"):
+                save_file(name=f"{STUDY_NAME}.py", content=optimization_code, path=constants.OPTIMIZATIONS_PATH)
+                study = optuna.create_study(direction="maximize", study_name=STUDY_NAME,
+                                            storage="sqlite:///data/backtesting/backtesting_report.db",
+                                            load_if_exists=True)
+                objective = get_function_from_file(file_path=f"{constants.OPTIMIZATIONS_PATH}/{STUDY_NAME}.py",
+                                                   function_name="objective")
 
 
             def optimization_process():
@@ -134,9 +135,9 @@ with optimize:
 
             optimization_thread = threading.Thread(target=optimization_process)
             optimization_thread.start()
-        if st.button("Launch optuna dashboard"):
-            os_utils.execute_bash_command(f"optuna-dashboard sqlite:///data/backtesting/backtesting_report.db")
-            webbrowser.open("http://127.0.0.1:8080/dashboard", new=2)
+            if st.button("Launch optuna dashboard"):
+                os_utils.execute_bash_command(f"optuna-dashboard sqlite:///data/backtesting/backtesting_report.db")
+                webbrowser.open("http://127.0.0.1:8080/dashboard", new=2)
 
 with analyze:
     # TODO:
