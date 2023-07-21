@@ -1,7 +1,7 @@
 from typing import Dict
 
 
-def directional_strategy_template(strategy_cls_name: str) -> str:
+def directional_strategy_template(strategy_cls_name: str, exchange: str, trading_pair: str, interval: str) -> str:
     strategy_config_cls_name = f"{strategy_cls_name}Config"
     sma_config_text = "{self.config.sma_length}"
     return f"""import pandas_ta as ta
@@ -11,9 +11,9 @@ from quants_lab.strategy.directional_strategy_base import DirectionalStrategyBas
 
 
 class {strategy_config_cls_name}(BaseModel):
-    exchange: str = Field(default="binance_perpetual")
-    trading_pair: str = Field(default="ETH-USDT")
-    interval: str = Field(default="1h")
+    exchange: str = Field(default="{exchange}")
+    trading_pair: str = Field(default="{trading_pair}")
+    interval: str = Field(default="{interval}")
     sma_length: int = Field(default=20, ge=10, le=200)
     # ... Add more fields here
 
