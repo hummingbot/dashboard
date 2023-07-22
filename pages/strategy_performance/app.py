@@ -6,6 +6,7 @@ from pathlib import Path
 from utils.database_manager import DatabaseManager
 from utils.graphs import CandlesGraph
 
+# Page metadata
 title = "Strategy Performance"
 icon = "🚀"
 
@@ -16,11 +17,13 @@ st.set_page_config(
 )
 st.title(f"{icon} {title}")
 
+# About this page
 current_directory = Path(__file__).parent
 readme_path = current_directory / "README.md"
 with st.expander("About This Page"):
     st.write(readme_path.read_text())
 
+# Start content here
 intervals = {
     "1m": 60,
     "3m": 60 * 3,

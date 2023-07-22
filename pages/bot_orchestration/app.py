@@ -1,21 +1,30 @@
 import time
-
-import pandas as pd
-from hbotrc import BotCommands
-import streamlit as st
-from docker_manager import DockerManager
-
 import constants
+import pandas as pd
+import streamlit as st
+from pathlib import Path
+
+from docker_manager import DockerManager
+from hbotrc import BotCommands
+
+# Page metadata
+title = "Bot Orchestration"
+icon = "🐙"
 
 st.set_page_config(
-    page_title="Hummingbot Dashboard",
-    page_icon=":bar_chart:",
+    page_title=title,
+    page_icon=icon,
     layout="wide",
-    initial_sidebar_state="collapsed"
 )
-st.title("🐙 Bot Orchestration")
-st.write("---")
+st.title(f"{icon} {title}")
 
+# About this page
+current_directory = Path(__file__).parent
+readme_path = current_directory / "README.md"
+with st.expander("About This Page"):
+    st.write(readme_path.read_text())
+
+# Start content here
 docker_manager = DockerManager()
 
 active_containers = docker_manager.get_active_containers()

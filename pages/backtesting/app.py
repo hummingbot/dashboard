@@ -3,6 +3,7 @@ import threading
 import webbrowser
 
 import streamlit as st
+from pathlib import Path
 from streamlit_ace import st_ace
 
 import constants
@@ -12,15 +13,26 @@ from utils.file_templates import strategy_optimization_template, directional_str
 from utils.os_utils import load_directional_strategies, save_file, get_function_from_file
 import optuna
 
+# Page metadata
+title = "Backtesting"
+icon = "⚙️"
+
 st.set_page_config(
-    page_title="Hummingbot Dashboard",
-    page_icon="🚀",
+    page_title=title,
+    page_icon=icon,
     layout="wide",
 )
+st.title(f"{icon} {title}")
+
+# About this page
+current_directory = Path(__file__).parent
+readme_path = current_directory / "README.md"
+with st.expander("About This Page"):
+    st.write(readme_path.read_text())
+
+# Start content here
 if "strategy_params" not in st.session_state:
     st.session_state.strategy_params = {}
-
-st.title("⚙️ Backtesting")
 
 create, modify, backtest, optimize, analyze = st.tabs(["Create", "Modify", "Backtest", "Optimize", "Analyze"])
 

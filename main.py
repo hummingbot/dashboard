@@ -21,13 +21,8 @@ show_pages(
     [
         Page("main.py", "Hummingbot Dashboard", "📊"),
         Page("pages/strategy_performance/app.py", "Strategy Performance", "🚀"),
-        # # The pages appear in the order you pass them
-        # Page("example_app/example_four.py", "Example Four", "📖"),
-        # Page("example_app/example_two.py", "Example Two", "✏️"),
-        # # Will use the default icon and name based on the filename if you don't
-        # # pass them
-        # Page("example_app/example_three.py"),
-        # Page("example_app/example_five.py", "Example Five", "🧰"),
+        Page("pages/bot_orchestration/app.py", "Bot Orchestration", "🐙"),
+        Page("pages/backtesting/app.py", "Backtesting", "⚙️"),
     ]
 )
 

@@ -10,20 +10,19 @@ Here are the current dashboards in the collection:
 
 * 🚀 **Strategy Performance**: Analyze the performance of a running Hummingbot instance
 * 🐙 **Bot Orchestration**: Deploy and manage Hummingbot instances
-* 🧙 **XE Token Analyzer**: Identify cross-exchange trading opportunities by analyzing differences in token spreads across venues
 * ⚙️ **Backtesting**: Deploy and manage backtests of directional strategies
-* 🧳 **Hummingbot DB**: Inspect and analyze the orders and trades data contained in a SQLite database for a strategy or script
-* 🦉 **TVL vs MCAP Analysis**: Easily compare various DeFi protocols based on their market capitalization and total value locked, using DeFiLlama data.
 * 🗂 **Candles Downloader**: Download historical exchange data as OHLVC candles. Supports multiple trading pairs and custom time ranges/intervals.
-* 📋 **Data**: Reference data for the various apps this collection
+* 🧳 **Database Inspector**: Inspect and analyze the orders and trades data contained in a Hummingbot strategy database
+* 🧙 **Token Spreads**: Identify cross-exchange trading opportunities by analyzing differences in token spreads across venues
+* 🦉 **TVL vs MCAPs**: Easily compare various DeFi protocols based on their market capitalization and total value locked, using DeFiLlama data.
 
 ## Installation
 
-See [Installation](https://github.com/hummingbot/dashboard/INSTALLATION.md) for how to install and update the dashboard.
+See [Installation](https://github.com/hummingbot/dashboard/blob/feat/base-page-class/INSTALLATION.md) for how to install and update the dashboard.
 
 ## Contributions
 
-We welcome contributions from the community! See [Contribution](https://github.com/hummingbot/dashboard/CONTRIBUTION.md) for more information.
+We welcome contributions from the community! See [Contribution](https://github.com/hummingbot/dashboard/blob/feat/base-page-class/CONTRIBUTING.md) for more information.
 
 ## Participation
 
