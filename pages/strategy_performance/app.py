@@ -1,18 +1,25 @@
 import os
-
 import pandas as pd
 import streamlit as st
+from pathlib import Path
 
 from utils.database_manager import DatabaseManager
 from utils.graphs import CandlesGraph
 
+title = "Strategy Performance"
+icon = "🚀"
+
 st.set_page_config(
-    page_title="Hummingbot Dashboard",
-    page_icon=":bar_chart:",
+    page_title=title,
+    page_icon=icon,
     layout="wide",
-    initial_sidebar_state="collapsed"
 )
-st.title("🚀 Strategy Performance")
+st.title(f"{icon} {title}")
+
+current_directory = Path(__file__).parent
+readme_path = current_directory / "README.md"
+with st.expander("About This Page"):
+    st.write(readme_path.read_text())
 
 intervals = {
     "1m": 60,
