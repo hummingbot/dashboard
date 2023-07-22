@@ -3,7 +3,7 @@ FROM continuumio/miniconda3:latest AS builder
 
 # Install system dependencies
 RUN apt-get update && \
-    apt-get install -y sudo libusb-1.0 python3-dev && \
+    apt-get install -y sudo libusb-1.0 python3-dev gcc && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /home/dashboard
@@ -15,11 +15,7 @@ RUN conda env create -f /tmp/environment_conda.yml && \
     rm /tmp/environment_conda.yml
 
 # Copy remaining files
-COPY main.py .
-COPY pages/ pages/
-COPY utils/ utils/
-COPY CONFIG.py .
-COPY .streamlit/ .streamlit/
+COPY . .
 
 
 SHELL [ "/bin/bash", "-lc" ]
