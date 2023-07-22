@@ -19,6 +19,7 @@ dependencies:
       - jupyter
       - optuna
       - optuna-dashboard
+      - pathlib
       - streamlit-ace
       - git+https://github.com/hummingbot/hbot-remote-client-py.git
       - git+https://github.com/hummingbot/docker-manager.git
