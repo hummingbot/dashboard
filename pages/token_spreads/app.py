@@ -1,10 +1,29 @@
 import pandas as pd
 import streamlit as st
+from pathlib import Path
 import plotly.express as px
 import CONFIG
 from utils.coingecko_utils import CoinGeckoUtils
 from utils.miner_utils import MinerUtils
 
+# Page metadata
+title = "Token Spreads"
+icon = "🧙"
+
+st.set_page_config(
+    page_title=title,
+    page_icon=icon,
+    layout="wide",
+)
+st.title(f"{icon} {title}")
+
+# About this page
+current_directory = Path(__file__).parent
+readme_path = current_directory / "README.md"
+with st.expander("About This Page"):
+    st.write(readme_path.read_text())
+
+# Start content here
 cg_utils = CoinGeckoUtils()
 miner_utils = MinerUtils()
 
@@ -24,10 +43,6 @@ def get_miner_stats_df():
 def get_coin_tickers_by_id_list(coins_id: list):
     return cg_utils.get_coin_tickers_by_id_list(coins_id)
 
-st.set_page_config(layout='wide')
-st.title("🧙‍Cross Exchange Token Analyzer")
-st.write("---")
-
 with st.spinner(text='In progress'):
     exchanges_df = get_all_exchanges_df()
     coins_df = get_all_coins_df()
@@ -35,7 +50,6 @@ with st.spinner(text='In progress'):
 
 miner_coins = coins_df.loc[coins_df["symbol"].isin(miner_stats_df["base"].str.lower().unique()), "name"]
 
-st.write("### Coins filter 🦅")
 tokens = st.multiselect(
     "Select the tokens to analyze:",
     options=coins_df["name"],
@@ -47,8 +61,7 @@ coins_id = coins_df.loc[coins_df["name"].isin(tokens), "id"].tolist()
 coin_tickers_df = get_coin_tickers_by_id_list(coins_id)
 coin_tickers_df["coin_name"] = coin_tickers_df.apply(lambda x: coins_df.loc[coins_df["id"] == x.token_id, "name"].item(), axis=1)
 
-st.sidebar.write("### Exchanges filter 🦅")
-exchanges = st.sidebar.multiselect(
+exchanges = st.multiselect(
     "Select the exchanges to analyze:",
     options=exchanges_df["name"],
     default=[exchange for exchange in CONFIG.MINER_EXCHANGES if exchange in exchanges_df["name"].unique()]
@@ -75,6 +88,6 @@ fig = px.scatter(
     }
 )
 
-st.sidebar.write("# Data filters 🏷")
-st.sidebar.code("🧳 New filters coming. \nReach us on discord \nif you want to propose one!")
+# st.write("# Data filters 🏷")
+# st.code("🧳 New filters coming. \nReach us on discord \nif you want to propose one!")
 st.plotly_chart(fig, use_container_width=True)

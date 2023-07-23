@@ -1,8 +1,27 @@
 import streamlit as st
+from pathlib import Path
 
 import sqlite3
 import pandas as pd
 
+# Page metadata
+title = "DB Inspector"
+icon = "🔍"
+
+st.set_page_config(
+    page_title=title,
+    page_icon=icon,
+    layout="wide",
+)
+st.title(f"{icon} {title}")
+
+# About this page
+current_directory = Path(__file__).parent
+readme_path = current_directory / "README.md"
+with st.expander("About This Page"):
+    st.write(readme_path.read_text())
+
+# Start content here
 @st.cache_data
 def get_table_data(database_name: str, table_name: str):
     conn = sqlite3.connect(database_name)
@@ -17,9 +36,6 @@ def get_all_tables(database_name: str):
     tables = [table_row[0] for table_row in cursor.fetchall()]
     return tables
 
-st.set_page_config(layout='wide')
-st.title("🧳 Hummingbot Database Analyzer")
-st.write("---")
 uploaded_file = st.file_uploader("Add your database")
 
 if uploaded_file is not None:

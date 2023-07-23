@@ -1,0 +1,1 @@
+Download historical exchange data as OHLVC candles. Supports multiple trading pairs and custom time ranges/intervals.

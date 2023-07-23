@@ -22,7 +22,11 @@ show_pages(
         Page("main.py", "Hummingbot Dashboard", "📊"),
         Page("pages/strategy_performance/app.py", "Strategy Performance", "🚀"),
         Page("pages/bot_orchestration/app.py", "Bot Orchestration", "🐙"),
-        Page("pages/backtesting/app.py", "Backtesting", "⚙️"),
+        Page("pages/backtest_manager/app.py", "Backtest Manager", "⚙️"),
+        Page("pages/candles_downloader/app.py", "Candles Downloader", "🗂"),
+        Page("pages/db_inspector/app.py", "DB Inspector", "🔍"),
+        Page("pages/token_spreads/app.py", "Token Spreads", "🧙"),
+        Page("pages/tvl_vs_mcap/app.py", "TVL vs Market Cap", "🦉"),
     ]
 )
 

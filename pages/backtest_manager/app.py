@@ -14,7 +14,7 @@ from utils.os_utils import load_directional_strategies, save_file, get_function_
 import optuna
 
 # Page metadata
-title = "Backtesting"
+title = "Backtest Manager"
 icon = "⚙️"
 
 st.set_page_config(

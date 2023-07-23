@@ -1,9 +1,28 @@
 import numpy as np
 import streamlit as st
+from pathlib import Path
 import pandas as pd
 import plotly.express as px
 from defillama import DefiLlama
 
+# Page metadata
+title = "TVL vs Market Cap"
+icon = "🦉"
+
+st.set_page_config(
+    page_title=title,
+    page_icon=icon,
+    layout="wide",
+)
+st.title(f"{icon} {title}")
+
+# About this page
+current_directory = Path(__file__).parent
+readme_path = current_directory / "README.md"
+with st.expander("About This Page"):
+    st.write(readme_path.read_text())
+
+# Start content here
 MIN_TVL = 1000000.
 MIN_MCAP = 1000000.
 
@@ -17,18 +36,13 @@ def get_tvl_mcap_data():
 def get_protocols_by_chain_category(protocols: pd.DataFrame, group_by: list, nth: list):
     return protocols.sort_values('tvl', ascending=False).groupby(group_by).nth(nth).reset_index()
 
-st.set_page_config(layout='wide')
-st.title("🦉 TVL vs MCAP Analysis")
-st.write("---")
-st.code("💡 Source: [DefiLlama](https://defillama.com/)")
-
 with st.spinner(text='In progress'):
     tvl_mcap_df = get_tvl_mcap_data()
 
 default_chains = ["Ethereum", "Solana", "Binance", "Polygon", "Multi-Chain", "Avalanche"]
 
-st.sidebar.write("### Chains filter 🔗")
-chains = st.sidebar.multiselect(
+st.write("### Chains 🔗")
+chains = st.multiselect(
     "Select the chains to analyze:",
     options=tvl_mcap_df["chain"].unique(),
     default=default_chains)
@@ -52,10 +66,10 @@ scatter = px.scatter(
 
 st.plotly_chart(scatter, use_container_width=True)
 
-st.sidebar.write("---")
-st.sidebar.write("### SunBurst filter 🔗")
-groupby = st.sidebar.selectbox('Group by:', [['chain', 'category'], ['category', 'chain']])
-nth = st.sidebar.slider('Top protocols by Category', min_value=1, max_value=5)
+st.write("---")
+st.write("### SunBurst 🌞")
+groupby = st.selectbox('Group by:', [['chain', 'category'], ['category', 'chain']])
+nth = st.slider('Top protocols by Category', min_value=1, max_value=5)
 
 proto_agg = get_protocols_by_chain_category(tvl_mcap_df[tvl_mcap_df["chain"].isin(chains)], groupby, np.arange(0, nth, 1).tolist())
 groupby.append("slug")
@@ -68,6 +82,3 @@ sunburst = px.sunburst(
     template="plotly_dark",)
 
 st.plotly_chart(sunburst, use_container_width=True)
-
-st.sidebar.write("# Data filters 🏷")
-st.sidebar.code("🧳 New filters coming. \nReach us on discord \nif you want to propose one!")

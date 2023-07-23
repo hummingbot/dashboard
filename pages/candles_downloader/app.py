@@ -2,19 +2,31 @@ import time
 from subprocess import CalledProcessError
 
 import streamlit as st
+from pathlib import Path
 
 import constants
 from utils import os_utils
 from docker_manager import DockerManager
 
+# Page metadata
+title = "Candles Downloader"
+icon = "🗂️"
+
 st.set_page_config(
-    page_title="Candles Downloader",
-    page_icon=":bar_chart:",
+    page_title=title,
+    page_icon=icon,
     layout="wide",
 )
+st.title(f"{icon} {title}")
+
+# About this page
+current_directory = Path(__file__).parent
+readme_path = current_directory / "README.md"
+with st.expander("About This Page"):
+    st.write(readme_path.read_text())
+
+# Start content here
 docker_manager = DockerManager()
-st.write(f"# 🗂️ Candles Downloader")
-st.write("---")
 
 c1, c2, c3 = st.columns([2, 2, 0.5])
 with c1:
