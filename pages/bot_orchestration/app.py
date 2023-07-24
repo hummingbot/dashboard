@@ -1,21 +1,17 @@
 import time
-
-import pandas as pd
-from hbotrc import BotCommands
-import streamlit as st
-from docker_manager import DockerManager
-
 import constants
+import pandas as pd
+import streamlit as st
 
-st.set_page_config(
-    page_title="Hummingbot Dashboard",
-    page_icon=":bar_chart:",
-    layout="wide",
-    initial_sidebar_state="collapsed"
-)
-st.title("🐙 Bot Orchestration")
-st.write("---")
+from docker_manager import DockerManager
+from hbotrc import BotCommands
 
+from utils.st_utils import initialize_st_page
+
+
+initialize_st_page(title="Bot Orchestration", icon="🐙")
+
+# Start content here
 docker_manager = DockerManager()
 
 active_containers = docker_manager.get_active_containers()

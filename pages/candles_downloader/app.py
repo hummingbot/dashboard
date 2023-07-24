@@ -7,14 +7,13 @@ import constants
 from utils import os_utils
 from docker_manager import DockerManager
 
-st.set_page_config(
-    page_title="Candles Downloader",
-    page_icon=":bar_chart:",
-    layout="wide",
-)
+from utils.st_utils import initialize_st_page
+
+
+initialize_st_page(title="Candles Downloader", icon="🗂️")
+
+# Start content here
 docker_manager = DockerManager()
-st.write(f"# 🗂️ Candles Downloader")
-st.write("---")
 
 c1, c2, c3 = st.columns([2, 2, 0.5])
 with c1:

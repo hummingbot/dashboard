@@ -1,19 +1,15 @@
 import os
-
 import pandas as pd
 import streamlit as st
 
 from utils.database_manager import DatabaseManager
 from utils.graphs import CandlesGraph
+from utils.st_utils import initialize_st_page
 
-st.set_page_config(
-    page_title="Hummingbot Dashboard",
-    page_icon=":bar_chart:",
-    layout="wide",
-    initial_sidebar_state="collapsed"
-)
-st.title("🚀 Strategy Performance")
 
+initialize_st_page(title="Strategy Performance", icon="🚀")
+
+# Start content here
 intervals = {
     "1m": 60,
     "3m": 60 * 3,
@@ -24,6 +20,7 @@ intervals = {
     "6h": 60 * 60 * 6,
     "1d": 60 * 60 * 24,
 }
+
 
 @st.cache_resource
 def get_database(db_name: str):

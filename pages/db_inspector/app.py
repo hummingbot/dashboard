@@ -3,6 +3,12 @@ import streamlit as st
 import sqlite3
 import pandas as pd
 
+from utils.st_utils import initialize_st_page
+
+
+initialize_st_page(title="DB Inspector", icon="🔍")
+
+# Start content here
 @st.cache_data
 def get_table_data(database_name: str, table_name: str):
     conn = sqlite3.connect(database_name)
@@ -17,9 +23,6 @@ def get_all_tables(database_name: str):
     tables = [table_row[0] for table_row in cursor.fetchall()]
     return tables
 
-st.set_page_config(layout='wide')
-st.title("🧳 Hummingbot Database Analyzer")
-st.write("---")
 uploaded_file = st.file_uploader("Add your database")
 
 if uploaded_file is not None:

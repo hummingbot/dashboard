@@ -12,15 +12,14 @@ from utils.file_templates import strategy_optimization_template, directional_str
 from utils.os_utils import load_directional_strategies, save_file, get_function_from_file
 import optuna
 
-st.set_page_config(
-    page_title="Hummingbot Dashboard",
-    page_icon="🚀",
-    layout="wide",
-)
+from utils.st_utils import initialize_st_page
+
+
+initialize_st_page(title="Backtest Manager", icon="⚙️")
+
+# Start content here
 if "strategy_params" not in st.session_state:
     st.session_state.strategy_params = {}
-
-st.title("⚙️ Backtesting")
 
 create, modify, backtest, optimize, analyze = st.tabs(["Create", "Modify", "Backtest", "Optimize", "Analyze"])
 
