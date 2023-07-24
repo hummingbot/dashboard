@@ -3,7 +3,6 @@ import threading
 import webbrowser
 
 import streamlit as st
-from pathlib import Path
 from streamlit_ace import st_ace
 
 import constants

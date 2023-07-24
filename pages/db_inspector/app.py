@@ -1,25 +1,12 @@
 import streamlit as st
-from pathlib import Path
 
 import sqlite3
 import pandas as pd
 
-# Page metadata
-title = "DB Inspector"
-icon = "🔍"
+from utils.st_utils import initialize_st_page
 
-st.set_page_config(
-    page_title=title,
-    page_icon=icon,
-    layout="wide",
-)
-st.title(f"{icon} {title}")
 
-# About this page
-current_directory = Path(__file__).parent
-readme_path = current_directory / "README.md"
-with st.expander("About This Page"):
-    st.write(readme_path.read_text())
+initialize_st_page(title="DB Inspector", icon="🔍")
 
 # Start content here
 @st.cache_data

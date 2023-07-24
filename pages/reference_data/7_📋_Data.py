@@ -3,30 +3,30 @@ import streamlit as st
 import CONFIG
 from utils.coingecko_utils import CoinGeckoUtils
 from utils.miner_utils import MinerUtils
+from utils.st_utils import initialize_st_page
+
 
 @st.cache_data
 def get_all_coins_df():
     return CoinGeckoUtils().get_all_coins_df()
 
+
 @st.cache_data
 def get_all_exchanges_df():
     return CoinGeckoUtils().get_all_exchanges_df()
+
 
 @st.cache_data
 def get_miner_stats_df():
     return MinerUtils().get_miner_stats_df()
 
+
 @st.cache_data
 def get_coin_tickers_by_id_list(coins_id: list):
     return CoinGeckoUtils().get_coin_tickers_by_id_list(coins_id)
 
-st.set_page_config(
-    page_title="Crypto Data",
-    page_icon=":bar_chart:",
-    layout="wide",
-    initial_sidebar_state="collapsed"
-)
-st.title("📋 Data Available")
+
+initialize_st_page(title="Crypto Data", icon=":bar_chart:")
 
 with st.spinner(text='In progress'):
     exchanges_df = get_all_exchanges_df()

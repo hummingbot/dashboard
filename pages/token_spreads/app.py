@@ -1,27 +1,13 @@
-import pandas as pd
 import streamlit as st
 from pathlib import Path
 import plotly.express as px
 import CONFIG
 from utils.coingecko_utils import CoinGeckoUtils
 from utils.miner_utils import MinerUtils
+from utils.st_utils import initialize_st_page
 
-# Page metadata
-title = "Token Spreads"
-icon = "🧙"
 
-st.set_page_config(
-    page_title=title,
-    page_icon=icon,
-    layout="wide",
-)
-st.title(f"{icon} {title}")
-
-# About this page
-current_directory = Path(__file__).parent
-readme_path = current_directory / "README.md"
-with st.expander("About This Page"):
-    st.write(readme_path.read_text())
+initialize_st_page(title="Token Spreads", icon="🧙")
 
 # Start content here
 cg_utils = CoinGeckoUtils()

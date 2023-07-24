@@ -1,27 +1,13 @@
 import os
 import pandas as pd
 import streamlit as st
-from pathlib import Path
 
 from utils.database_manager import DatabaseManager
 from utils.graphs import CandlesGraph
+from utils.st_utils import initialize_st_page
 
-# Page metadata
-title = "Strategy Performance"
-icon = "🚀"
 
-st.set_page_config(
-    page_title=title,
-    page_icon=icon,
-    layout="wide",
-)
-st.title(f"{icon} {title}")
-
-# About this page
-current_directory = Path(__file__).parent
-readme_path = current_directory / "README.md"
-with st.expander("About This Page"):
-    st.write(readme_path.read_text())
+initialize_st_page(title="Strategy Performance", icon="🚀")
 
 # Start content here
 intervals = {
@@ -34,6 +20,7 @@ intervals = {
     "6h": 60 * 60 * 6,
     "1d": 60 * 60 * 24,
 }
+
 
 @st.cache_resource
 def get_database(db_name: str):

@@ -2,27 +2,14 @@ import time
 import constants
 import pandas as pd
 import streamlit as st
-from pathlib import Path
 
 from docker_manager import DockerManager
 from hbotrc import BotCommands
 
-# Page metadata
-title = "Bot Orchestration"
-icon = "🐙"
+from utils.st_utils import initialize_st_page
 
-st.set_page_config(
-    page_title=title,
-    page_icon=icon,
-    layout="wide",
-)
-st.title(f"{icon} {title}")
 
-# About this page
-current_directory = Path(__file__).parent
-readme_path = current_directory / "README.md"
-with st.expander("About This Page"):
-    st.write(readme_path.read_text())
+initialize_st_page(title="Bot Orchestration", icon="🐙")
 
 # Start content here
 docker_manager = DockerManager()
