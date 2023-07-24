@@ -19,10 +19,6 @@ show_pages(
     ]
 )
 
-st.title("Welcome!")
-st.write("---")
-st.code("💡 The purpose of this dashboard is to provide useful information for high frequency trading traders")
-st.write("")
 st.write("Watch this video to understand how the dashboard works! 🦅")
 c1, c2, c3 = st.columns([1, 6, 1])
 with c2:
