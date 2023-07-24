@@ -13,22 +13,10 @@ from utils.file_templates import strategy_optimization_template, directional_str
 from utils.os_utils import load_directional_strategies, save_file, get_function_from_file
 import optuna
 
-# Page metadata
-title = "Backtest Manager"
-icon = "⚙️"
+from utils.st_utils import initialize_st_page
 
-st.set_page_config(
-    page_title=title,
-    page_icon=icon,
-    layout="wide",
-)
-st.title(f"{icon} {title}")
 
-# About this page
-current_directory = Path(__file__).parent
-readme_path = current_directory / "README.md"
-with st.expander("About This Page"):
-    st.write(readme_path.read_text())
+initialize_st_page(title="Backtest Manager", icon="⚙️")
 
 # Start content here
 if "strategy_params" not in st.session_state:
