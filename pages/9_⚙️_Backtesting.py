@@ -76,8 +76,9 @@ with create:
         response_dict = code_editor(code=st.session_state.code_str,
                                     lang="python",
                                     buttons=custom_btns,
-                                    theme="dark")
-        if response_dict["text"]:
+                                    theme="dark",
+                                    height=1200)
+        if response_dict["type"] == 'saved':
             save_file(name=f"{strategy_name.lower()}.py",
                       content=response_dict["text"],
                       path=constants.DIRECTIONAL_STRATEGIES_PATH)
@@ -90,6 +91,7 @@ with modify:
     col1, col2 = st.columns([4, 1])
     with col1:
         selected_file = st.selectbox("Select your script:", get_python_files_from_directory("quants_lab/strategy/experiments"))
+        strategy_name = selected_file.split("/")[-1]
     with col2:
         st.markdown("<br>", unsafe_allow_html=True)
         if st.button("Open file"):
@@ -100,7 +102,8 @@ with modify:
         response_edit_dict = code_editor(code=st.session_state.code_str,
                                          lang="python",
                                          buttons=custom_btns,
-                                         theme="dark")
+                                         theme="dark",
+                                         height=1200)
         if response_edit_dict["type"] == 'saved':
             save_file(name=f"{strategy_name.lower()}",
                       content=response_edit_dict["text"],
