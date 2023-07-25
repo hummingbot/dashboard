@@ -149,21 +149,29 @@ with backtest:
         add_positions = st.checkbox("Add positions", value=True)
         add_volume = st.checkbox("Add volume", value=True)
         add_pnl = st.checkbox("Add PnL", value=True)
-
-        run_backtesting_button = st.button("Run Backtesting!")
+    st.subheader("Position config")
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        selected_order_amount = st.number_input("Order amount", value=50.0, min_value=0.1, max_value=999999999.99)
+        selected_leverage = st.number_input("Leverage", value=10, min_value=1, max_value=200)
+    with col2:
+        selected_initial_portfolio = st.number_input("Initial portfolio", value=10000.00, min_value=1.00, max_value=999999999.99)
+        selected_time_limit = st.number_input("Time Limit", value=60 * 60 * 3, min_value=1, max_value=999999999)
+    with col3:
+        selected_tp_multiplier = st.number_input("Take Profit Multiplier", value=1.0, min_value=0.01, max_value=99.99)
+        selected_sl_multiplier = st.number_input("Stop Loss Multiplier", value=1.0, min_value=0.01, max_value=99.99)
+    run_backtesting_button = st.button("Run Backtesting!")
     if run_backtesting_button:
         config = strategy["config"](**st.session_state["strategy_params"])
         strategy = strategy["class"](config=config)
-        # TODO: add form for order amount, leverage, tp, sl, etc.
-
         market_data, positions = strategy.run_backtesting(
             start='2021-04-01',
-            order_amount=50,
-            leverage=20,
-            initial_portfolio=100,
-            take_profit_multiplier=2.3,
-            stop_loss_multiplier=1.2,
-            time_limit=60 * 60 * 3,
+            order_amount=selected_order_amount,
+            leverage=selected_order_amount,
+            initial_portfolio=selected_initial_portfolio,
+            take_profit_multiplier=selected_tp_multiplier,
+            stop_loss_multiplier=selected_sl_multiplier,
+            time_limit=selected_time_limit,
             std_span=None,
         )
         strategy_analysis = StrategyAnalysis(
