@@ -15,8 +15,8 @@ import optuna
 
 
 def initialize_session_state_vars():
-    if 'edit_mode' not in st.session_state:
-        st.session_state.edit_mode = False
+    if "create_mode" not in st.session_state:
+        st.session_state.create_mode = False
     if "strategy_params" not in st.session_state:
         st.session_state.strategy_params = {}
 
@@ -27,7 +27,21 @@ st.set_page_config(
     page_icon="🚀",
     layout="wide",
 )
-
+custom_btns = [{
+            "name": "Copy",
+            "feather": "Copy",
+            "alwaysOn": True,
+            "commands": ["copyAll"],
+            "style": {"top": "0.46rem", "right": "0.4rem"},
+        },
+            {
+                "name": "Save",
+                "feather": "Save",
+                "alwaysOn": True,
+                "commands": ["save-state", ["response", "saved"]],
+                "response": "saved",
+                "style": {"top": "calc(0.46rem + 2.5rem)", "right": "0.4rem"}
+            }]
 st.title("⚙️ Backtesting")
 
 create, modify, backtest, optimize, analyze = st.tabs(["Create", "Modify", "Backtest", "Optimize", "Analyze"])
@@ -53,32 +67,18 @@ with create:
     with col5:
         st.markdown("<br>", unsafe_allow_html=True)
         if st.button("Generate"):
-            st.session_state.edit_mode = True
+            st.session_state.create_mode = True
             if selected_type == "Directional":
                 st.session_state.code_str = directional_strategy_template(strategy_cls_name=strategy_name,
                                                                           exchange=selected_exchange,
                                                                           trading_pair=selected_trading_pair,
                                                                           interval=selected_interval)
-    if st.session_state.edit_mode:
+    if st.session_state.create_mode:
         st.subheader("Code editor")
         # TODO: every time that we save and run the optimizations, we should save the code in a file
         #  so the user then can correlate the results with the code.
-        custom_btns = [{
-            "name": "Copy",
-            "feather": "Copy",
-            "alwaysOn": True,
-            "commands": ["copyAll"],
-            "style": {"top": "0.46rem", "right": "0.4rem"},
-        },
-            {
-                "name": "Save",
-                "feather": "Save",
-                "alwaysOn": True,
-                "commands": ["save-state", ["response", "saved"]],
-                "response": "saved",
-                "style": {"top": "calc(0.46rem + 2.5rem)", "right": "0.4rem"}
-            }]
-        response_dict = code_editor(code=st.session_state.code_str,
+        response_dict = code_editor(key="create",
+                                    code=st.session_state.code_str,
                                     lang="python",
                                     buttons=custom_btns,
                                     theme="dark")
