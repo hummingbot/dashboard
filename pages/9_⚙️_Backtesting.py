@@ -183,6 +183,65 @@ with backtest:
         )
         st.text(strategy_analysis.text_report())
         # TODO: check why the pnl is not being plotted
+        col1, col2 = st.columns(2)
+        with col1:
+            st.subheader("🏦 Market")
+        with col2:
+            st.subheader("📋 General stats")
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            st.metric("Exchange", st.session_state["strategy_params"]["exchange"])
+        with col2:
+            st.metric("Trading Pair", st.session_state["strategy_params"]["trading_pair"])
+        with col3:
+            st.metric("Start date", strategy_analysis.start_date().strftime("%Y-%m-%d %H:%M"))
+            st.metric("End date", strategy_analysis.end_date().strftime("%Y-%m-%d %H:%M"))
+        with col4:
+            st.metric("Duration (hours)", f"{strategy_analysis.duration_in_minutes() / 60:.2f}")
+            st.metric("Price change", st.session_state["strategy_params"]["trading_pair"])
+        st.subheader("📈 Performance")
+        col1, col2, col3, col4, col5, col6, col7, col8 = st.columns(8)
+        with col1:
+            st.metric("Net PnL USD",
+                      f"{strategy_analysis.net_profit_usd():.2f}",
+                      delta=f"{100 * strategy_analysis.net_profit_pct():.2f}%",
+                      help="The overall profit or loss achieved.")
+        with col2:
+            st.metric("Total positions",
+                      f"{strategy_analysis.total_positions()}",
+                      help="The total number of closed trades, winning and losing.")
+        with col3:
+            st.metric("% Profitable",
+                      f"{(len(strategy_analysis.win_signals()) / strategy_analysis.total_positions()):.2f}",
+                      help="The percentage of winning trades, the number of winning trades divided by the"
+                           " total number of closed trades")
+        with col4:
+            st.metric("Profit factor",
+                      f"{strategy_analysis.profit_factor():.2f}",
+                      help="The amount of money the strategy made for every unit of money it lost, "
+                           "gross profits divided by gross losses.")
+        with col5:
+            st.metric("Max Drawdown",
+                      f"{strategy_analysis.max_drawdown_usd():.2f}",
+                      delta=f"{strategy_analysis.max_drawdown_pct():.2f}%",
+                      help="The greatest loss drawdown, i.e., the greatest possible loss the strategy had compared "
+                      "to its highest profits")
+        with col6:
+            st.metric("Avg Profit",
+                      f"{strategy_analysis.avg_profit():.2f}",
+                      help="The sum of money gained or lost by the average trade, Net Profit divided by "
+                           "the overall number of closed trades.")
+        with col7:
+            st.metric("Avg Minutes",
+                      f"{strategy_analysis.avg_trading_time_in_minutes():.2f}",
+                      help="The average number of minutes that elapsed during trades for all closed trades.")
+        with col8:
+            st.metric("Sharpe Ratio",
+                      f"{strategy_analysis.sharpe_ratio():.2f}",
+                      help="The Sharpe ratio is a measure that quantifies the risk-adjusted return of an investment"
+                           " or portfolio. It compares the excess return earned above a risk-free rate per unit of"
+                           " risk taken.")
+        st.plotly_chart(strategy_analysis.pnl_over_time(), use_container_width=True)
         strategy_analysis.create_base_figure(volume=add_volume, positions=add_positions, trade_pnl=add_pnl)
         st.plotly_chart(strategy_analysis.figure(), use_container_width=True)
 
