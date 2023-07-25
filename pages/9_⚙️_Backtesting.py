@@ -84,6 +84,7 @@ with create:
                       content=response_dict["text"],
                       path=constants.DIRECTIONAL_STRATEGIES_PATH)
             st.success(f"Strategy {strategy_name} saved successfully")
+            response_dict["type"] = ""
 
 with modify:
     # TODO:
@@ -111,7 +112,7 @@ with modify:
                       content=response_edit_dict["text"],
                       path=constants.DIRECTIONAL_STRATEGIES_PATH)
             st.success(f"Strategy {strategy_name} saved successfully")
-            response_edit_dict["type"] = 'standby'
+            response_edit_dict["type"] = ""
 with backtest:
     # TODO:
     #    * Add videos explaining how to the triple barrier method works and how the backtesting is designed,
