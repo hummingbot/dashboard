@@ -32,7 +32,7 @@ st.set_page_config(
     page_title="Hummingbot Dashboard",
     page_icon="🚀",
     layout="wide",
-)
+    initial_sidebar_state="collapsed",)
 custom_btns = [{
             "name": "Copy",
             "feather": "Copy",
