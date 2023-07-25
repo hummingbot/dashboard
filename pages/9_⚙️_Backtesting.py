@@ -57,25 +57,18 @@ with create:
     #    * Add functionality to start strategy creation from scratch or by duplicating an existing one
     st.subheader("Create your own strategy")
     st.markdown("In this module you'll be able to create your own strategy. Start by choosing a strategy type:")
-    selected_type = st.selectbox("Strategy Type", ["Directional"])
-    col1, col2, col3, col4, col5 = st.columns(5)
+    col1, col2, col3 = st.columns([2, 2, 1])
     with col1:
-        strategy_name = st.text_input("Strategy Name:", "CustomStrategy")
+        selected_type = st.selectbox("Strategy Type", ["Directional"])
     with col2:
-        selected_exchange = st.selectbox("Exchange:", constants.EXCHANGES)
+        strategy_name = st.text_input("Strategy Name:", "CustomStrategy")
     with col3:
-        selected_trading_pair = st.selectbox("Trading Pair:", constants.TRADING_PAIRS)
-    with col4:
-        selected_interval = st.selectbox("Interval:", constants.INTERVALS)
-    with col5:
         st.markdown("<br>", unsafe_allow_html=True)
         if st.button("Generate"):
             st.session_state.create_mode = True
             if selected_type == "Directional":
-                st.session_state.code_str = directional_strategy_template(strategy_cls_name=strategy_name,
-                                                                          exchange=selected_exchange,
-                                                                          trading_pair=selected_trading_pair,
-                                                                          interval=selected_interval)
+                st.session_state.code_str = directional_strategy_template(strategy_cls_name=strategy_name)
+
     if st.session_state.create_mode:
         st.subheader("Code editor")
         # TODO: every time that we save and run the optimizations, we should save the code in a file
