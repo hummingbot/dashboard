@@ -73,8 +73,7 @@ with create:
         st.subheader("Code editor")
         # TODO: every time that we save and run the optimizations, we should save the code in a file
         #  so the user then can correlate the results with the code.
-        response_dict = code_editor(key="create",
-                                    code=st.session_state.code_str,
+        response_dict = code_editor(code=st.session_state.code_str,
                                     lang="python",
                                     buttons=custom_btns,
                                     theme="dark")
@@ -98,12 +97,16 @@ with modify:
             st.session_state.code_str = load_file(selected_file)
     if st.session_state.edit_mode:
         st.subheader("Code editor")
-        response_dict = code_editor(key="edit",
-                                    code=st.session_state.code_str,
-                                    lang="python",
-                                    buttons=custom_btns,
-                                    theme="dark")
-        st.write(response_dict)
+        response_edit_dict = code_editor(code=st.session_state.code_str,
+                                         lang="python",
+                                         buttons=custom_btns,
+                                         theme="dark")
+        if response_edit_dict["type"] == 'saved':
+            save_file(name=f"{strategy_name.lower()}",
+                      content=response_edit_dict["text"],
+                      path=constants.DIRECTIONAL_STRATEGIES_PATH)
+            st.success(f"Strategy {strategy_name} saved successfully")
+            response_edit_dict["type"] = 'standby'
 with backtest:
     # TODO:
     #    * Add videos explaining how to the triple barrier method works and how the backtesting is designed,
