@@ -65,6 +65,7 @@ with create:
     with col3:
         st.markdown("<br>", unsafe_allow_html=True)
         if st.button("Generate"):
+            st.session_state.edit_mode = False
             st.session_state.create_mode = True
             if selected_type == "Directional":
                 st.session_state.code_str = directional_strategy_template(strategy_cls_name=strategy_name)
@@ -95,6 +96,7 @@ with modify:
     with col2:
         st.markdown("<br>", unsafe_allow_html=True)
         if st.button("Open file"):
+            st.session_state.create_mode = False
             st.session_state.edit_mode = True
             st.session_state.code_str = load_file(selected_file)
     if st.session_state.edit_mode:
