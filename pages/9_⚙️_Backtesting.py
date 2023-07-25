@@ -4,6 +4,7 @@ import webbrowser
 
 import streamlit as st
 from streamlit_ace import st_ace
+from code_editor import code_editor
 
 import constants
 from quants_lab.strategy.strategy_analysis import StrategyAnalysis
@@ -12,13 +13,20 @@ from utils.file_templates import strategy_optimization_template, directional_str
 from utils.os_utils import load_directional_strategies, save_file, get_function_from_file
 import optuna
 
+
+def initialize_session_state_vars():
+    if 'edit_mode' not in st.session_state:
+        st.session_state.edit_mode = False
+    if "strategy_params" not in st.session_state:
+        st.session_state.strategy_params = {}
+
+
+initialize_session_state_vars()
 st.set_page_config(
     page_title="Hummingbot Dashboard",
     page_icon="🚀",
     layout="wide",
 )
-if "strategy_params" not in st.session_state:
-    st.session_state.strategy_params = {}
 
 st.title("⚙️ Backtesting")
 
@@ -29,26 +37,54 @@ with create:
     #    * Add videos explaining how to the triple barrier method works and how the backtesting is designed,
     #  link to video of how to create a strategy, etc in a toggle.
     #    * Add functionality to start strategy creation from scratch or by duplicating an existing one
-    c1, c2 = st.columns([4, 1])
-    with c1:
+    st.subheader("Create your own strategy")
+    st.markdown("In this module you'll be able to create your own strategy. Start by choosing a strategy type:")
+    selected_type = st.selectbox("Strategy Type", ["Directional"])
+    col1, col2, col3, col4, col5 = st.columns(5)
+    with col1:
         # TODO: Allow change the strategy name and see the effect in the code
-        strategy_name = st.text_input("Strategy class name", value="CustomStrategy")
-    with c2:
-        update_strategy_name = st.button("Update Strategy Name")
-
-    c1, c2 = st.columns([4, 1])
-    with c1:
+        strategy_name = st.text_input("Strategy Name:", "CustomStrategy")
+    with col2:
+        selected_exchange = st.selectbox("Exchange:", constants.EXCHANGES)
+    with col3:
+        selected_trading_pair = st.selectbox("Trading Pair:", constants.TRADING_PAIRS)
+    with col4:
+        selected_interval = st.selectbox("Interval:", constants.INTERVALS)
+    with col5:
+        st.markdown("<br>", unsafe_allow_html=True)
+        if st.button("Generate"):
+            st.session_state.edit_mode = True
+            if selected_type == "Directional":
+                st.session_state.code_str = directional_strategy_template(strategy_cls_name=strategy_name,
+                                                                          exchange=selected_exchange,
+                                                                          trading_pair=selected_trading_pair,
+                                                                          interval=selected_interval)
+    if st.session_state.edit_mode:
+        st.subheader("Code editor")
         # TODO: every time that we save and run the optimizations, we should save the code in a file
         #  so the user then can correlate the results with the code.
-        if update_strategy_name:
-            st.session_state.directional_strategy_code = st_ace(key="create_directional_strategy",
-                                               value=directional_strategy_template(strategy_name),
-                                               language='python',
-                                               keybinding='vscode',
-                                               theme='pastel_on_dark')
-    with c2:
-        if st.button("Save strategy"):
-            save_file(name=f"{strategy_name.lower()}.py", content=st.session_state.directional_strategy_code,
+        custom_btns = [{
+            "name": "Copy",
+            "feather": "Copy",
+            "alwaysOn": True,
+            "commands": ["copyAll"],
+            "style": {"top": "0.46rem", "right": "0.4rem"},
+        },
+            {
+                "name": "Save",
+                "feather": "Save",
+                "alwaysOn": True,
+                "commands": ["save-state", ["response", "saved"]],
+                "response": "saved",
+                "style": {"top": "calc(0.46rem + 2.5rem)", "right": "0.4rem"}
+            }]
+        response_dict = code_editor(code=st.session_state.code_str,
+                                    lang="python",
+                                    buttons=custom_btns,
+                                    theme="dark")
+        if response_dict["text"]:
+            save_file(name=f"{strategy_name.lower()}.py",
+                      content=response_dict["text"],
                       path=constants.DIRECTIONAL_STRATEGIES_PATH)
             st.success(f"Strategy {strategy_name} saved successfully")
 
@@ -143,15 +179,16 @@ with optimize:
             # TODO: every time that we save and run the optimizations, we should save the code in a file
             #  so the user then can correlate the results with the code.
             st.session_state.optimization_code = st_ace(key="create_optimization_code",
-                                       value=strategy_optimization_template(
-                                           strategy_info=strategies[strategy_to_optimize]),
-                                       language='python',
-                                       keybinding='vscode',
-                                       theme='pastel_on_dark')
+                                                        value=strategy_optimization_template(
+                                                            strategy_info=strategies[strategy_to_optimize]),
+                                                        language='python',
+                                                        keybinding='vscode',
+                                                        theme='pastel_on_dark')
     if "optimization_code" in st.session_state:
         with c2:
             if st.button("Run optimization"):
-                save_file(name=f"{STUDY_NAME}.py", content=st.session_state.optimization_code, path=constants.OPTIMIZATIONS_PATH)
+                save_file(name=f"{STUDY_NAME}.py", content=st.session_state.optimization_code,
+                          path=constants.OPTIMIZATIONS_PATH)
                 study = optuna.create_study(direction="maximize", study_name=STUDY_NAME,
                                             storage="sqlite:///data/backtesting/backtesting_report.db",
                                             load_if_exists=True)
@@ -165,7 +202,6 @@ with optimize:
 
                 optimization_thread = threading.Thread(target=optimization_process)
                 optimization_thread.start()
-
 
 with analyze:
     # TODO:
