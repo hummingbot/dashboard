@@ -10,7 +10,7 @@ import constants
 from quants_lab.strategy.strategy_analysis import StrategyAnalysis
 from utils import os_utils
 from utils.file_templates import strategy_optimization_template, directional_strategy_template
-from utils.os_utils import load_directional_strategies, save_file, get_function_from_file
+from utils.os_utils import load_directional_strategies, save_file, get_function_from_file, get_python_files_from_directory, load_file
 import optuna
 
 
@@ -19,6 +19,10 @@ def initialize_session_state_vars():
         st.session_state.create_mode = False
     if "strategy_params" not in st.session_state:
         st.session_state.strategy_params = {}
+    if "edit_mode" not in st.session_state:
+        st.session_state.edit_mode = False
+    if "code_str" not in st.session_state:
+        st.session_state.code_str: str = None
 
 
 initialize_session_state_vars()
@@ -89,8 +93,25 @@ with create:
             st.success(f"Strategy {strategy_name} saved successfully")
 
 with modify:
-    pass
-
+    # TODO:
+    #  * file versioning? something like id = 1 in create page and every time you save it you upgrade by 1
+    #  * Fix non-updating when changes selected file
+    col1, col2 = st.columns([4, 1])
+    with col1:
+        selected_file = st.selectbox("Select your script:", get_python_files_from_directory("quants_lab/strategy/experiments"))
+    with col2:
+        st.markdown("<br>", unsafe_allow_html=True)
+        if st.button("Open file"):
+            st.session_state.edit_mode = True
+            st.session_state.code_str = load_file(selected_file)
+    if st.session_state.edit_mode:
+        st.subheader("Code editor")
+        response_dict = code_editor(key="edit",
+                                    code=st.session_state.code_str,
+                                    lang="python",
+                                    buttons=custom_btns,
+                                    theme="dark")
+        st.write(response_dict)
 with backtest:
     # TODO:
     #    * Add videos explaining how to the triple barrier method works and how the backtesting is designed,
