@@ -181,8 +181,6 @@ with backtest:
             positions=positions,
             candles_df=market_data,
         )
-        st.text(strategy_analysis.text_report())
-        # TODO: check why the pnl is not being plotted
         col1, col2 = st.columns(2)
         with col1:
             st.subheader("🏦 Market")
