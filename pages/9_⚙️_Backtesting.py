@@ -60,7 +60,6 @@ with create:
     selected_type = st.selectbox("Strategy Type", ["Directional"])
     col1, col2, col3, col4, col5 = st.columns(5)
     with col1:
-        # TODO: Allow change the strategy name and see the effect in the code
         strategy_name = st.text_input("Strategy Name:", "CustomStrategy")
     with col2:
         selected_exchange = st.selectbox("Exchange:", constants.EXCHANGES)
