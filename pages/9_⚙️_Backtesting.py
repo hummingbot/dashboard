@@ -21,8 +21,10 @@ def initialize_session_state_vars():
         st.session_state.strategy_params = {}
     if "edit_mode" not in st.session_state:
         st.session_state.edit_mode = False
-    if "code_str" not in st.session_state:
-        st.session_state.code_str: str = None
+    if "edit_code_str" not in st.session_state:
+        st.session_state.edit_code_str: str = None
+    if "create_code_str" not in st.session_state:
+        st.session_state.create_code_str: str = None
 
 
 initialize_session_state_vars()
@@ -68,13 +70,13 @@ with create:
             st.session_state.edit_mode = False
             st.session_state.create_mode = True
             if selected_type == "Directional":
-                st.session_state.code_str = directional_strategy_template(strategy_cls_name=strategy_name)
+                st.session_state.create_code_str = directional_strategy_template(strategy_cls_name=strategy_name)
 
     if st.session_state.create_mode:
         st.subheader("Code editor")
         # TODO: every time that we save and run the optimizations, we should save the code in a file
         #  so the user then can correlate the results with the code.
-        response_dict = code_editor(code=st.session_state.code_str,
+        response_dict = code_editor(code=st.session_state.create_code_str,
                                     lang="python",
                                     buttons=custom_btns,
                                     theme="dark",
@@ -99,10 +101,10 @@ with modify:
         if st.button("Open file"):
             st.session_state.create_mode = False
             st.session_state.edit_mode = True
-            st.session_state.code_str = load_file(selected_file)
+            st.session_state.edit_code_str = load_file(selected_file)
     if st.session_state.edit_mode:
         st.subheader("Code editor")
-        response_edit_dict = code_editor(code=st.session_state.code_str,
+        response_edit_dict = code_editor(code=st.session_state.edit_code_str,
                                          lang="python",
                                          buttons=custom_btns,
                                          theme="dark",
