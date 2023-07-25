@@ -4,6 +4,4 @@
 .gitignore
 .dockerignore
 _pycache_
-README.md
-CONTRIBUTING.md
-LICENSE
+
