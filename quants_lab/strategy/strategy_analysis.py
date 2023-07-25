@@ -103,7 +103,7 @@ class StrategyAnalysis:
             row=2, col=1,
         )
 
-    def add_trade_pnl(self, row=2):
+    def add_trade_pnl(self, row=3):
         self.base_figure.add_trace(
             go.Scatter(
                 x=self.positions['timestamp'],
