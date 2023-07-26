@@ -17,6 +17,7 @@ dependencies:
       - pyyaml
       - commlib-py
       - jupyter
+      - streamlit-elements
       - optuna
       - optuna-dashboard
       - pathlib
