@@ -60,6 +60,11 @@ def get_python_files_from_directory(directory: str) -> list:
     return py_files
 
 
+def get_yml_files_from_directory(directory: str) -> list:
+    yml = glob.glob(directory + "/**/*.yml", recursive=True)
+    return yml
+
+
 def load_directional_strategies(path):
     strategies = {}
     for filename in os.listdir(path):
