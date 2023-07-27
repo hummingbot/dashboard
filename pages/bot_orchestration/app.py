@@ -1,16 +1,13 @@
-import time
-from types import SimpleNamespace
+from commlib.exceptions import RPCClientTimeoutError
 
 import constants
-import pandas as pd
 import streamlit as st
-from streamlit_elements import elements, mui, html, lazy, sync
+from streamlit_elements import elements, mui, lazy, sync, event
 
 from docker_manager import DockerManager
 from hbotrc import BotCommands
 
 from ui_components.bot_performance_card import BotPerformanceCard
-from ui_components.card import Card
 from ui_components.dashboard import Dashboard
 from utils.st_utils import initialize_st_page
 
@@ -22,35 +19,70 @@ if "is_broker_running" not in st.session_state:
 if "active_bots" not in st.session_state:
     st.session_state.active_bots = {}
 
+
 def update_containers_info(docker_manager):
     active_containers = docker_manager.get_active_containers()
     st.session_state.is_broker_running = "hummingbot-broker" in active_containers
 
-    # TODO: Improve performance by only updating the changed containers since now a new instance of the broker is created
-    active_bots = {container: {
-        "bot_name": container,
-        "broker_client": BotCommands(host='localhost', port=1883, username='admin', password='password',
-                                     bot_id=container)
-    } for container in active_containers if
-        "hummingbot-" in container and "broker" not in container}
-    for container in active_bots.keys():
-        # TODO: Implement start date
-        broker_client = active_bots[container]["broker_client"]
-        status = broker_client.status()
-        history = broker_client.history()
-        is_running = "No strategy is currently running" not in status.msg
-        active_bots[container]["is_running"] = is_running
-        active_bots[container]["status"] = status.msg
-        active_bots[container]["trades"] = history.trades
-    st.session_state.active_bots = active_bots
+    active_hbot_containers = [container for container in active_containers if "hummingbot-" in container and "broker" not in container]
+
+    previous_active_bots = st.session_state.active_bots.keys()
+
+    # Remove bots that are no longer active
+    for bot in previous_active_bots:
+        if bot not in active_hbot_containers:
+            del st.session_state.active_bots[bot]
+
+    # Add new bots
+    for bot in active_hbot_containers:
+        if bot not in previous_active_bots:
+            st.session_state.active_bots[bot] = {
+                "bot_name": bot,
+                "broker_client": BotCommands(host='localhost', port=1883, username='admin', password='password',
+                                             bot_id=bot)
+            }
+
+    # Update bot info
+    for bot in st.session_state.active_bots.keys():
+        try:
+            broker_client = st.session_state.active_bots[bot]["broker_client"]
+            status = broker_client.status()
+            history = broker_client.history()
+            is_running = "No strategy is currently running" not in status.msg
+            st.session_state.active_bots[bot]["is_running"] = is_running
+            st.session_state.active_bots[bot]["status"] = status.msg
+            st.session_state.active_bots[bot]["trades"] = history.trades
+            st.session_state.active_bots[bot]["selected_strategy"] = None
+        except RPCClientTimeoutError:
+            st.error(f"RPCClientTimeoutError: Could not connect to {bot}. Please review the connection.")
+            del st.session_state.active_bots[bot]
+    # # TODO: Improve performance by only updating the changed containers since now a new instance of the broker is created
+    # active_bots = {container: {
+    #     "bot_name": container,
+    #     "broker_client": BotCommands(host='localhost', port=1883, username='admin', password='password',
+    #                                  bot_id=container)
+    # } for container in active_containers if
+    #     "hummingbot-" in container and "broker" not in container}
+    # for container in active_bots.keys():
+    #     # TODO: Implement start date
+    #     broker_client = active_bots[container]["broker_client"]
+    #     status = broker_client.status()
+    #     history = broker_client.history()
+    #     is_running = "No strategy is currently running" not in status.msg
+    #     active_bots[container]["is_running"] = is_running
+    #     active_bots[container]["status"] = status.msg
+    #     active_bots[container]["trades"] = history.trades
+    #     active_bots[container]["selected_strategy"] = None
+    # Sort bots by running status
+    st.session_state.active_bots = dict(sorted(st.session_state.active_bots.items(), key=lambda x: x[1]['is_running'], reverse=True))
 
 
-# Start content here
 docker_manager = DockerManager()
-
 update_containers_info(docker_manager)
-orchestrate, create, manage = st.tabs(["Orchestrate", "Create", "Manage"])
 
+
+orchestrate, create, manage = st.tabs(["Orchestrate", "Create", "Manage"])
+update_containers_info(docker_manager)
 with orchestrate:
     c1, c2 = st.columns([0.8, 0.2])
     if not st.session_state.is_broker_running:
@@ -73,14 +105,25 @@ with orchestrate:
             # TODO: Make layout configurable
             cols = 3
             rows = quantity_of_active_bots // cols + 1
+            card_width = 4
+            card_height = 3
             active_instances_board = Dashboard()
-            for bot, config in st.session_state.active_bots.items():
-                st.session_state.active_bots[bot]["bot_performance_card"] = BotPerformanceCard(active_instances_board, 0, 0, 4, 4)
+            x_y = [(x * card_width, y * card_height) for x in range(cols) for y in range(rows)]
+            sorted_positions = sorted(x_y, key=lambda x: (x[1], x[0]))
+            for (bot, config), (x, y) in zip(st.session_state.active_bots.items(), sorted_positions):
+                st.session_state.active_bots[bot]["bot_performance_card"] = BotPerformanceCard(active_instances_board,
+                                                                                               x, y,
+                                                                                               card_width, card_height)
 
             with elements("active_instances_board"):
                 with active_instances_board():
                     for bot, config in st.session_state.active_bots.items():
                         st.session_state.active_bots[bot]["bot_performance_card"](config)
+            #
+            # with elements("callbacks_interval"):
+            #     def call_every_second():
+            #         update_containers_info(docker_manager)
+            #     event.Interval(10, call_every_second)
         st.write(st.session_state.active_bots)
 
         # if len(all_instances) > 0:
