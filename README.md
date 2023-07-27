@@ -16,11 +16,11 @@ Here are the current dashboards in the collection:
 
 This project is built using [StreamLit](https://streamlit.io/) and uses Anaconda and Docker to simplify installation, updates, and manage dependencies. 
 
-See [Installation](https://github.com/hummingbot/dashboard/blob/feat/base-page-class/INSTALLATION.md) for how to install and update the dashboard.
+See [Installation](https://github.com/hummingbot/dashboard/blob/main/INSTALLATION.md) for how to install and update the dashboard.
 
 ### Contributions
 
-We welcome contributions from the community! See [Contribution](https://github.com/hummingbot/dashboard/blob/feat/base-page-class/CONTRIBUTING.md) for more information.
+We welcome contributions from the community! See [Contribution](https://github.com/hummingbot/dashboard/blob/main/CONTRIBUTING.md) for more information.
 
 ### Meetings
 
