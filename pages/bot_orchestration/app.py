@@ -88,6 +88,14 @@ docker_manager = DockerManager()
 
 orchestrate, manage = st.tabs(["Orchestrate", "Manage Files"])
 update_containers_info(docker_manager)
+
+
+def get_grid_positions(n_cards: int, cols: int = 3, card_width: int = 4, card_height: int = 3):
+    rows = n_cards // cols + 1
+    x_y = [(x * card_width, y * card_height) for x in range(cols) for y in range(rows)]
+    return sorted(x_y, key=lambda x: (x[1], x[0]))
+
+
 with orchestrate:
     with elements("create_bot"):
         with mui.Grid(container=True, spacing=4):
@@ -124,14 +132,9 @@ with orchestrate:
         quantity_of_active_bots = len(st.session_state.active_bots)
         if quantity_of_active_bots > 0:
             # TODO: Make layout configurable
-            cols = 3
-            rows = quantity_of_active_bots // cols + 1
-            card_width = 4
-            card_height = 3
+            grid_positions = get_grid_positions(n_cards=quantity_of_active_bots, cols=3, card_width=4, card_height=3)
             active_instances_board = Dashboard()
-            x_y = [(x * card_width, y * card_height) for x in range(cols) for y in range(rows)]
-            sorted_positions = sorted(x_y, key=lambda x: (x[1], x[0]))
-            for (bot, config), (x, y) in zip(st.session_state.active_bots.items(), sorted_positions):
+            for (bot, config), (x, y) in zip(st.session_state.active_bots.items(), grid_positions):
                 st.session_state.active_bots[bot]["bot_performance_card"] = BotPerformanceCard(active_instances_board,
                                                                                                x, y,
                                                                                                card_width, card_height)
