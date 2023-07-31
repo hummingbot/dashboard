@@ -16,6 +16,8 @@ class CandlesGraph:
         specs = [[{"secondary_y": True}]] * rows
         self.base_figure = make_subplots(rows=rows, cols=1, shared_xaxes=True, vertical_spacing=0.005,
                                          row_heights=heights, specs=specs)
+        self.min_time = candles_df.reset_index().timestamp.min()
+        self.max_time = candles_df.reset_index().timestamp.max()
         self.add_candles_graph()
         if self.show_volume:
             self.add_volume()
@@ -231,7 +233,9 @@ class CandlesGraph:
                 x=1
             ),
             height=1500,
-            xaxis_rangeslider_visible=False,
+            xaxis=dict(rangeslider_visible=False,
+                       range=[self.min_time, self.max_time]),
+            yaxis=dict(range=[self.candles_df.low.min(), self.candles_df.high.max()]),
             hovermode='x unified'
         )
         self.base_figure.update_yaxes(title_text="Price", row=1, col=1)
