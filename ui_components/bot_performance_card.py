@@ -2,6 +2,7 @@ from docker_manager import DockerManager
 from streamlit_elements import mui, lazy
 from ui_components.dashboard import Dashboard
 import streamlit as st
+import time
 from utils.os_utils import get_python_files_from_directory, get_yml_files_from_directory
 
 
@@ -13,6 +14,16 @@ class BotPerformanceCard(Dashboard.Item):
     @staticmethod
     def set_strategy(event, bot_name):
         st.session_state.active_bots[bot_name]["selected_strategy"] = event.target.value
+
+    @staticmethod
+    def start_strategy(bot_name, broker_client):
+        selected_strategy = st.session_state.active_bots[bot_name]["selected_strategy"]
+        if selected_strategy.endswith(".py"):
+            broker_client.start(script=selected_strategy)
+        elif selected_strategy.endswith(".yml"):
+            broker_client.import_strategy(strategy=selected_strategy.replace(".yml", ""))
+            time.sleep(0.5)
+            broker_client.start()
 
     def __call__(self, bot_config: dict):
         if "selected_strategy" not in st.session_state:
@@ -59,8 +70,7 @@ class BotPerformanceCard(Dashboard.Item):
                                           sx={"width": "100%"},)
 
                         with mui.Grid(item=True, xs=4):
-                            with mui.Button(onClick=lambda: bot_config["broker_client"].start(
-                                    script=st.session_state.active_bots[bot_name]["selected_strategy"])):
+                            with mui.Button(onClick=lambda x: self.start_strategy(bot_name, bot_config["broker_client"])):
                                 mui.icon.PlayCircle()
                                 mui.Typography("Start")
 
