@@ -10,6 +10,7 @@ from hbotrc import BotCommands
 
 from ui_components.bot_performance_card import BotPerformanceCard
 from ui_components.dashboard import Dashboard
+from ui_components.exited_bot_card import ExitedBotCard
 from utils.st_utils import initialize_st_page
 
 initialize_st_page(title="Bot Orchestration", icon="🐙")
@@ -20,9 +21,14 @@ if "is_broker_running" not in st.session_state:
 if "active_bots" not in st.session_state:
     st.session_state.active_bots = {}
 
+if "exited_bots" not in st.session_state:
+    st.session_state.exited_bots = {}
+
 if "new_bot_name" not in st.session_state:
     st.session_state.new_bot_name = ""
 
+if "selected_strategy" not in st.session_state:
+    st.session_state.selected_strategy = None
 
 def manage_broker_container():
     if st.session_state.is_broker_running:
@@ -32,7 +38,7 @@ def manage_broker_container():
     else:
         docker_manager.create_broker()
         with st.spinner('Starting hummingbot broker... This process may take a few seconds'):
-            time.sleep(30)
+            time.sleep(20)
 
 
 def launch_new_bot():
@@ -47,7 +53,8 @@ def update_containers_info(docker_manager):
     st.session_state.is_broker_running = "hummingbot-broker" in active_containers
     if st.session_state.is_broker_running:
         try:
-            active_hbot_containers = [container for container in active_containers if "hummingbot-" in container and "broker" not in container]
+            active_hbot_containers = [container for container in active_containers if
+                                      "hummingbot-" in container and "broker" not in container]
             previous_active_bots = st.session_state.active_bots.keys()
 
             # Remove bots that are no longer active
@@ -80,14 +87,22 @@ def update_containers_info(docker_manager):
                     del st.session_state.active_bots[bot]
         except RuntimeError:
             st.experimental_rerun()
-        st.session_state.active_bots = dict(sorted(st.session_state.active_bots.items(), key=lambda x: x[1]['is_running'], reverse=True))
+        st.session_state.active_bots = dict(
+            sorted(st.session_state.active_bots.items(), key=lambda x: x[1]['is_running'], reverse=True))
     else:
         st.session_state.active_bots = {}
 
-docker_manager = DockerManager()
 
+docker_manager = DockerManager()
+CARD_WIDTH = 4
+CARD_HEIGHT = 3
+
+if not docker_manager.is_docker_running():
+    st.warning("Docker is not running. Please start Docker and refresh the page.")
+    st.stop()
 orchestrate, manage = st.tabs(["Orchestrate", "Manage Files"])
 update_containers_info(docker_manager)
+exited_containers = [container for container in docker_manager.get_exited_containers() if "broker" not in container]
 
 
 def get_grid_positions(n_cards: int, cols: int = 3, card_width: int = 4, card_height: int = 3):
@@ -127,40 +142,41 @@ with orchestrate:
                                 icon()
                                 mui.Typography(button_text)
 
-
-    if st.session_state.is_broker_running:
-        quantity_of_active_bots = len(st.session_state.active_bots)
-        if quantity_of_active_bots > 0:
-            # TODO: Make layout configurable
-            grid_positions = get_grid_positions(n_cards=quantity_of_active_bots, cols=3, card_width=4, card_height=3)
-            active_instances_board = Dashboard()
-            for (bot, config), (x, y) in zip(st.session_state.active_bots.items(), grid_positions):
-                st.session_state.active_bots[bot]["bot_performance_card"] = BotPerformanceCard(active_instances_board,
-                                                                                               x, y,
-                                                                                               card_width, card_height)
-
-            with elements("active_instances_board"):
-                with mui.Paper(elevation=3, style={"padding": "2rem"}, spacing=[2, 2], container=True):
-                    mui.Typography("🦅 Hummingbot Instances", variant="h3")
+    with elements("active_instances_board"):
+        with mui.Paper(elevation=3, style={"padding": "2rem"}, spacing=[2, 2], container=True):
+            mui.Typography("🦅 Active Instances", variant="h3")
+            if st.session_state.is_broker_running:
+                quantity_of_active_bots = len(st.session_state.active_bots)
+                if quantity_of_active_bots > 0:
+                    # TODO: Make layout configurable
+                    grid_positions = get_grid_positions(n_cards=quantity_of_active_bots, cols=3,
+                                                        card_width=CARD_WIDTH, card_height=CARD_HEIGHT)
+                    active_instances_board = Dashboard()
+                    for (bot, config), (x, y) in zip(st.session_state.active_bots.items(), grid_positions):
+                        st.session_state.active_bots[bot]["bot_performance_card"] = BotPerformanceCard(active_instances_board,
+                                                                                                       x, y,
+                                                                                                       CARD_WIDTH, CARD_HEIGHT)
                     with active_instances_board():
                         for bot, config in st.session_state.active_bots.items():
                             st.session_state.active_bots[bot]["bot_performance_card"](config)
-            with elements("stopped_instances_board"):
-                with mui.Paper(elevation=3, style={"padding": "2rem"}, spacing=[2, 2], container=True):
-                    mui.Typography("🦅 Stopped Instances", variant="h3")
-                    # with mui.Grid()
-
-
-
+                else:
+                    mui.Alert("No active bots found. Please create a new bot.", severity="info", sx={"margin": "1rem"})
+            else:
+                mui.Alert("Please start the Hummingbot Broker to control your bots.", severity="warning", sx={"margin": "1rem"})
+    with elements("stopped_instances_board"):
+        grid_positions = get_grid_positions(n_cards=len(exited_containers), cols=3, card_width=4, card_height=3)
+        exited_instances_board = Dashboard()
+        for exited_instance, (x, y) in zip(exited_containers, grid_positions):
+            st.session_state.exited_bots[exited_instance] = ExitedBotCard(exited_instances_board, x, y,
+                                                                          CARD_WIDTH, 1)
+        with mui.Paper(elevation=3, style={"padding": "2rem"}, spacing=[2, 2], container=True):
+            mui.Typography("💤 Stopped Instances", variant="h3")
+            with exited_instances_board():
+                for bot, card in st.session_state.exited_bots.items():
+                    card(bot)
 
 with manage:
     with elements("monaco_editors"):
-        # Streamlit Elements embeds Monaco code and diff editor that powers Visual Studio Code.
-        # You can configure editor's behavior and features with the 'options' parameter.
-        #
-        # Streamlit Elements uses an unofficial React implementation (GitHub links below for
-        # documentation).
-
         from streamlit_elements import editor
 
         if "content" not in st.session_state:
