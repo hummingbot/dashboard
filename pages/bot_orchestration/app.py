@@ -30,7 +30,7 @@ def manage_broker_container():
         with st.spinner('Stopping hummingbot broker... You are not going to be able to manage bots anymore.'):
             time.sleep(5)
     else:
-        docker_manager.start_container("hummingbot-broker")
+        docker_manager.create_broker()
         with st.spinner('Starting hummingbot broker... This process may take a few seconds'):
             time.sleep(30)
 
