@@ -16,6 +16,28 @@ class DatabaseManager:
         self.engine = create_engine(self.db_path, connect_args={'check_same_thread': False})
         self.session_maker = sessionmaker(bind=self.engine)
 
+    @property
+    def status(self):
+        try:
+            with self.session_maker() as session:
+                query = 'SELECT DISTINCT config_file_path FROM TradeFill'
+                config_files = pd.read_sql_query(query, session.connection())
+            if len(config_files) > 0:
+            # TODO: improve error handling, think what to do with other cases
+                return "OK"
+            else:
+                return "No records found in the TradeFill table with non-null config_file_path"
+        except Exception as e:
+            return f"Error: {str(e)}"
+
+    @property
+    def config_files(self):
+        return self.get_config_files()
+
+    @property
+    def configs(self):
+        return {config_file: self.get_exchanges_trading_pairs_by_config_file(config_file) for config_file in self.config_files}
+
     def get_config_files(self):
         with self.session_maker() as session:
             query = 'SELECT DISTINCT config_file_path FROM TradeFill'
