@@ -26,8 +26,6 @@ class BotPerformanceCard(Dashboard.Item):
             broker_client.start()
 
     def __call__(self, bot_config: dict):
-        if "selected_strategy" not in st.session_state:
-            st.session_state.selected_strategy = None
         bot_name = bot_config["bot_name"]
         scripts_directory = f"./hummingbot_files/bot_configs/{bot_config['bot_name']}"
         strategies_directory = f"{scripts_directory}/conf/strategies"
