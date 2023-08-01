@@ -1,4 +1,5 @@
 from glob import glob
+from types import SimpleNamespace
 
 from commlib.exceptions import RPCClientTimeoutError
 
@@ -12,11 +13,12 @@ from hbotrc import BotCommands
 
 from ui_components.bot_performance_card import BotPerformanceCard
 from ui_components.dashboard import Dashboard
+from ui_components.editor import Editor
 from ui_components.exited_bot_card import ExitedBotCard
-from utils.os_utils import get_directories_from_directory, get_python_files_from_directory, get_yml_files_from_directory
+from ui_components.file_explorer import FileExplorer
 from utils.st_utils import initialize_st_page
 
-initialize_st_page(title="Bot Orchestration", icon="🐙")
+initialize_st_page(title="Bot Orchestration", icon="🐙", initial_sidebar_state="collapsed")
 
 if "is_broker_running" not in st.session_state:
     st.session_state.is_broker_running = False
@@ -32,6 +34,13 @@ if "new_bot_name" not in st.session_state:
 
 if "selected_strategy" not in st.session_state:
     st.session_state.selected_strategy = None
+
+if "selected_file" not in st.session_state:
+    st.session_state.selected_file = ""
+
+if "editor_tabs" not in st.session_state:
+    st.session_state.editor_tabs = {}
+
 
 def manage_broker_container():
     if st.session_state.is_broker_running:
@@ -179,27 +188,25 @@ with orchestrate:
                     card(bot)
 
 
-def set_selected_file(_, node_id):
-    st.session_state.selected_file = node_id
-
-
 with manage:
-    if "selected_file" not in st.session_state:
-        st.session_state.selected_file = ""
+    if "w" not in st.session_state:
+        board = Dashboard()
+        w = SimpleNamespace(
+            dashboard=board,
+            file_explorer=FileExplorer(board, 0, 0, 3, 12),
+            editor=Editor(board, 4, 0, 9, 12),
+        )
+        st.session_state.w = w
+
+    else:
+        w = st.session_state.w
+
+    for tab_name, content in st.session_state.editor_tabs.items():
+        w.editor.add_tab(tab_name, content["content"], content["language"])
+
     with elements("bot_config"):
         with mui.Paper(elevation=3, style={"padding": "2rem"}, spacing=[2, 2], container=True):
             mui.Typography("🗂Files Management", variant="h3", sx={"margin-bottom": "2rem"})
-            with mui.Grid(container=True, spacing=4):
-                bots = [bot.split("/")[-2] for bot in get_directories_from_directory("hummingbot_files/bot_configs") if
-                            "data_downloader" not in bot]
-                with mui.Grid(item=True, xs=6):
-                    mui.Typography("🗄️ Files", variant="h5", sx={"margin-bottom": "1rem"})
-                    with mui.lab.TreeView(defaultExpandIcon=mui.icon.ChevronRight, defaultCollapseIcon=mui.icon.ExpandMore,
-                                          onNodeSelect=lazy(lambda event, node_id: set_selected_file(event, node_id))):
-                        for bot in bots:
-                            with mui.lab.TreeItem(nodeId=bot, label=f"🤖{bot}"):
-                                for file in get_python_files_from_directory(f"hummingbot_files/bot_configs/{bot}/scripts"):
-                                    mui.lab.TreeItem(nodeId=file, label=f"🐍{file.split('/')[-1]}")
-                                for file in get_yml_files_from_directory(f"hummingbot_files/bot_configs/{bot}/conf/strategies"):
-                                    mui.lab.TreeItem(nodeId=file, label=f"📄 {file.split('/')[-1]}")
-
+            with w.dashboard():
+                w.file_explorer()
+                w.editor()
