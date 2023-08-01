@@ -54,6 +54,11 @@ def load_file(path: str) -> str:
         return ""
 
 
+def get_directories_from_directory(directory: str) -> list:
+    directories = glob.glob(directory + "/**/")
+    return directories
+
+
 def get_python_files_from_directory(directory: str) -> list:
     py_files = glob.glob(directory + "/**/*.py", recursive=True)
     py_files = [path for path in py_files if not path.endswith("__init__.py")]
