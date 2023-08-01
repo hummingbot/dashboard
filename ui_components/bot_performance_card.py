@@ -12,8 +12,8 @@ class BotPerformanceCard(Dashboard.Item):
         super().__init__(board, x, y, w, h, **item_props)
 
     @staticmethod
-    def set_strategy(event, bot_name):
-        st.session_state.active_bots[bot_name]["selected_strategy"] = event.target.value
+    def set_strategy(_, childs, bot_name):
+        st.session_state.active_bots[bot_name]["selected_strategy"] = childs.props.value
 
     @staticmethod
     def start_strategy(bot_name, broker_client):
@@ -63,18 +63,17 @@ class BotPerformanceCard(Dashboard.Item):
                         with mui.Grid(item=True, xs=12):
                             mui.Typography("Select a strategy:")
                         with mui.Grid(item=True, xs=8):
-                            mui.TextField(label="Script name or config file name",
-                                          onChange=lazy(lambda x: self.set_strategy(x, bot_name)),
-                                          sx={"width": "100%"},)
+                            with mui.Select(onChange=lazy(lambda x, y: self.set_strategy(x, y, bot_name)),
+                                            sx={"width": "100%"}):
+                                for script in scripts:
+                                    mui.MenuItem(script, value=script)
+                                for strategy in strategies:
+                                    mui.MenuItem(strategy, value=strategy)
 
                         with mui.Grid(item=True, xs=4):
                             with mui.Button(onClick=lambda x: self.start_strategy(bot_name, bot_config["broker_client"])):
                                 mui.icon.PlayCircle()
                                 mui.Typography("Start")
-
-                    # with mui.Select(label="Scripts", onChange=lazy(lambda x: self.set_strategy(x, bot_name))):
-                    #     for script in scripts:
-                    #         mui.MenuItem(script, value=script)
                 with mui.CardActions(disableSpacing=True):
                     with mui.Button(onClick=lambda: DockerManager().stop_container(bot_name)):
                         mui.icon.DeleteForever()
