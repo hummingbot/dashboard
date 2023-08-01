@@ -193,8 +193,8 @@ with manage:
         board = Dashboard()
         w = SimpleNamespace(
             dashboard=board,
-            file_explorer=FileExplorer(board, 0, 0, 3, 12),
-            editor=Editor(board, 4, 0, 9, 12),
+            file_explorer=FileExplorer(board, 0, 0, 3, 8),
+            editor=Editor(board, 4, 0, 9, 8),
         )
         st.session_state.w = w
 
