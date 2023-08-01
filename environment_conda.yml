@@ -17,11 +17,11 @@ dependencies:
       - pyyaml
       - commlib-py
       - jupyter
-      - streamlit-elements
       - optuna
       - optuna-dashboard
       - pathlib
       - streamlit-ace
       - st-pages
+      - streamlit-elements==0.1.*
       - git+https://github.com/hummingbot/hbot-remote-client-py.git
       - git+https://github.com/hummingbot/docker-manager.git
