@@ -1,3 +1,5 @@
+from glob import glob
+
 from commlib.exceptions import RPCClientTimeoutError
 
 import constants
@@ -11,6 +13,7 @@ from hbotrc import BotCommands
 from ui_components.bot_performance_card import BotPerformanceCard
 from ui_components.dashboard import Dashboard
 from ui_components.exited_bot_card import ExitedBotCard
+from utils.os_utils import get_directories_from_directory, get_python_files_from_directory, get_yml_files_from_directory
 from utils.st_utils import initialize_st_page
 
 initialize_st_page(title="Bot Orchestration", icon="🐙")
@@ -175,25 +178,28 @@ with orchestrate:
                 for bot, card in st.session_state.exited_bots.items():
                     card(bot)
 
+
+def set_selected_file(_, node_id):
+    st.session_state.selected_file = node_id
+
+
 with manage:
-    with elements("monaco_editors"):
-        from streamlit_elements import editor
+    if "selected_file" not in st.session_state:
+        st.session_state.selected_file = ""
+    with elements("bot_config"):
+        with mui.Paper(elevation=3, style={"padding": "2rem"}, spacing=[2, 2], container=True):
+            mui.Typography("🗂Files Management", variant="h3", sx={"margin-bottom": "2rem"})
+            with mui.Grid(container=True, spacing=4):
+                bots = [bot.split("/")[-2] for bot in get_directories_from_directory("hummingbot_files/bot_configs") if
+                            "data_downloader" not in bot]
+                with mui.Grid(item=True, xs=6):
+                    mui.Typography("🗄️ Files", variant="h5", sx={"margin-bottom": "1rem"})
+                    with mui.lab.TreeView(defaultExpandIcon=mui.icon.ChevronRight, defaultCollapseIcon=mui.icon.ExpandMore,
+                                          onNodeSelect=lazy(lambda event, node_id: set_selected_file(event, node_id))):
+                        for bot in bots:
+                            with mui.lab.TreeItem(nodeId=bot, label=f"🤖{bot}"):
+                                for file in get_python_files_from_directory(f"hummingbot_files/bot_configs/{bot}/scripts"):
+                                    mui.lab.TreeItem(nodeId=file, label=f"🐍{file.split('/')[-1]}")
+                                for file in get_yml_files_from_directory(f"hummingbot_files/bot_configs/{bot}/conf/strategies"):
+                                    mui.lab.TreeItem(nodeId=file, label=f"📄 {file.split('/')[-1]}")
 
-        if "content" not in st.session_state:
-            st.session_state.content = "Default value"
-
-        mui.Typography("Content: ", st.session_state.content)
-
-
-        def update_content(value):
-            st.session_state.content = value
-
-
-        editor.Monaco(
-            height=1200,
-            defaultValue=st.session_state.content,
-            onChange=lazy(update_content),
-            defaultLanguage="python"
-        )
-
-        mui.Button("Update content", onClick=sync())
