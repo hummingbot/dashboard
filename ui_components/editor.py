@@ -55,7 +55,8 @@ class Editor(Dashboard.Item):
                         theme="vs-dark" if self._dark_mode else "light",
                         path=label,
                         options={
-                            "wordWrap": True
+                            "wordWrap": True,
+                            "fontSize": 16.5,
                         }
                     )
 
