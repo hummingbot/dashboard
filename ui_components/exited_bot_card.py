@@ -17,7 +17,6 @@ class ExitedBotCard(Dashboard.Item):
     def remove_container(bot_name):
         DockerManager().remove_container(bot_name)
         os_utils.remove_directory(f"./hummingbot_files/bot_configs/{bot_name}")
-        st.experimental_rerun()
 
     def __call__(self, bot_name: str):
         with mui.Card(key=self._key,
