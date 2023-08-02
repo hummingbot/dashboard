@@ -14,10 +14,6 @@ class FileExplorer(Dashboard.Item):
         st.session_state.selected_file = node_id
 
     @staticmethod
-    def add_file():
-        pass
-
-    @staticmethod
     def delete_file():
         if st.session_state.selected_file:
             if st.session_state.selected_file.endswith(".py") or st.session_state.selected_file.endswith(".yml"):
@@ -47,7 +43,6 @@ class FileExplorer(Dashboard.Item):
                         mui.icon.Folder()
                         mui.Typography("File Explorer")
                     with mui.Grid(item=True, xs=6, sx={"display": "flex", "justifyContent": "flex-end"}):
-                        mui.IconButton(mui.icon.Add, onClick=self.add_file, sx={"mx": 1})
                         mui.IconButton(mui.icon.Delete, onClick=self.delete_file, sx={"mx": 1})
                         mui.IconButton(mui.icon.Edit, onClick=self.edit_file, sx={"mx": 1})
             with mui.Box(sx={"overflow": "auto"}):
