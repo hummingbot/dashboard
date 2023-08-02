@@ -14,10 +14,13 @@ def remove_files_from_directory(directory: str):
     for file in os.listdir(directory):
         os.remove(f"{directory}/{file}")
 
+def remove_file(file_path: str):
+    os.remove(file_path)
 
 def remove_directory(directory: str):
     process = subprocess.Popen(f"rm -rf {directory}", shell=True)
     process.wait()
+
 
 def dump_dict_to_yaml(data_dict, filename):
     with open(filename, 'w') as file:
@@ -54,10 +57,20 @@ def load_file(path: str) -> str:
         return ""
 
 
+def get_directories_from_directory(directory: str) -> list:
+    directories = glob.glob(directory + "/**/")
+    return directories
+
+
 def get_python_files_from_directory(directory: str) -> list:
     py_files = glob.glob(directory + "/**/*.py", recursive=True)
     py_files = [path for path in py_files if not path.endswith("__init__.py")]
     return py_files
+
+
+def get_yml_files_from_directory(directory: str) -> list:
+    yml = glob.glob(directory + "/**/*.yml", recursive=True)
+    return yml
 
 
 def load_directional_strategies(path):

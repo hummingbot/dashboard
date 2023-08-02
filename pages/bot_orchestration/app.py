@@ -1,135 +1,214 @@
-import time
+from glob import glob
+from types import SimpleNamespace
+
+from commlib.exceptions import RPCClientTimeoutError
+
 import constants
-import pandas as pd
 import streamlit as st
+from streamlit_elements import elements, mui, lazy, sync, event
+import time
 
 from docker_manager import DockerManager
 from hbotrc import BotCommands
 
+from ui_components.bot_performance_card import BotPerformanceCard
+from ui_components.dashboard import Dashboard
+from ui_components.editor import Editor
+from ui_components.exited_bot_card import ExitedBotCard
+from ui_components.file_explorer import FileExplorer
 from utils.st_utils import initialize_st_page
 
+initialize_st_page(title="Bot Orchestration", icon="🐙", initial_sidebar_state="collapsed")
 
-initialize_st_page(title="Bot Orchestration", icon="🐙")
+if "is_broker_running" not in st.session_state:
+    st.session_state.is_broker_running = False
 
-# Start content here
+if "active_bots" not in st.session_state:
+    st.session_state.active_bots = {}
+
+if "exited_bots" not in st.session_state:
+    st.session_state.exited_bots = {}
+
+if "new_bot_name" not in st.session_state:
+    st.session_state.new_bot_name = ""
+
+if "selected_strategy" not in st.session_state:
+    st.session_state.selected_strategy = None
+
+if "selected_file" not in st.session_state:
+    st.session_state.selected_file = ""
+
+if "editor_tabs" not in st.session_state:
+    st.session_state.editor_tabs = {}
+
+
+def manage_broker_container():
+    if st.session_state.is_broker_running:
+        docker_manager.stop_container("hummingbot-broker")
+        with st.spinner('Stopping hummingbot broker... You are not going to be able to manage bots anymore.'):
+            time.sleep(5)
+    else:
+        docker_manager.create_broker()
+        with st.spinner('Starting hummingbot broker... This process may take a few seconds'):
+            time.sleep(20)
+
+
+def launch_new_bot():
+    bot_name = f"hummingbot-{st.session_state.new_bot_name.target.value}"
+    docker_manager.create_hummingbot_instance(instance_name=bot_name,
+                                              base_conf_folder=f"{constants.BOTS_FOLDER}/master_bot_conf/",
+                                              target_conf_folder=f"{constants.BOTS_FOLDER}/{bot_name}")
+
+
+def update_containers_info(docker_manager):
+    active_containers = docker_manager.get_active_containers()
+    st.session_state.is_broker_running = "hummingbot-broker" in active_containers
+    if st.session_state.is_broker_running:
+        try:
+            active_hbot_containers = [container for container in active_containers if
+                                      "hummingbot-" in container and "broker" not in container]
+            previous_active_bots = st.session_state.active_bots.keys()
+
+            # Remove bots that are no longer active
+            for bot in previous_active_bots:
+                if bot not in active_hbot_containers:
+                    del st.session_state.active_bots[bot]
+
+            # Add new bots
+            for bot in active_hbot_containers:
+                if bot not in previous_active_bots:
+                    st.session_state.active_bots[bot] = {
+                        "bot_name": bot,
+                        "broker_client": BotCommands(host='localhost', port=1883, username='admin', password='password',
+                                                     bot_id=bot)
+                    }
+
+            # Update bot info
+            for bot in st.session_state.active_bots.keys():
+                try:
+                    broker_client = st.session_state.active_bots[bot]["broker_client"]
+                    status = broker_client.status()
+                    history = broker_client.history()
+                    is_running = "No strategy is currently running" not in status.msg
+                    st.session_state.active_bots[bot]["is_running"] = is_running
+                    st.session_state.active_bots[bot]["status"] = status.msg
+                    st.session_state.active_bots[bot]["trades"] = history.trades
+                    st.session_state.active_bots[bot]["selected_strategy"] = None
+                except RPCClientTimeoutError:
+                    st.error(f"RPCClientTimeoutError: Could not connect to {bot}. Please review the connection.")
+                    del st.session_state.active_bots[bot]
+        except RuntimeError:
+            st.experimental_rerun()
+        st.session_state.active_bots = dict(
+            sorted(st.session_state.active_bots.items(), key=lambda x: x[1]['is_running'], reverse=True))
+    else:
+        st.session_state.active_bots = {}
+
+
 docker_manager = DockerManager()
+CARD_WIDTH = 4
+CARD_HEIGHT = 3
 
-active_containers = docker_manager.get_active_containers()
-exited_containers = docker_manager.get_exited_containers()
+if not docker_manager.is_docker_running():
+    st.warning("Docker is not running. Please start Docker and refresh the page.")
+    st.stop()
+orchestrate, manage = st.tabs(["Orchestrate", "Manage Files"])
+update_containers_info(docker_manager)
+exited_containers = [container for container in docker_manager.get_exited_containers() if "broker" not in container]
 
 
+def get_grid_positions(n_cards: int, cols: int = 3, card_width: int = 4, card_height: int = 3):
+    rows = n_cards // cols + 1
+    x_y = [(x * card_width, y * card_height) for x in range(cols) for y in range(rows)]
+    return sorted(x_y, key=lambda x: (x[1], x[0]))
 
-st.write("## 🚀Create Hummingbot Instance")
-c11, c12 = st.columns([0.8, 0.2])
-with c11:
-    instance_name = st.text_input("Instance Name")
-with c12:
-    st.write()
-    create_instance = st.button("Create Instance")
-    if create_instance:
-        bot_name = f"hummingbot-{instance_name}"
-        docker_manager.create_hummingbot_instance(instance_name=bot_name,
-                                                  base_conf_folder=f"{constants.BOTS_FOLDER}/data_downloader/conf",
-                                                  target_conf_folder=f"{constants.BOTS_FOLDER}/{bot_name}")
 
-st.write("---")
+with orchestrate:
+    with elements("create_bot"):
+        with mui.Grid(container=True, spacing=4):
+            with mui.Grid(item=True, xs=6):
+                with mui.Paper(elevation=3, style={"padding": "2rem"}, spacing=[2, 2], container=True):
+                    with mui.Grid(container=True, spacing=4):
+                        with mui.Grid(item=True, xs=12):
+                            mui.Typography("🚀 Set up a new bot", variant="h3")
+                        with mui.Grid(item=True, xs=8):
+                            mui.TextField(label="Bot Name", variant="outlined", onChange=lazy(sync("new_bot_name")),
+                                          sx={"width": "100%"})
+                        with mui.Grid(item=True, xs=4):
+                            with mui.Button(onClick=launch_new_bot):
+                                mui.icon.AddCircleOutline()
+                                mui.Typography("Create new bot!")
+            with mui.Grid(item=True, xs=6):
+                with mui.Paper(elevation=3, style={"padding": "2rem"}, spacing=[2, 2], container=True):
+                    with mui.Grid(container=True, spacing=4):
+                        with mui.Grid(item=True, xs=12):
+                            mui.Typography("🐙 Hummingbot Broker", variant="h3")
+                        with mui.Grid(item=True, xs=8):
+                            mui.Typography("To control and monitor your bots you need to launch the Hummingbot Broker."
+                                           "This component will send the commands to the running bots.")
+                        with mui.Grid(item=True, xs=4):
+                            button_text = "Stop Broker" if st.session_state.is_broker_running else "Start Broker"
+                            color = "error" if st.session_state.is_broker_running else "success"
+                            icon = mui.icon.Stop if st.session_state.is_broker_running else mui.icon.PlayCircle
+                            with mui.Button(onClick=manage_broker_container, color=color):
+                                icon()
+                                mui.Typography(button_text)
 
-st.write("## 🦅Hummingbot Instances")
+    with elements("active_instances_board"):
+        with mui.Paper(elevation=3, style={"padding": "2rem"}, spacing=[2, 2], container=True):
+            mui.Typography("🦅 Active Instances", variant="h3")
+            if st.session_state.is_broker_running:
+                quantity_of_active_bots = len(st.session_state.active_bots)
+                if quantity_of_active_bots > 0:
+                    # TODO: Make layout configurable
+                    grid_positions = get_grid_positions(n_cards=quantity_of_active_bots, cols=3,
+                                                        card_width=CARD_WIDTH, card_height=CARD_HEIGHT)
+                    active_instances_board = Dashboard()
+                    for (bot, config), (x, y) in zip(st.session_state.active_bots.items(), grid_positions):
+                        st.session_state.active_bots[bot]["bot_performance_card"] = BotPerformanceCard(active_instances_board,
+                                                                                                       x, y,
+                                                                                                       CARD_WIDTH, CARD_HEIGHT)
+                    with active_instances_board():
+                        for bot, config in st.session_state.active_bots.items():
+                            st.session_state.active_bots[bot]["bot_performance_card"](config)
+                else:
+                    mui.Alert("No active bots found. Please create a new bot.", severity="info", sx={"margin": "1rem"})
+            else:
+                mui.Alert("Please start the Hummingbot Broker to control your bots.", severity="warning", sx={"margin": "1rem"})
+    with elements("stopped_instances_board"):
+        grid_positions = get_grid_positions(n_cards=len(exited_containers), cols=3, card_width=4, card_height=3)
+        exited_instances_board = Dashboard()
+        for exited_instance, (x, y) in zip(exited_containers, grid_positions):
+            st.session_state.exited_bots[exited_instance] = ExitedBotCard(exited_instances_board, x, y,
+                                                                          CARD_WIDTH, 1)
+        with mui.Paper(elevation=3, style={"padding": "2rem"}, spacing=[2, 2], container=True):
+            mui.Typography("💤 Stopped Instances", variant="h3")
+            with exited_instances_board():
+                for bot, card in st.session_state.exited_bots.items():
+                    card(bot)
 
-st.write("This section will let you control your hummingbot instances.")
 
-c1, c2 = st.columns([0.8, 0.2])
-active_hummingbot_instances = [(container, "active") for container in active_containers if "hummingbot-" in container
-                               and "broker" not in container]
-exited_hummingbot_instances = [(container, "exited") for container in exited_containers if "hummingbot-" in container
-                               and "broker" not in container]
-all_instances = active_hummingbot_instances + exited_hummingbot_instances
-if len(all_instances) > 0:
-    with c1:
-        df = pd.DataFrame(all_instances, columns=["instance_name", "status"])
-        df["selected"] = False
-        edited_df = st.data_editor(df[["selected", "instance_name", "status"]])
-        selected_instances = edited_df[edited_df["selected"]]["instance_name"].tolist()
-    with c2:
-        stop_instances = st.button("Stop Selected Instances")
-        start_instances = st.button("Start Selected Instances")
-        clean_instances = st.button("Clean Selected Instances")
+with manage:
+    if "w" not in st.session_state:
+        board = Dashboard()
+        w = SimpleNamespace(
+            dashboard=board,
+            file_explorer=FileExplorer(board, 0, 0, 3, 7),
+            editor=Editor(board, 4, 0, 9, 7),
+        )
+        st.session_state.w = w
 
-        if stop_instances:
-            for instance in selected_instances:
-                docker_manager.stop_container(instance)
+    else:
+        w = st.session_state.w
 
-        if start_instances:
-            for instance in selected_instances:
-                docker_manager.start_container(instance)
+    for tab_name, content in st.session_state.editor_tabs.items():
+        if tab_name not in w.editor._tabs:
+            w.editor.add_tab(tab_name, content["content"], content["language"], content["file_path"])
 
-        if clean_instances:
-            for instance in selected_instances:
-                docker_manager.remove_container(instance)
-else:
-    st.info("No active hummingbot instances")
-
-st.write("---")
-st.write("## 📩Hummingbot Broker")
-if "hummingbot-broker" not in active_containers:
-    c1, c2 = st.columns([0.9, 0.1])
-    with c1:
-        st.error("Hummingbot Broker is not running")
-    with c2:
-        # TODO: Add configuration variables for broker creation
-        create_broker = st.button("Create Hummingbot Broker")
-        if create_broker:
-            docker_manager.create_broker()
-else:
-    c1, c2 = st.columns([0.9, 0.1])
-    with c1:
-        st.success("Hummingbot Broker is running")
-    with c2:
-        # TODO: Make that the hummingbot client checks if the broker is running if the config is on like gateway
-        stop_broker = st.button("Stop Hummingbot Broker")
-        if stop_broker:
-            docker_manager.stop_container("hummingbot-broker")
-    if len(active_hummingbot_instances) > 0:
-        broker_clients = {instance_name[0]: BotCommands(
-                                    host='localhost',
-                                    port=1883,
-                                    username='admin',
-                                    password='38828943.Dardonacci',
-                                    bot_id=instance_name[0],
-                                ) for instance_name in active_hummingbot_instances}
-        instance_names = [instance_name[0] for instance_name in active_hummingbot_instances]
-        tabs = st.tabs([instance_name for instance_name in instance_names])
-        for i, tab in enumerate(tabs):
-            with tab:
-                instance_name = instance_names[i]
-                client = broker_clients[instance_name]
-                status = client.status()
-                bot_stopped = "No strategy is currently running" in status.msg
-                strategy = None
-                c1, c2 = st.columns([0.8, 0.2])
-                with c1:
-                    if bot_stopped:
-                        strategy = st.text_input("Strategy config or Script to run (strategy will be the name of the config file"
-                                                 "and script script_name.py)",
-                                                 key=f"strategy-{instance_name}")
-                        st.info("The bot is currently stopped. Start a strategy to get the bot status")
-                with c2:
-                    if strategy:
-                        run_strategy = st.button("Run Strategy", key=f"run-{instance_name}")
-                        is_script = strategy.endswith(".py")
-                        if run_strategy:
-                            if is_script:
-                                client.start(script=strategy)
-                            else:
-                                client.import_strategy(strategy=strategy.replace(".yml", ""))
-                                time.sleep(0.5)
-                                client.start(strategy)
-                    status = st.button("Get Status", key=f"status-{instance_name}")
-                    stop_strategy = st.button("Stop Strategy", key=f"stop-{instance_name}")
-                with c1:
-                    if status:
-                        status = client.status()
-                        st.write(status.msg)
-                    if stop_strategy:
-                        client.stop(strategy)
-                        st.success("Strategy stopped")
+    with elements("bot_config"):
+        with mui.Paper(elevation=3, style={"padding": "2rem"}, spacing=[2, 2], container=True):
+            mui.Typography("🗂Files Management", variant="h3", sx={"margin-bottom": "2rem"})
+            event.Hotkey("ctrl+s", sync(), bindInputs=True, overrideDefault=True)
+            with w.dashboard():
+                w.file_explorer()
+                w.editor()
