@@ -23,12 +23,12 @@ git clone https://github.com/hummingbot/dashboard.git
 cd dashboard
 ```
 
-3. Run conda command to create an isolated `conda` environment and install dependencies
+3. Run command to create an isolated `conda` environment and install dependencies
 ```
-conda env create -f environment_conda.yml
+make env_create
 ```
 
-4. Activate the isoldated 'conda' environment
+4. Activate the isolated 'conda' environment
 ```bash
 conda activate dashboard
 ```
@@ -58,9 +58,10 @@ unlink data
 
 ## Updating Dependencies
 
-To update the `dashboard` environment for new dependencies, run:
+To update the `dashboard` environment for changes to dependencies defined in `environment.yml`, remove the environment and re-create it:
 ```
-conda env update -f environment_conda.yml
+make env_remove
+make env_create
 ```
 
 To updated the `dashboard` source for latest version, run:
