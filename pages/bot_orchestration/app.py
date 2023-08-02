@@ -5,7 +5,7 @@ from commlib.exceptions import RPCClientTimeoutError
 
 import constants
 import streamlit as st
-from streamlit_elements import elements, mui, lazy, sync
+from streamlit_elements import elements, mui, lazy, sync, event
 import time
 
 from docker_manager import DockerManager
@@ -193,8 +193,8 @@ with manage:
         board = Dashboard()
         w = SimpleNamespace(
             dashboard=board,
-            file_explorer=FileExplorer(board, 0, 0, 3, 8),
-            editor=Editor(board, 4, 0, 9, 8),
+            file_explorer=FileExplorer(board, 0, 0, 3, 7),
+            editor=Editor(board, 4, 0, 9, 7),
         )
         st.session_state.w = w
 
@@ -202,11 +202,13 @@ with manage:
         w = st.session_state.w
 
     for tab_name, content in st.session_state.editor_tabs.items():
-        w.editor.add_tab(tab_name, content["content"], content["language"])
+        if tab_name not in w.editor._tabs:
+            w.editor.add_tab(tab_name, content["content"], content["language"], content["file_path"])
 
     with elements("bot_config"):
         with mui.Paper(elevation=3, style={"padding": "2rem"}, spacing=[2, 2], container=True):
             mui.Typography("🗂Files Management", variant="h3", sx={"margin-bottom": "2rem"})
+            event.Hotkey("ctrl+s", sync(), bindInputs=True, overrideDefault=True)
             with w.dashboard():
                 w.file_explorer()
                 w.editor()
