@@ -24,12 +24,11 @@ class FileExplorer(Dashboard.Item):
 
     def edit_file(self):
         short_path = st.session_state.selected_file.replace(self._directory, "")
-        if st.session_state.selected_file.endswith(".py"):
+        language = "python" if st.session_state.selected_file.endswith(".py") else "yaml"
+        if st.session_state.selected_file.endswith(".py") or st.session_state.selected_file.endswith(".yml"):
             st.session_state.editor_tabs[short_path] = {"content": load_file(st.session_state.selected_file),
-                                                        "language": "python"}
-        elif st.session_state.selected_file.endswith(".yml"):
-            st.session_state.editor_tabs[short_path] = {"content": load_file(st.session_state.selected_file),
-                                                        "language": "yaml"}
+                                                        "language": language,
+                                                        "file_path": st.session_state.selected_file}
 
     def __call__(self):
         bots = [bot.split("/")[-2] for bot in get_directories_from_directory(self._directory) if
