@@ -1,5 +1,8 @@
 from functools import partial
+import streamlit as st
 from streamlit_elements import mui, editor, sync, lazy
+
+from utils.os_utils import save_file
 from .dashboard import Dashboard
 
 
@@ -19,31 +22,51 @@ class Editor(Dashboard.Item):
             "borderColor": "divider"
         }
 
+    def save_file(self):
+        if len(self._tabs) > 0:
+            label = list(self._tabs.keys())[self._index]
+            content = self.get_content(label)
+            full_path = self.get_file_path(label)
+            file_name = full_path.split("/")[-1]
+            path = "/".join(full_path.split("/")[:-1])
+            save_file(name=file_name, content=content, path=path)
+            st.info("File saved")
+
     def _change_tab(self, _, index):
         self._index = index
 
     def update_content(self, label, content):
         self._tabs[label]["content"] = content
 
-    def add_tab(self, label, default_content, language):
+    def add_tab(self, label, default_content, language, file_path):
         self._tabs[label] = {
             "content": default_content,
-            "language": language
+            "language": language,
+            "file_path": file_path
         }
 
     def get_content(self, label):
         return self._tabs[label]["content"]
 
+    def get_file_path(self, label):
+        return self._tabs[label]["file_path"]
+
     def __call__(self):
         with mui.Paper(key=self._key, sx={"display": "flex", "flexDirection": "column", "borderRadius": 3, "overflow": "hidden"}, elevation=1):
 
             with self.title_bar("0px 15px 0px 15px"):
-                mui.icon.Terminal()
-                mui.Typography("Editor")
+                with mui.Grid(container=True, spacing=4, sx={"display": "flex", "alignItems": "center"}):
+                    with mui.Grid(item=True, xs=10, sx={"display": "flex", "alignItems": "center"}):
+                        mui.icon.Terminal()
+                        mui.Typography("Editor")
+                        with mui.Tabs(value=self._index, onChange=self._change_tab, scrollButtons=True,
+                                      variant="scrollable", sx={"flex": 1}):
+                            for label in self._tabs.keys():
+                                mui.Tab(label=label)
+                    with mui.Grid(item=True, xs=2, sx={"display": "flex", "justifyContent": "flex-end"}):
+                        mui.IconButton(mui.icon.Save, onClick=self.save_file, sx={"mx": 1})
 
-                with mui.Tabs(value=self._index, onChange=self._change_tab, scrollButtons=True, variant="scrollable", sx={"flex": 1}):
-                    for label in self._tabs.keys():
-                        mui.Tab(label=label)
+
 
             for index, (label, tab) in enumerate(self._tabs.items()):
                 with mui.Box(sx=self._editor_box_style, hidden=(index != self._index)):
