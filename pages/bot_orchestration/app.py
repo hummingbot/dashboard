@@ -18,7 +18,7 @@ from ui_components.exited_bot_card import ExitedBotCard
 from ui_components.file_explorer import FileExplorer
 from utils.st_utils import initialize_st_page
 
-initialize_st_page(title="Bot Orchestration", icon="🐙", initial_sidebar_state="collapsed")
+initialize_st_page(title="Bot Orchestration", icon="🐙", initial_sidebar_state="expanded")
 
 if "is_broker_running" not in st.session_state:
     st.session_state.is_broker_running = False
@@ -45,11 +45,11 @@ if "editor_tabs" not in st.session_state:
 def manage_broker_container():
     if st.session_state.is_broker_running:
         docker_manager.stop_container("hummingbot-broker")
-        with st.spinner('Stopping hummingbot broker... You are not going to be able to manage bots anymore.'):
+        with st.spinner('Stopping Hummingbot Broker... you will not going to be able to manage bots anymore.'):
             time.sleep(5)
     else:
         docker_manager.create_broker()
-        with st.spinner('Starting hummingbot broker... This process may take a few seconds'):
+        with st.spinner('Starting Hummingbot Broker... This process may take a few seconds'):
             time.sleep(20)
 
 
@@ -108,16 +108,17 @@ def update_containers_info(docker_manager):
 docker_manager = DockerManager()
 CARD_WIDTH = 4
 CARD_HEIGHT = 3
+NUM_CARD_COLS = 3
 
 if not docker_manager.is_docker_running():
     st.warning("Docker is not running. Please start Docker and refresh the page.")
     st.stop()
-orchestrate, manage = st.tabs(["Orchestrate", "Manage Files"])
+orchestrate, manage = st.tabs(["Manage Instances", "Manage Files"])
 update_containers_info(docker_manager)
 exited_containers = [container for container in docker_manager.get_exited_containers() if "broker" not in container]
 
 
-def get_grid_positions(n_cards: int, cols: int = 3, card_width: int = 4, card_height: int = 3):
+def get_grid_positions(n_cards: int, cols: int = NUM_CARD_COLS, card_width: int = CARD_HEIGHT, card_height: int = CARD_WIDTH):
     rows = n_cards // cols + 1
     x_y = [(x * card_width, y * card_height) for x in range(cols) for y in range(rows)]
     return sorted(x_y, key=lambda x: (x[1], x[0]))
@@ -127,41 +128,40 @@ with orchestrate:
     with elements("create_bot"):
         with mui.Grid(container=True, spacing=4):
             with mui.Grid(item=True, xs=6):
-                with mui.Paper(elevation=3, style={"padding": "2rem"}, spacing=[2, 2], container=True):
+                with mui.Paper(style={"padding": "2rem"}, variant="outlined"):
                     with mui.Grid(container=True, spacing=4):
                         with mui.Grid(item=True, xs=12):
-                            mui.Typography("🚀 Create Bot", variant="h4")
+                            mui.Typography("🚀 Create Instance", variant="h4")
                         with mui.Grid(item=True, xs=8):
                             mui.TextField(label="Bot Name", variant="outlined", onChange=lazy(sync("new_bot_name")),
                                           sx={"width": "100%"})
                         with mui.Grid(item=True, xs=4):
-                            with mui.Button(onClick=launch_new_bot):
+                            with mui.Button(onClick=launch_new_bot, variant="contained", color="success"):
                                 mui.icon.AddCircleOutline()
                                 mui.Typography("Create")
             with mui.Grid(item=True, xs=6):
-                with mui.Paper(elevation=3, style={"padding": "2rem"}, spacing=[2, 2], container=True):
+                with mui.Paper(style={"padding": "2rem"}, variant="outlined"):
                     with mui.Grid(container=True, spacing=4):
                         with mui.Grid(item=True, xs=12):
                             mui.Typography("🐙 Manage Broker", variant="h4")
                         with mui.Grid(item=True, xs=8):
-                            mui.Typography("To control and monitor your bots you need to launch Hummingbot Broker."
-                                           "This component enables two-way communication with bots.")
+                            mui.Typography("Hummingbot Broker helps you control and monitor your bot instances.")
                         with mui.Grid(item=True, xs=4):
                             button_text = "Stop Broker" if st.session_state.is_broker_running else "Start Broker"
                             color = "error" if st.session_state.is_broker_running else "success"
                             icon = mui.icon.Stop if st.session_state.is_broker_running else mui.icon.PlayCircle
-                            with mui.Button(onClick=manage_broker_container, color=color):
+                            with mui.Button(onClick=manage_broker_container, color=color, variant="contained"):
                                 icon()
                                 mui.Typography(button_text)
 
     with elements("active_instances_board"):
-        with mui.Paper(elevation=3, style={"padding": "2rem"}, spacing=[2, 2], container=True):
-            mui.Typography("🦅 Active Bots", variant="h4")
+        with mui.Paper(style={"padding": "2rem"}, variant="outlined"):
+            mui.Typography("🦅 Active Instances", variant="h4")
             if st.session_state.is_broker_running:
                 quantity_of_active_bots = len(st.session_state.active_bots)
                 if quantity_of_active_bots > 0:
                     # TODO: Make layout configurable
-                    grid_positions = get_grid_positions(n_cards=quantity_of_active_bots, cols=3,
+                    grid_positions = get_grid_positions(n_cards=quantity_of_active_bots, cols=NUM_CARD_COLS,
                                                         card_width=CARD_WIDTH, card_height=CARD_HEIGHT)
                     active_instances_board = Dashboard()
                     for (bot, config), (x, y) in zip(st.session_state.active_bots.items(), grid_positions):
@@ -176,13 +176,13 @@ with orchestrate:
             else:
                 mui.Alert("Please start the Hummingbot Broker to control your bots.", severity="warning", sx={"margin": "1rem"})
     with elements("stopped_instances_board"):
-        grid_positions = get_grid_positions(n_cards=len(exited_containers), cols=3, card_width=4, card_height=3)
+        grid_positions = get_grid_positions(n_cards=len(exited_containers), cols=NUM_CARD_COLS, card_width=CARD_WIDTH, card_height=CARD_HEIGHT)
         exited_instances_board = Dashboard()
         for exited_instance, (x, y) in zip(exited_containers, grid_positions):
             st.session_state.exited_bots[exited_instance] = ExitedBotCard(exited_instances_board, x, y,
                                                                           CARD_WIDTH, 1)
-        with mui.Paper(elevation=3, style={"padding": "2rem"}, spacing=[2, 2], container=True):
-            mui.Typography("💤 Stopped Bots", variant="h4")
+        with mui.Paper(style={"padding": "2rem"}, variant="outlined"):
+            mui.Typography("💤 Inactive Instances", variant="h4")
             with exited_instances_board():
                 for bot, card in st.session_state.exited_bots.items():
                     card(bot)
@@ -206,8 +206,8 @@ with manage:
             w.editor.add_tab(tab_name, content["content"], content["language"], content["file_path"])
 
     with elements("bot_config"):
-        with mui.Paper(elevation=3, style={"padding": "2rem"}, spacing=[2, 2], container=True):
-            mui.Typography("🗂Files Management", variant="h3", sx={"margin-bottom": "2rem"})
+        with mui.Paper(style={"padding": "2rem"}, variant="outlined"):
+            mui.Typography("🗂 Manage Files", variant="h4", sx={"margin-bottom": "2rem"})
             event.Hotkey("ctrl+s", sync(), bindInputs=True, overrideDefault=True)
             with w.dashboard():
                 w.file_explorer()

@@ -71,10 +71,10 @@ class BotPerformanceCard(Dashboard.Item):
                                     mui.MenuItem(strategy, value=strategy)
 
                         with mui.Grid(item=True, xs=4):
-                            with mui.Button(onClick=lambda x: self.start_strategy(bot_name, bot_config["broker_client"])):
+                            with mui.Button(onClick=lambda x: self.start_strategy(bot_name, bot_config["broker_client"]), variant="contained", color="success"):
                                 mui.icon.PlayCircle()
                                 mui.Typography("Start")
                 with mui.CardActions(disableSpacing=True):
-                    with mui.Button(onClick=lambda: DockerManager().stop_container(bot_name)):
+                    with mui.Button(onClick=lambda: DockerManager().stop_container(bot_name), variant="contained", color="error"):
                         mui.icon.DeleteForever()
-                        mui.Typography("Stop Container")
+                        mui.Typography("Stop Instance")
