@@ -3,15 +3,15 @@ from st_pages import Page, Section, show_pages, add_page_title
 
 from utils.st_utils import initialize_st_page
 
-
 initialize_st_page(title="Hummingbot Dashboard", icon="📊")
 
 show_pages(
     [
-        Section("Foundation", "🏠"),
         Page("main.py", "Hummingbot Dashboard", "📊"),
+        Section("Foundation Pages", "🏠"),
         Page("pages/bot_orchestration/app.py", "Bot Orchestration", "🐙"),
-        Section("Community", "👨‍👩‍👧‍👦"),
+        Page("pages/file_manager/app.py", "File Manager", "🗂"),
+        Section("Community Pages", "👨‍👩‍👧‍👦"),
         Page("pages/strategy_performance/app.py", "Strategy Performance", "🚀"),
         Page("pages/backtest_manager/app.py", "Backtest Manager", "⚙️"),
         Page("pages/candles_downloader/app.py", "Candles Downloader", "🗂"),
