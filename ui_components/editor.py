@@ -26,30 +26,32 @@ class Editor(Dashboard.Item):
         if len(self._tabs) > 0:
             label = list(self._tabs.keys())[self._index]
             content = self.get_content(label)
-            full_path = self.get_file_path(label)
-            file_name = full_path.split("/")[-1]
-            path = "/".join(full_path.split("/")[:-1])
+            file_name = label.split("/")[-1]
+            path = "/".join(label.split("/")[:-1])
             save_file(name=file_name, content=content, path=path)
             st.info("File saved")
 
     def _change_tab(self, _, index):
         self._index = index
 
+    @property
+    def tabs(self):
+        return self._tabs
+    
     def update_content(self, label, content):
         self._tabs[label]["content"] = content
 
-    def add_tab(self, label, default_content, language, file_path):
+    def add_tab(self, label, default_content, language):
         self._tabs[label] = {
             "content": default_content,
             "language": language,
-            "file_path": file_path
         }
+
+    def remove_tab(self, label):
+        del self._tabs[label]
 
     def get_content(self, label):
         return self._tabs[label]["content"]
-
-    def get_file_path(self, label):
-        return self._tabs[label]["file_path"]
 
     def __call__(self):
         with mui.Paper(key=self._key, sx={"display": "flex", "flexDirection": "column", "borderRadius": 3, "overflow": "hidden"}, elevation=1):
