@@ -1,6 +1,6 @@
 from functools import partial
 import streamlit as st
-from streamlit_elements import mui, editor, sync, lazy
+from streamlit_elements import mui, editor, sync, lazy, event
 
 from utils.os_utils import save_file
 from .dashboard import Dashboard
@@ -87,4 +87,5 @@ class Editor(Dashboard.Item):
 
             with mui.Stack(direction="row", spacing=2, alignItems="center", sx={"padding": "10px"}):
                 mui.Button("Apply", variant="contained", onClick=sync())
+                event.Hotkey("ctrl+s", sync(), bindInputs=True, overrideDefault=True)
                 mui.Typography("Or press ctrl+s", sx={"flex": 1})

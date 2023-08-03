@@ -208,7 +208,6 @@ with manage:
     with elements("bot_config"):
         with mui.Paper(elevation=3, style={"padding": "2rem"}, spacing=[2, 2], container=True):
             mui.Typography("🗂Files Management", variant="h3", sx={"margin-bottom": "2rem"})
-            event.Hotkey("ctrl+s", sync(), bindInputs=True, overrideDefault=True)
             with w.dashboard():
                 w.file_explorer()
                 w.editor()
