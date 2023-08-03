@@ -7,9 +7,8 @@ from .dashboard import Dashboard
 
 class FileExplorerBase(Dashboard.Item):
 
-    def __init__(self, board, x, y, w, h, directory, **item_props):
+    def __init__(self, board, x, y, w, h, **item_props):
         super().__init__(board, x, y, w, h, **item_props)
-        self._directory = directory
         self._tabs = {}
         self.selected_file = None
 
