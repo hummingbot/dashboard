@@ -21,9 +21,9 @@ initialize_st_page(title="Backtest Manager", icon="⚙️")
 if "strategy_params" not in st.session_state:
     st.session_state.strategy_params = {}
 
-create, modify, backtest, optimize, analyze = st.tabs(["Create", "Modify", "Backtest", "Optimize", "Analyze"])
+build, backtest, optimize, analyze = st.tabs(["Build", "Backtest", "Optimize", "Analyze"])
 
-with create:
+with build:
     # TODO:
     #    * Add videos explaining how to the triple barrier method works and how the backtesting is designed,
     #  link to video of how to create a strategy, etc in a toggle.
@@ -50,9 +50,6 @@ with create:
             save_file(name=f"{strategy_name.lower()}.py", content=st.session_state.directional_strategy_code,
                       path=constants.DIRECTIONAL_STRATEGIES_PATH)
             st.success(f"Strategy {strategy_name} saved successfully")
-
-with modify:
-    pass
 
 with backtest:
     # TODO:
