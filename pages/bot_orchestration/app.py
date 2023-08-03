@@ -130,22 +130,22 @@ with orchestrate:
                 with mui.Paper(elevation=3, style={"padding": "2rem"}, spacing=[2, 2], container=True):
                     with mui.Grid(container=True, spacing=4):
                         with mui.Grid(item=True, xs=12):
-                            mui.Typography("🚀 Set up a new bot", variant="h3")
+                            mui.Typography("🚀 Create Bot", variant="h4")
                         with mui.Grid(item=True, xs=8):
                             mui.TextField(label="Bot Name", variant="outlined", onChange=lazy(sync("new_bot_name")),
                                           sx={"width": "100%"})
                         with mui.Grid(item=True, xs=4):
                             with mui.Button(onClick=launch_new_bot):
                                 mui.icon.AddCircleOutline()
-                                mui.Typography("Create new bot!")
+                                mui.Typography("Create")
             with mui.Grid(item=True, xs=6):
                 with mui.Paper(elevation=3, style={"padding": "2rem"}, spacing=[2, 2], container=True):
                     with mui.Grid(container=True, spacing=4):
                         with mui.Grid(item=True, xs=12):
-                            mui.Typography("🐙 Hummingbot Broker", variant="h3")
+                            mui.Typography("🐙 Manage Broker", variant="h4")
                         with mui.Grid(item=True, xs=8):
-                            mui.Typography("To control and monitor your bots you need to launch the Hummingbot Broker."
-                                           "This component will send the commands to the running bots.")
+                            mui.Typography("To control and monitor your bots you need to launch Hummingbot Broker."
+                                           "This component enables two-way communication with bots.")
                         with mui.Grid(item=True, xs=4):
                             button_text = "Stop Broker" if st.session_state.is_broker_running else "Start Broker"
                             color = "error" if st.session_state.is_broker_running else "success"
@@ -156,7 +156,7 @@ with orchestrate:
 
     with elements("active_instances_board"):
         with mui.Paper(elevation=3, style={"padding": "2rem"}, spacing=[2, 2], container=True):
-            mui.Typography("🦅 Active Instances", variant="h3")
+            mui.Typography("🦅 Active Bots", variant="h4")
             if st.session_state.is_broker_running:
                 quantity_of_active_bots = len(st.session_state.active_bots)
                 if quantity_of_active_bots > 0:
@@ -182,7 +182,7 @@ with orchestrate:
             st.session_state.exited_bots[exited_instance] = ExitedBotCard(exited_instances_board, x, y,
                                                                           CARD_WIDTH, 1)
         with mui.Paper(elevation=3, style={"padding": "2rem"}, spacing=[2, 2], container=True):
-            mui.Typography("💤 Stopped Instances", variant="h3")
+            mui.Typography("💤 Stopped Bots", variant="h4")
             with exited_instances_board():
                 for bot, card in st.session_state.exited_bots.items():
                     card(bot)
