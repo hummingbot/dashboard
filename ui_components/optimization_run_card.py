@@ -42,18 +42,25 @@ class OptimizationRunCard(Dashboard.Item):
                 mui.icon.AutoFixHigh()
                 mui.Typography("Run a optimization", variant="h6")
 
-            with mui.Stack(direction="row", spacing=2, justifyContent="space-evenly", alignItems="center", sx={"padding": "10px"}):
-                if len(optimizations) == 0:
-                    mui.Alert("No optimizations available, please create one.", severity="warning", sx={"width": "100%"})
-                    return
-                else:
-                    if self._optimization_name is None:
-                        self._optimization_name = optimizations[0]
-                    with mui.Select(label="Select strategy", defaultValue=optimizations[0],
-                                    variant="standard", onChange=lazy(self._set_optimization_name)):
-                        for optimization in optimizations:
-                            mui.MenuItem(f"{optimization.split('/')[-1].split('.')[0]}", value=optimization)
-                    mui.TextField(defaultValue=self._optimization_name, label="Number of trials", type="number",
-                                  variant="standard", onChange=lazy(self._set_number_of_trials))
-                    mui.IconButton(mui.icon.PlayCircleFilled, sx={"color": "primary.main"},
-                                   onClick=self._run_optimization)
+            if len(optimizations) == 0:
+                mui.Alert("No optimizations available, please create one.", severity="warning", sx={"width": "100%"})
+                return
+            else:
+                if self._optimization_name is None:
+                    self._optimization_name = optimizations[0]
+                with mui.Grid(container=True, spacing=2, sx={"padding": "10px"}):
+                    with mui.Grid(item=True, xs=4):
+                        with mui.FormControl(variant="standard", sx={"width": "100%"}):
+                            mui.FormHelperText("Study name")
+                            with mui.Select(defaultValue=optimizations[0],
+                                            variant="standard", onChange=lazy(self._set_optimization_name)):
+                                for optimization in optimizations:
+                                    mui.MenuItem(f"{optimization.split('/')[-1].split('.')[0]}", value=optimization)
+                    with mui.Grid(item=True, xs=4):
+                        with mui.FormControl(variant="standard", sx={"width": "100%"}):
+                            mui.TextField(defaultValue=self._optimization_name, label="Number of trials", type="number",
+                                      variant="standard", onChange=lazy(self._set_number_of_trials))
+                    with mui.Grid(item=True, xs=4):
+                        with mui.Button(variant="contained", onClick=self._run_optimization, sx={"width": "100%"}):
+                            mui.icon.PlayCircleFilled()
+                            mui.Typography("Run", variant="button")
