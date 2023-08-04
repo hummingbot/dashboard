@@ -6,7 +6,7 @@ import math
 from utils.database_manager import DatabaseManager
 from utils.graphs import CandlesGraph
 from utils.st_utils import initialize_st_page
-
+from utils.os_utils import directory_exists, create_directory
 
 initialize_st_page(title="Strategy Performance", icon="🚀")
 
@@ -41,6 +41,8 @@ def download_csv(df: pd.DataFrame, filename: str, key: str):
             )
 
 
+if not directory_exists("data"):
+    create_directory("data")
 st.session_state["dbs"] = get_databases()
 db_names = [x.db_name for x in st.session_state["dbs"].values() if x.status == 'OK']
 if not db_names:
