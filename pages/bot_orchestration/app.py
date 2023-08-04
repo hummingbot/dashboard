@@ -11,9 +11,7 @@ from docker_manager import DockerManager
 from hbotrc import BotCommands
 
 from ui_components.bot_performance_card import BotPerformanceCard
-from ui_components.bots_file_explorer import BotsFileExplorer
 from ui_components.dashboard import Dashboard
-from ui_components.editor import Editor
 from ui_components.exited_bot_card import ExitedBotCard
 from utils.st_utils import initialize_st_page
 
@@ -180,34 +178,3 @@ with elements("stopped_instances_board"):
         with exited_instances_board():
             for bot, card in st.session_state.exited_bots.items():
                 card(bot)
-
-
-with manage:
-    if "w" not in st.session_state:
-        board = Dashboard()
-        w = SimpleNamespace(
-            dashboard=board,
-            file_explorer=BotsFileExplorer(board, 0, 0, 3, 7, constants.BOTS_FOLDER),
-            editor=Editor(board, 4, 0, 9, 7),
-        )
-        st.session_state.w = w
-
-    else:
-        w = st.session_state.w
-
-    # Add new tabs
-    for tab_name, content in w.file_explorer.tabs.items():
-        if tab_name not in w.editor.tabs:
-            w.editor.add_tab(tab_name, content["content"], content["language"])
-
-    # Remove deleted tabs
-    for tab_name in list(w.editor.tabs.keys()):
-        if tab_name not in w.file_explorer.tabs:
-            w.editor.remove_tab(tab_name)
-
-    with elements("bot_config"):
-        with mui.Paper(elevation=3, style={"padding": "2rem"}, spacing=[2, 2], container=True):
-            mui.Typography("🗂Files Management", variant="h3", sx={"margin-bottom": "2rem"})
-            with w.dashboard():
-                w.file_explorer()
-                w.editor()
