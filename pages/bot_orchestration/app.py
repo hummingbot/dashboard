@@ -50,8 +50,8 @@ def manage_broker_container():
 def launch_new_bot():
     bot_name = f"hummingbot-{st.session_state.new_bot_name.target.value}"
     docker_manager.create_hummingbot_instance(instance_name=bot_name,
-                                              base_conf_folder=f"{constants.BOTS_FOLDER}/master_bot_conf/",
-                                              target_conf_folder=f"{constants.BOTS_FOLDER}/{bot_name}")
+                                              base_conf_folder=f"{constants.BOTS_FOLDER}/master_bot_conf/.",
+                                              target_conf_folder=f"{constants.BOTS_FOLDER}/{bot_name}/.")
 
 
 def update_containers_info(docker_manager):

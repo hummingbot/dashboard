@@ -38,7 +38,7 @@ class BotPerformanceCard(Dashboard.Item):
                 st.session_state.active_bots[bot_name]["selected_strategy"] = strategies[0]
 
         with mui.Card(key=self._key,
-                      sx={"display": "flex", "flexDirection": "column", "borderRadius": 2, "overflow": "hidden"},
+                      sx={"display": "flex", "flexDirection": "column", "borderRadius": 2, "overflow": "auto"},
                       elevation=2):
             color = "green" if bot_config["is_running"] else "red"
             subheader_message = "Running " + st.session_state.active_bots[bot_name]["selected_strategy"] if bot_config["is_running"] else "Stopped"
