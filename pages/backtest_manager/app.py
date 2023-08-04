@@ -1,21 +1,26 @@
-import datetime
-import threading
+import time
 import webbrowser
+from types import SimpleNamespace
 
 import streamlit as st
-from streamlit_ace import st_ace
+from streamlit_elements import elements, mui
 
 import constants
 from quants_lab.strategy.strategy_analysis import StrategyAnalysis
+from ui_components.dashboard import Dashboard
+from ui_components.directional_strategies_file_explorer import DirectionalStrategiesFileExplorer
+from ui_components.directional_strategy_creation_card import DirectionalStrategyCreationCard
+from ui_components.editor import Editor
+from ui_components.optimization_creation_card import OptimizationCreationCard
+from ui_components.optimization_run_card import OptimizationRunCard
+from ui_components.optimizations_file_explorer import OptimizationsStrategiesFileExplorer
 from utils import os_utils
-from utils.file_templates import strategy_optimization_template, directional_strategy_template
-from utils.os_utils import load_directional_strategies, save_file, get_function_from_file
-import optuna
+from utils.os_utils import load_directional_strategies
 
 from utils.st_utils import initialize_st_page
 
 
-initialize_st_page(title="Backtest Manager", icon="⚙️")
+initialize_st_page(title="Backtest Manager", icon="⚙️", initial_sidebar_state="collapsed")
 
 # Start content here
 if "strategy_params" not in st.session_state:
@@ -28,28 +33,37 @@ with build:
     #    * Add videos explaining how to the triple barrier method works and how the backtesting is designed,
     #  link to video of how to create a strategy, etc in a toggle.
     #    * Add functionality to start strategy creation from scratch or by duplicating an existing one
-    c1, c2 = st.columns([4, 1])
-    with c1:
-        # TODO: Allow change the strategy name and see the effect in the code
-        strategy_name = st.text_input("Strategy class name", value="CustomStrategy")
-    with c2:
-        update_strategy_name = st.button("Update Strategy Name")
 
-    c1, c2 = st.columns([4, 1])
-    with c1:
-        # TODO: every time that we save and run the optimizations, we should save the code in a file
-        #  so the user then can correlate the results with the code.
-        if update_strategy_name:
-            st.session_state.directional_strategy_code = st_ace(key="create_directional_strategy",
-                                               value=directional_strategy_template(strategy_name),
-                                               language='python',
-                                               keybinding='vscode',
-                                               theme='pastel_on_dark')
-    with c2:
-        if st.button("Save strategy"):
-            save_file(name=f"{strategy_name.lower()}.py", content=st.session_state.directional_strategy_code,
-                      path=constants.DIRECTIONAL_STRATEGIES_PATH)
-            st.success(f"Strategy {strategy_name} saved successfully")
+    if "ds_board" not in st.session_state:
+        board = Dashboard()
+        ds_board = SimpleNamespace(
+            dashboard=board,
+            create_strategy_card=DirectionalStrategyCreationCard(board, 0, 0, 3, 1),
+            file_explorer=DirectionalStrategiesFileExplorer(board, 0, 2, 3, 7),
+            editor=Editor(board, 4, 2, 9, 7),
+        )
+        st.session_state.ds_board = ds_board
+
+    else:
+        ds_board = st.session_state.ds_board
+
+    # Add new tabs
+    for tab_name, content in ds_board.file_explorer.tabs.items():
+        if tab_name not in ds_board.editor.tabs:
+            ds_board.editor.add_tab(tab_name, content["content"], content["language"])
+
+    # Remove deleted tabs
+    for tab_name in list(ds_board.editor.tabs.keys()):
+        if tab_name not in ds_board.file_explorer.tabs:
+            ds_board.editor.remove_tab(tab_name)
+
+    with elements("directional_strategies"):
+        with mui.Paper(elevation=3, style={"padding": "2rem"}, spacing=[2, 2], container=True):
+            mui.Typography("🗂Directional Strategies", variant="h3", sx={"margin-bottom": "2rem"})
+            with ds_board.dashboard():
+                ds_board.create_strategy_card()
+                ds_board.file_explorer()
+                ds_board.editor()
 
 with backtest:
     # TODO:
@@ -117,50 +131,53 @@ with backtest:
 with optimize:
     # TODO:
     #  * Add videos explaining how to use the optimization tool, quick intro to optuna, etc in a toggle
-    with st.container():
-        c1, c2, c3 = st.columns([1, 1, 1])
-        with c1:
-            strategies = load_directional_strategies(constants.DIRECTIONAL_STRATEGIES_PATH)
-            strategy_to_optimize = st.selectbox("Select strategy to optimize", strategies.keys())
-        with c2:
-            today = datetime.datetime.today()
-            # TODO: add hints about the study name
-            STUDY_NAME = st.text_input("Study name",
-                                       f"{strategy_to_optimize}_study_{today.day:02d}-{today.month:02d}-{today.year}")
-        with c3:
-            generate_optimization_code_button = st.button("Generate Optimization Code")
-            if st.button("Launch optuna dashboard"):
-                os_utils.execute_bash_command(f"optuna-dashboard sqlite:///data/backtesting/backtesting_report.db")
-                webbrowser.open("http://127.0.0.1:8080/dashboard", new=2)
 
-    c1, c2 = st.columns([4, 1])
-    if generate_optimization_code_button:
-        with c1:
-            # TODO: every time that we save and run the optimizations, we should save the code in a file
-            #  so the user then can correlate the results with the code.
-            st.session_state.optimization_code = st_ace(key="create_optimization_code",
-                                       value=strategy_optimization_template(
-                                           strategy_info=strategies[strategy_to_optimize]),
-                                       language='python',
-                                       keybinding='vscode',
-                                       theme='pastel_on_dark')
-    if "optimization_code" in st.session_state:
-        with c2:
-            if st.button("Run optimization"):
-                save_file(name=f"{STUDY_NAME}.py", content=st.session_state.optimization_code, path=constants.OPTIMIZATIONS_PATH)
-                study = optuna.create_study(direction="maximize", study_name=STUDY_NAME,
-                                            storage="sqlite:///data/backtesting/backtesting_report.db",
-                                            load_if_exists=True)
-                objective = get_function_from_file(file_path=f"{constants.OPTIMIZATIONS_PATH}/{STUDY_NAME}.py",
-                                                   function_name="objective")
+    def run_optuna_dashboard():
+        os_utils.execute_bash_command(f"optuna-dashboard sqlite:///data/backtesting/backtesting_report.db")
+        time.sleep(5)
+        webbrowser.open("http://127.0.0.1:8080/dashboard", new=2)
+
+    if "op_board" not in st.session_state:
+        board = Dashboard()
+        op_board = SimpleNamespace(
+            dashboard=board,
+            run_optimization_card=OptimizationRunCard(board, 0, 0, 3, 1),
+            create_optimization_card=OptimizationCreationCard(board, 0, 1, 3, 1),
+            file_explorer=OptimizationsStrategiesFileExplorer(board, 0, 2, 3, 5),
+            editor=Editor(board, 4, 2, 9, 7),
+        )
+        st.session_state.op_board = op_board
+
+    else:
+        op_board = st.session_state.op_board
+
+    # Add new tabs
+    for tab_name, content in op_board.file_explorer.tabs.items():
+        if tab_name not in op_board.editor.tabs:
+            op_board.editor.add_tab(tab_name, content["content"], content["language"])
+
+    # Remove deleted tabs
+    for tab_name in list(op_board.editor.tabs.keys()):
+        if tab_name not in op_board.file_explorer.tabs:
+            op_board.editor.remove_tab(tab_name)
+
+    with elements("optimizations"):
+        with mui.Paper(elevation=3, style={"padding": "2rem"}, spacing=[2, 2], container=True):
+            with mui.Grid(container=True, spacing=2):
+                with mui.Grid(item=True, xs=10):
+                    mui.Typography("🧪Optimizations", variant="h3", sx={"margin-bottom": "2rem"})
+                with mui.Grid(item=True, xs=2):
+                    with mui.Button(variant="outlined", color="primary", size="large",
+                                    sx={"height": "100%", "width": "100%"}, onClick=run_optuna_dashboard):
+                        mui.icon.AutoGraph()
+                        mui.Typography("Run Optuna Dashboard", variant="body1")
 
 
-                def optimization_process():
-                    study.optimize(objective, n_trials=2000)
-
-
-                optimization_thread = threading.Thread(target=optimization_process)
-                optimization_thread.start()
+            with op_board.dashboard():
+                op_board.run_optimization_card()
+                op_board.create_optimization_card()
+                op_board.file_explorer()
+                op_board.editor()
 
 
 with analyze:
