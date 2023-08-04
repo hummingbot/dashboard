@@ -1,25 +1,25 @@
 name: dashboard
 channels:
-  - conda-forge
+  - default
 dependencies:
-  - python=3.9
+  - python
+  - streamlit
+  - watchdog
+  - plotly
   - sqlalchemy
+  - statsmodels
+  - pyyaml
+  - jupyter
+  - pathlib
   - pip
   - pip:
-      - streamlit
-      - watchdog
-      - plotly
       - pycoingecko
       - glom
       - defillama
-      - statsmodels
       - pandas_ta
-      - pyyaml
       - commlib-py
-      - jupyter
       - optuna
       - optuna-dashboard
-      - pathlib
       - streamlit-ace
       - st-pages
       - streamlit-elements==0.1.*
