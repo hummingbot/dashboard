@@ -68,6 +68,11 @@ def get_python_files_from_directory(directory: str) -> list:
     return py_files
 
 
+def get_log_files_from_directory(directory: str) -> list:
+    log_files = glob.glob(directory + "/**/*.log*", recursive=True)
+    return log_files
+
+
 def get_yml_files_from_directory(directory: str) -> list:
     yml = glob.glob(directory + "/**/*.yml", recursive=True)
     return yml

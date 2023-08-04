@@ -13,7 +13,6 @@ def initialize_st_page(title: str, icon: str, layout="wide", initial_sidebar_sta
         layout=layout,
         initial_sidebar_state=initial_sidebar_state
     )
-    # st.title(f"{icon} {title}")
     caller_frame = inspect.currentframe().f_back
 
     add_page_title(layout="wide")

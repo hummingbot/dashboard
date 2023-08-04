@@ -1,4 +1,3 @@
-from glob import glob
 from types import SimpleNamespace
 
 from commlib.exceptions import RPCClientTimeoutError
@@ -32,6 +31,10 @@ if "new_bot_name" not in st.session_state:
 
 if "selected_strategy" not in st.session_state:
     st.session_state.selected_strategy = None
+
+if "editor_tabs" not in st.session_state:
+    st.session_state.editor_tabs = {}
+
 
 def manage_broker_container():
     if st.session_state.is_broker_running:

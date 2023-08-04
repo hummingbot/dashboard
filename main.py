@@ -1,5 +1,5 @@
 import streamlit as st
-from st_pages import Page, Section, show_pages, add_page_title
+from st_pages import Page, Section, show_pages
 
 from utils.st_utils import initialize_st_page
 
@@ -8,12 +8,16 @@ initialize_st_page(title="Hummingbot Dashboard", icon="📊")
 show_pages(
     [
         Page("main.py", "Hummingbot Dashboard", "📊"),
-        Section("Foundation Pages", "🏠"),
-        Page("pages/bot_orchestration/app.py", "Bot Orchestration", "🐙"),
+        Section("Bot Orchestration", "🐙"),
+        Page("pages/bot_orchestration/app.py", "Bots Manager", "🦅"),
         Page("pages/file_manager/app.py", "File Manager", "🗂"),
+        Section("Backtest Manager", "⚙️"),
+        Page("pages/backtest_manager/create.py", "Create", "⚔️"),
+        Page("pages/backtest_manager/optimize.py", "Optimize", "🧪"),
+        Page("pages/backtest_manager/analyze.py", "Analyze", "🔬"),
+        Page("pages/backtest_manager/simulate.py", "Simulate", "📈"),
         Section("Community Pages", "👨‍👩‍👧‍👦"),
         Page("pages/strategy_performance/app.py", "Strategy Performance", "🚀"),
-        Page("pages/backtest_manager/app.py", "Backtest Manager", "⚙️"),
         Page("pages/candles_downloader/app.py", "Candles Downloader", "🗂"),
         Page("pages/db_inspector/app.py", "DB Inspector", "🔍"),
         Page("pages/token_spreads/app.py", "Token Spreads", "🧙"),
