@@ -180,3 +180,35 @@ with elements("stopped_instances_board"):
         with exited_instances_board():
             for bot, card in st.session_state.exited_bots.items():
                 card(bot)
+
+
+with manage:
+    if "w" not in st.session_state:
+        board = Dashboard()
+        w = SimpleNamespace(
+            dashboard=board,
+            file_explorer=BotsFileExplorer(board, 0, 0, 3, 7, constants.BOTS_FOLDER),
+            editor=Editor(board, 4, 0, 9, 7),
+        )
+        st.session_state.w = w
+
+    else:
+        w = st.session_state.w
+
+    # Add new tabs
+    for tab_name, content in w.file_explorer.tabs.items():
+        if tab_name not in w.editor.tabs:
+            w.editor.add_tab(tab_name, content["content"], content["language"])
+
+    # Remove deleted tabs
+    for tab_name in list(w.editor.tabs.keys()):
+        if tab_name not in w.file_explorer.tabs:
+            w.editor.remove_tab(tab_name)
+
+    with elements("bot_config"):
+        with mui.Paper(elevation=3, style={"padding": "2rem"}, spacing=[2, 2], container=True):
+            mui.Typography("🗂Files Management", variant="h3", sx={"margin-bottom": "2rem"})
+            event.Hotkey("ctrl+s", sync(), bindInputs=True, overrideDefault=True)
+            with w.dashboard():
+                w.file_explorer()
+                w.editor()
