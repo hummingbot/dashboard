@@ -40,7 +40,7 @@ class FileExplorer(Dashboard.Item):
                 with mui.Grid(container=True, spacing=4, sx={"display": "flex", "alignItems": "center"}):
                     with mui.Grid(item=True, xs=6, sx={"display": "flex", "alignItems": "center"}):
                         mui.icon.Folder()
-                        mui.Typography("File Explorer")
+                        mui.Typography("/bot_configs/")
                     with mui.Grid(item=True, xs=6, sx={"display": "flex", "justifyContent": "flex-end"}):
                         mui.IconButton(mui.icon.Delete, onClick=self.delete_file, sx={"mx": 1})
                         mui.IconButton(mui.icon.Edit, onClick=self.edit_file, sx={"mx": 1})

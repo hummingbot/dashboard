@@ -29,10 +29,10 @@ class ExitedBotCard(Dashboard.Item):
                 className=self._draggable_class,
             )
 
-            with mui.CardActions(disableSpacing=True):
-                with mui.Button(onClick=lambda: DockerManager().start_container(bot_name), color="success"):
+            with mui.CardActions():
+                with mui.Button(onClick=lambda: DockerManager().start_container(bot_name), variant="contained", color="success", sx={"pr": "2"}):
                     mui.icon.PlayCircle()
                     mui.Typography("Start Container")
-                with mui.Button(onClick=lambda: self.remove_container(bot_name), color="error"):
+                with mui.Button(onClick=lambda: self.remove_container(bot_name), variant="contained", color="error"):
                     mui.icon.DeleteForever()
                     mui.Typography("Delete Container")
