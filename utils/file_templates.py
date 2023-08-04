@@ -111,6 +111,7 @@ def objective(trial):
         trial.set_user_attr("profit_factor", strategy_analysis.profit_factor())
         trial.set_user_attr("duration_in_hours", strategy_analysis.duration_in_minutes() / 60)
         trial.set_user_attr("avg_trading_time_in_hours", strategy_analysis.avg_trading_time_in_minutes() / 60)
+        trial.set_user_attr("config", config.dict())
         return strategy_analysis.net_profit_pct()
     except Exception as e:
         traceback.print_exc()
