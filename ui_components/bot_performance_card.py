@@ -38,10 +38,10 @@ class BotPerformanceCard(Dashboard.Item):
                 st.session_state.active_bots[bot_name]["selected_strategy"] = strategies[0]
 
         with mui.Card(key=self._key,
-                      sx={"display": "flex", "flexDirection": "column", "borderRadius": 3, "overflow": "hidden"},
+                      sx={"display": "flex", "flexDirection": "column", "borderRadius": 2, "overflow": "hidden"},
                       elevation=2):
             color = "green" if bot_config["is_running"] else "red"
-            subheader_message = "Running" if bot_config["is_running"] else "Stopped"
+            subheader_message = "Running " + st.session_state.active_bots[bot_name]["selected_strategy"] if bot_config["is_running"] else "Stopped"
             mui.CardHeader(
                 title=bot_config["bot_name"],
                 subheader=subheader_message,
@@ -52,10 +52,16 @@ class BotPerformanceCard(Dashboard.Item):
             )
             if bot_config["is_running"]:
                 with mui.CardContent(sx={"flex": 1}):
-                    mui.Typography("Status:")
-                    mui.Typography(bot_config["status"])
-                    mui.Typography("Trades:")
-                    mui.Typography(str(bot_config["trades"]))
+                    with mui.Paper(elevation=2, sx={"padding": 2, "marginBottom": 2}):
+                        mui.Typography("Status", variant="h6")
+                        mui.Typography(bot_config["status"])
+                    with mui.Accordion(sx={"padding": 2, "marginBottom": 2}):
+                        with mui.AccordionSummary(expandIcon="▼"):
+                            mui.Typography("Trades" + "(" + str(len(bot_config["trades"])) + ")", variant="h6")
+                        with mui.AccordionDetails():
+                            mui.Typography(str(bot_config["trades"]))
+                    mui.Typography("Run the following command in Bash/Terminal to attach to the bot instance:")
+                    mui.TextField(disabled=True, value="docker attach " + bot_name, sx={"width": "100%"})
 
             else:
                 with mui.CardContent(sx={"flex": 1}):
@@ -69,12 +75,11 @@ class BotPerformanceCard(Dashboard.Item):
                                     mui.MenuItem(script, value=script)
                                 for strategy in strategies:
                                     mui.MenuItem(strategy, value=strategy)
-
                         with mui.Grid(item=True, xs=4):
                             with mui.Button(onClick=lambda x: self.start_strategy(bot_name, bot_config["broker_client"]), variant="contained", color="success"):
                                 mui.icon.PlayCircle()
                                 mui.Typography("Start")
-                with mui.CardActions(disableSpacing=True):
-                    with mui.Button(onClick=lambda: DockerManager().stop_container(bot_name), variant="contained", color="error"):
-                        mui.icon.DeleteForever()
-                        mui.Typography("Stop Instance")
+            with mui.CardActions():
+                with mui.Button(onClick=lambda: DockerManager().stop_container(bot_name), variant="contained", color="error"):
+                    mui.icon.DeleteForever()
+                    mui.Typography("Stop Instance")

@@ -97,9 +97,9 @@ def update_containers_info(docker_manager):
 
 
 docker_manager = DockerManager()
-CARD_WIDTH = 4
+CARD_WIDTH = 6
 CARD_HEIGHT = 3
-NUM_CARD_COLS = 3
+NUM_CARD_COLS = 2
 
 if not docker_manager.is_docker_running():
     st.warning("Docker is not running. Please start Docker and refresh the page.")
