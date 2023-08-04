@@ -29,23 +29,33 @@ class OptimizationCreationCard(Dashboard.Item):
     def __call__(self):
         available_strategies = load_directional_strategies(constants.DIRECTIONAL_STRATEGIES_PATH)
         strategy_names = list(available_strategies.keys())
-        with mui.Paper(key=self._key, sx={"display": "flex", "flexDirection": "column", "borderRadius": 3, "overflow": "hidden"}, elevation=1):
+        with mui.Paper(key=self._key,
+                       sx={"display": "flex", "flexDirection": "column", "borderRadius": 3, "overflow": "hidden"},
+                       elevation=1):
             with self.title_bar(padding="10px 15px 10px 15px", dark_switcher=False):
                 mui.icon.NoteAdd()
-                mui.Typography("Create a new optimization", variant="h6")
-
-            with mui.Stack(direction="row", spacing=2, justifyContent="space-evenly", alignItems="center", sx={"padding": "10px"}):
-                if len(strategy_names) == 0:
-                    mui.Alert("No strategies available, please create one to optimize it", severity="warning", sx={"width": "100%"})
-                    return
-                else:
-                    if self._strategy_name is None:
-                        self._strategy_name = strategy_names[0]
-                    with mui.Select(label="Select strategy", defaultValue=strategy_names[0],
-                                    variant="standard", onChange=lazy(self._set_strategy_name)):
-                        for strategy in strategy_names:
-                            mui.MenuItem(strategy, value=strategy)
-                    mui.TextField(defaultValue=self._optimization_version, label="Optimization version",
-                                  variant="standard", onChange=lazy(self._set_optimization_version))
-                    mui.IconButton(mui.icon.AddCircle, sx={"color": "primary.main"},
-                                   onClick=lambda x: self._create_optimization(available_strategies[self._strategy_name]))
+                mui.Typography("Create study", variant="h6")
+            if len(strategy_names) == 0:
+                mui.Alert("No strategies available, please create one to optimize it", severity="warning",
+                          sx={"width": "100%"})
+                return
+            else:
+                if self._strategy_name is None:
+                    self._strategy_name = strategy_names[0]
+                with mui.Grid(container=True, spacing=2, sx={"padding": "10px"}):
+                    with mui.Grid(item=True, xs=4):
+                        with mui.FormControl(variant="standard", sx={"width": "100%"}):
+                            mui.FormHelperText("Strategy name")
+                            with mui.Select(label="Select strategy", defaultValue=strategy_names[0],
+                                            variant="standard", onChange=lazy(self._set_strategy_name)):
+                                for strategy in strategy_names:
+                                    mui.MenuItem(strategy, value=strategy)
+                    with mui.Grid(item=True, xs=4):
+                        with mui.FormControl(variant="standard", sx={"width": "100%"}):
+                            mui.TextField(defaultValue=self._optimization_version, label="Optimization version",
+                                          variant="standard", onChange=lazy(self._set_optimization_version))
+                    with mui.Grid(item=True, xs=4):
+                        with mui.Button(variant="contained", onClick=lambda x: self._create_optimization(
+                                available_strategies[self._strategy_name]), sx={"width": "100%"}):
+                            mui.icon.Add()
+                            mui.Typography("Create", variant="body1")

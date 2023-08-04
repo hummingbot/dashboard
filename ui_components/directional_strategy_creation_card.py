@@ -30,10 +30,18 @@ class DirectionalStrategyCreationCard(Dashboard.Item):
                 mui.icon.NoteAdd()
                 mui.Typography("Create new strategy", variant="h6")
 
-            with mui.Stack(direction="row", spacing=2, justifyContent="space-evenly", alignItems="center", sx={"padding": "10px"}):
-                with mui.Select(label="Select strategy type", defaultValue="directional",
-                                variant="standard", onChange=lazy(self._set_strategy_type)):
-                    mui.MenuItem("Directional", value="directional")
-                mui.TextField(defaultValue="CustomStrategy", label="Strategy Name",
-                              variant="standard", onChange=lazy(self._set_strategy_name))
-                mui.IconButton(mui.icon.AddCircle, onClick=self._create_strategy, sx={"color": "primary.main"})
+            with mui.Grid(container=True, spacing=2, sx={"padding": "10px"}):
+                with mui.Grid(item=True, xs=5):
+                    with mui.FormControl(variant="standard", sx={"width": "100%"}):
+                        mui.FormHelperText("Template name")
+                        with mui.Select(label="Select strategy type", defaultValue="directional",
+                                        variant="standard", onChange=lazy(self._set_strategy_type)):
+                            mui.MenuItem("Directional", value="directional")
+                with mui.Grid(item=True, xs=5):
+                    with mui.FormControl(variant="standard", sx={"width": "100%"}):
+                        mui.TextField(defaultValue="CustomStrategy", label="Strategy Name",
+                                      variant="standard", onChange=lazy(self._set_strategy_name))
+                with mui.Grid(item=True, xs=2):
+                    with mui.Button(variant="contained", onClick=self._create_strategy):
+                        mui.icon.Add()
+                        mui.Typography("Create", variant="body1")
