@@ -37,6 +37,10 @@ def directory_exists(directory: str):
     return os.path.exists(directory)
 
 
+def create_directory(directory_path: str):
+    return os.mkdir(directory_path)
+
+
 def save_file(name: str, content: str, path: str):
     complete_file_path = os.path.join(path, name)
     os.makedirs(path, exist_ok=True)
