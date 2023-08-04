@@ -1,4 +1,3 @@
-from glob import glob
 from types import SimpleNamespace
 
 from commlib.exceptions import RPCClientTimeoutError
@@ -12,7 +11,9 @@ from docker_manager import DockerManager
 from hbotrc import BotCommands
 
 from ui_components.bot_performance_card import BotPerformanceCard
+from ui_components.bots_file_explorer import BotsFileExplorer
 from ui_components.dashboard import Dashboard
+from ui_components.editor import Editor
 from ui_components.exited_bot_card import ExitedBotCard
 from utils.st_utils import initialize_st_page
 
@@ -32,6 +33,10 @@ if "new_bot_name" not in st.session_state:
 
 if "selected_strategy" not in st.session_state:
     st.session_state.selected_strategy = None
+
+if "editor_tabs" not in st.session_state:
+    st.session_state.editor_tabs = {}
+
 
 def manage_broker_container():
     if st.session_state.is_broker_running:
