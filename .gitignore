@@ -131,3 +131,7 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Optimize studies and strategies
+quants_lab/optimizations/*
+quants_lab/strategy/experiments/*
