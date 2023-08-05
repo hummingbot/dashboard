@@ -1,9 +1,6 @@
 
 This repository is maintained by Hummingbot Foundation as a companion for users of [Hummingbot](https://github.com/hummingbot/hummingbot), the open source framework for building high-frequency crypto trading bots.
 
-Watch this video to understand how it works:
-https://www.loom.com/share/72d05bcbaf4048a399e3f9247d756a63
-
 ## Requirements
 
 * 8 GB memory or more (On AWS, this is a `t2.large` instance)
