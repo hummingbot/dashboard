@@ -15,7 +15,7 @@ from ui_components.dashboard import Dashboard
 from ui_components.exited_bot_card import ExitedBotCard
 from utils.st_utils import initialize_st_page
 
-initialize_st_page(title="Bot Orchestration", icon="🐙", initial_sidebar_state="expanded")
+initialize_st_page(title="Bots Manager", icon="🦅", initial_sidebar_state="collapsed")
 
 if "is_broker_running" not in st.session_state:
     st.session_state.is_broker_running = False
@@ -118,37 +118,43 @@ def get_grid_positions(n_cards: int, cols: int = NUM_CARD_COLS, card_width: int 
 
 
 with elements("create_bot"):
-    with mui.Grid(container=True, spacing=4):
+    with mui.Grid(container=True, spacing=2):
         with mui.Grid(item=True, xs=6):
             with mui.Paper(style={"padding": "2rem"}, variant="outlined"):
-                with mui.Grid(container=True, spacing=4):
+                with mui.Grid(container=True, spacing=2):
                     with mui.Grid(item=True, xs=12):
-                        mui.Typography("🚀 Create Instance", variant="h4")
+                        mui.Typography("🚀 Create Instance", variant="h5")
                     with mui.Grid(item=True, xs=8):
                         mui.TextField(label="Bot Name", variant="outlined", onChange=lazy(sync("new_bot_name")),
                                         sx={"width": "100%"})
                     with mui.Grid(item=True, xs=4):
-                        with mui.Button(onClick=launch_new_bot, variant="contained", color="success"):
+                        with mui.Button(onClick=launch_new_bot,
+                                        variant="outlined", 
+                                        color="success",
+                                        sx={"width": "100%", "height": "100%"}):
                             mui.icon.AddCircleOutline()
                             mui.Typography("Create")
         with mui.Grid(item=True, xs=6):
             with mui.Paper(style={"padding": "2rem"}, variant="outlined"):
-                with mui.Grid(container=True, spacing=4):
+                with mui.Grid(container=True, spacing=2):
                     with mui.Grid(item=True, xs=12):
-                        mui.Typography("🐙 Manage Broker", variant="h4")
+                        mui.Typography("🐙 Manage Broker", variant="h5")
                     with mui.Grid(item=True, xs=8):
                         mui.Typography("Hummingbot Broker helps you control and monitor your bot instances.")
                     with mui.Grid(item=True, xs=4):
-                        button_text = "Stop Broker" if st.session_state.is_broker_running else "Start Broker"
+                        button_text = "Stop" if st.session_state.is_broker_running else "Start"
                         color = "error" if st.session_state.is_broker_running else "success"
                         icon = mui.icon.Stop if st.session_state.is_broker_running else mui.icon.PlayCircle
-                        with mui.Button(onClick=manage_broker_container, color=color, variant="contained"):
+                        with mui.Button(onClick=manage_broker_container,
+                                        color=color,
+                                        variant="outlined",
+                                        sx={"width": "100%", "height": "100%"}):
                             icon()
                             mui.Typography(button_text)
 
 with elements("active_instances_board"):
-    with mui.Paper(style={"padding": "2rem"}, variant="outlined"):
-        mui.Typography("🦅 Active Instances", variant="h4")
+    with mui.Paper(sx={"padding": "2rem"}, variant="outlined"):
+        mui.Typography("🦅 Active Instances", variant="h5")
         if st.session_state.is_broker_running:
             quantity_of_active_bots = len(st.session_state.active_bots)
             if quantity_of_active_bots > 0:
@@ -174,7 +180,7 @@ with elements("stopped_instances_board"):
         st.session_state.exited_bots[exited_instance] = ExitedBotCard(exited_instances_board, x, y,
                                                                         CARD_WIDTH, 1)
     with mui.Paper(style={"padding": "2rem"}, variant="outlined"):
-        mui.Typography("💤 Inactive Instances", variant="h4")
+        mui.Typography("💤 Stopped Instances", variant="h5")
         with exited_instances_board():
             for bot, card in st.session_state.exited_bots.items():
                 card(bot)
