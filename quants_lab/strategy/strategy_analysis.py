@@ -193,6 +193,15 @@ class StrategyAnalysis:
         time_diff_minutes = (pd.to_datetime(self.positions['close_time']) - self.positions['timestamp']).dt.total_seconds() / 60
         return time_diff_minutes.mean()
 
+    def start_date(self):
+        return self.candles_df.timestamp.min()
+
+    def end_date(self):
+        return self.candles_df.timestamp.max()
+
+    def avg_profit(self):
+        return self.positions.ret_usd.mean()
+
     def text_report(self):
         return f"""
 Strategy Performance Report:
