@@ -11,6 +11,7 @@ from quants_lab.strategy.directional_strategy_base import DirectionalStrategyBas
 
 
 class {strategy_config_cls_name}(BaseModel):
+    name: str = "{strategy_cls_name.lower()}"
     exchange: str = Field(default="binance_perpetual")
     trading_pair: str = Field(default="ETH-USDT")
     interval: str = Field(default="1h")
