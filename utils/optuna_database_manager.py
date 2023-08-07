@@ -15,6 +15,20 @@ class OptunaDBManager:
         self.session_maker = sessionmaker(bind=self.engine)
 
     @property
+    def status(self):
+        try:
+            with self.session_maker() as session:
+                query = 'SELECT * FROM trials WHERE state = "COMPLETE"'
+                completed_trials = pd.read_sql_query(query, session.connection())
+            if len(completed_trials) > 0:
+                # TODO: improve error handling, think what to do with other cases
+                return "OK"
+            else:
+                return "No records found in the trials table with completed state"
+        except Exception as e:
+            return f"Error: {str(e)}"
+
+    @property
     def tables(self):
         return self._get_tables()
 
