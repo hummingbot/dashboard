@@ -1,4 +1,5 @@
 import os
+import json
 
 import pandas as pd
 from sqlalchemy import create_engine
@@ -250,3 +251,47 @@ class OptunaDBManager:
         merged_df["hover_text"] = merged_df.apply(self._add_hovertext, axis=1)
         return merged_df
 
+    def load_studies(self):
+        df = self.merged_df
+        study_name_col = 'study_name'
+        trial_id_col = 'trial_id'
+        nested_dict = {}
+        for _, row in df.iterrows():
+            study_name = row[study_name_col]
+            trial_id = row[trial_id_col]
+            data_dict = row.drop([study_name_col, trial_id_col]).to_dict()
+            if study_name not in nested_dict:
+                nested_dict[study_name] = {}
+            nested_dict[study_name][trial_id] = data_dict
+        return nested_dict
+
+    def load_params(self):
+        trial_id_col = 'trial_id'
+        param_name_col = 'param_name'
+        param_value_col = 'param_value'
+        distribution_json_col = 'distribution_json'
+        nested_dict = {}
+        for _, row in self.trial_params.iterrows():
+            trial_id = row[trial_id_col]
+            param_name = row[param_name_col]
+            param_value = row[param_value_col]
+            distribution_json = row[distribution_json_col]
+
+            if trial_id not in nested_dict:
+                nested_dict[trial_id] = {}
+
+            dist_json = json.loads(distribution_json)
+            default_step = None
+            default_low = None
+            default_high = None
+            default_log = None
+
+            nested_dict[trial_id][param_name] = {
+                'param_name': param_name,
+                'param_value': param_value,
+                'step': dist_json["attributes"].get("step", default_step),
+                'low': dist_json["attributes"].get("low", default_low),
+                'high': dist_json["attributes"].get("high", default_high),
+                'log': dist_json["attributes"].get("log", default_log),
+            }
+        return nested_dict
