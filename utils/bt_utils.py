@@ -2,6 +2,7 @@ import streamlit as st
 
 
 def get_strategy_config_fields_and_values(fields: dict, trial_config: dict):
+    """Overrides st.session_state.strategy_params, later used in strategy instantiation for run_backtesting method"""
     container = st.container()
     with container:
         c1, c2 = st.columns([5, 1])
