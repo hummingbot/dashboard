@@ -216,3 +216,16 @@ Strategy Performance Report:
     - Duration: {self.duration_in_minutes() / 60:,.2f} Hours
     - Average Trade Duration: {self.avg_trading_time_in_minutes():,.2f} minutes
     """
+
+    def pnl_over_time(self):
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(name="PnL Over Time",
+                                 x=self.positions.index,
+                                 y=self.positions.ret_usd.cumsum()))
+        # Update layout with the required attributes
+        fig.update_layout(
+            title="PnL Over Time",
+            xaxis_title="N° Position",
+            yaxis=dict(title="Net PnL USD", side="left", showgrid=False),
+        )
+        return fig
