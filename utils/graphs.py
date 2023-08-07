@@ -273,7 +273,10 @@ class BacktestingGraphs:
         return fig
 
     @staticmethod
-    def get_trial_metrics(strategy_analysis: StrategyAnalysis):
+    def get_trial_metrics(strategy_analysis: StrategyAnalysis,
+                          add_volume: bool = True,
+                          add_positions: bool = True,
+                          add_pnl: bool = True):
         """Isolated method because it needs to be called from analyze and simulate pages"""
         metrics_container = st.container()
         with metrics_container:
