@@ -274,6 +274,7 @@ class BacktestingGraphs:
 
     @staticmethod
     def get_trial_metrics(strategy_analysis: StrategyAnalysis):
+        """Isolated method because it needs to be called from analyze and simulate pages"""
         metrics_container = st.container()
         with metrics_container:
             col1, col2 = st.columns(2)
@@ -334,4 +335,8 @@ class BacktestingGraphs:
                           help="The Sharpe ratio is a measure that quantifies the risk-adjusted return of an investment"
                                " or portfolio. It compares the excess return earned above a risk-free rate per unit of"
                                " risk taken.")
+
+            st.plotly_chart(strategy_analysis.pnl_over_time(), use_container_width=True)
+            strategy_analysis.create_base_figure(volume=add_volume, positions=add_positions, trade_pnl=add_pnl)
+            st.plotly_chart(strategy_analysis.figure(), use_container_width=True)
         return metrics_container
