@@ -193,6 +193,15 @@ class StrategyAnalysis:
         time_diff_minutes = (pd.to_datetime(self.positions['close_time']) - self.positions['timestamp']).dt.total_seconds() / 60
         return time_diff_minutes.mean()
 
+    def start_date(self):
+        return self.candles_df.timestamp.min()
+
+    def end_date(self):
+        return self.candles_df.timestamp.max()
+
+    def avg_profit(self):
+        return self.positions.ret_usd.mean()
+
     def text_report(self):
         return f"""
 Strategy Performance Report:
@@ -207,3 +216,16 @@ Strategy Performance Report:
     - Duration: {self.duration_in_minutes() / 60:,.2f} Hours
     - Average Trade Duration: {self.avg_trading_time_in_minutes():,.2f} minutes
     """
+
+    def pnl_over_time(self):
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(name="PnL Over Time",
+                                 x=self.positions.index,
+                                 y=self.positions.ret_usd.cumsum()))
+        # Update layout with the required attributes
+        fig.update_layout(
+            title="PnL Over Time",
+            xaxis_title="N° Position",
+            yaxis=dict(title="Net PnL USD", side="left", showgrid=False),
+        )
+        return fig
