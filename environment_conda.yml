@@ -11,5 +11,4 @@ dependencies:
   - pyyaml
   - sqlalchemy>=1.4.0,<2.0.0
   - statsmodels
-  - streamlit>=1.24.1
   - watchdog
