@@ -8,18 +8,19 @@ dependencies:
   - plotly
   - sqlalchemy
   - statsmodels
+  - conda-forge::optuna
+  - conda-forge::optuna-dashboard
+  - conda-forge::glom
+  - conda-forge::pycoingecko
   - pyyaml
   - jupyter
+  - conda-forge::pandas-ta
   - pathlib
   - pip
   - pip:
-      - pycoingecko
-      - glom
+      - 
       - defillama
-      - pandas_ta
       - commlib-py
-      - optuna
-      - optuna-dashboard
       - streamlit-ace
       - st-pages
       - streamlit-elements==0.1.*
