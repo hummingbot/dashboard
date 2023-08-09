@@ -4,9 +4,9 @@ Hummingbot Dashboard is a community project to build dashboards that help you de
 
 Here are the current dashboards in the collection:
 
-* 🚀 **Strategy Performance**: Analyze the performance of a running Hummingbot instance
 * 🐙 **Bot Orchestration**: Deploy and manage Hummingbot instances
-* ⚙️ **Backtest Manager**: Deploy and manage backtests of directional strategies
+* ⚙️ **Backtest Manager**: Backtest strategies against historical data and optimize hyper-parameters
+* 🚀 **Strategy Performance**: Analyze the performance of a running Hummingbot instance
 * 🗂 **Candles Downloader**: Download historical exchange data as OHLVC candles. Supports multiple trading pairs and custom time ranges/intervals.
 * 🔍 **DB Inspector**: Inspect and analyze the orders and trades data contained in a Hummingbot strategy database
 * 🧙 **Token Spreads**: Identify cross-exchange trading opportunities by analyzing differences in token spreads across venues
@@ -18,14 +18,8 @@ This project is built using [StreamLit](https://streamlit.io/) and uses Anaconda
 
 See [Installation](https://github.com/hummingbot/dashboard/blob/main/INSTALLATION.md) for how to install and update the dashboard.
 
-### Contributions
+### Contributions and feedback
 
-We welcome contributions from the community! See [Contribution](https://github.com/hummingbot/dashboard/blob/main/CONTRIBUTING.md) for more information.
+We welcome contributions from the community! See [Contributing](https://github.com/hummingbot/dashboard/blob/main/CONTRIBUTING.md) for more information.
 
-### Meetings
-
-We hold bi-weekly livestream Dashboard project meetings. You can participate on our [Discord](https://discord.gg/hummingbot) 
-* Alternating Wenesdays, 3pm GMT / 11am EST / 8am PST / 11pm SIN
-* Design, Status, Demos, etc
-
-
+To provide feedback, submit a [Github issue](https://github.com/hummingbot/dashboard/issues) or join the #dashboard channel in our [Discord](https://discord.gg/hummingbot).

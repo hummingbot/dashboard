@@ -20,19 +20,28 @@ class ExitedBotCard(Dashboard.Item):
 
     def __call__(self, bot_name: str):
         with mui.Card(key=self._key,
-                      sx={"display": "flex", "flexDirection": "column", "borderRadius": 3, "overflow": "hidden"},
+                      sx={"display": "flex", "flexDirection": "column", "borderRadius": 2, "overflow": "auto"},
                       elevation=2):
             mui.CardHeader(
                 title=bot_name,
                 subheader="Stopped",
-                avatar=mui.Avatar("💀", sx={"bgcolor": "grey"}),
+                avatar=mui.Avatar("💀", sx={"bgcolor": "black"}),
                 className=self._draggable_class,
             )
 
             with mui.CardActions():
-                with mui.Button(onClick=lambda: DockerManager().start_container(bot_name), variant="contained", color="success", sx={"pr": "2"}):
-                    mui.icon.PlayCircle()
-                    mui.Typography("Start Container")
-                with mui.Button(onClick=lambda: self.remove_container(bot_name), variant="contained", color="error"):
-                    mui.icon.DeleteForever()
-                    mui.Typography("Delete Container")
+                with mui.Grid(container=True, spacing=2):
+                    with mui.Grid(item=True, xs=6):
+                        with mui.Button(onClick=lambda: DockerManager().start_container(bot_name),
+                                        variant="outlined",
+                                        color="success",
+                                        sx={"width": "100%"}):
+                            mui.icon.PlayCircle()
+                            mui.Typography("Start Instance")
+                    with mui.Grid(item=True, xs=6):
+                        with mui.Button(onClick=lambda: self.remove_container(bot_name),
+                                        variant="outlined",
+                                        color="error",
+                                        sx={"width": "100%"}):
+                            mui.icon.DeleteForever()
+                            mui.Typography("Delete Instance")
