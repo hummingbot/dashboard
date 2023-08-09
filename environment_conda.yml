@@ -2,27 +2,14 @@ name: dashboard
 channels:
   - default
 dependencies:
-  - python
-  - streamlit
-  - watchdog
-  - plotly
-  - sqlalchemy
-  - statsmodels
-  - conda-forge::optuna
-  - conda-forge::optuna-dashboard
-  - conda-forge::glom
-  - conda-forge::pycoingecko
-  - pyyaml
-  - jupyter
-  - conda-forge::pandas-ta
+  # default
+  - jupyter>=1.0.0
   - pathlib
-  - pip
-  - pip:
-      - 
-      - defillama
-      - commlib-py
-      - streamlit-ace
-      - st-pages
-      - streamlit-elements==0.1.*
-      - git+https://github.com/hummingbot/hbot-remote-client-py.git
-      - git+https://github.com/hummingbot/docker-manager.git
+  - pip>=23.2.1
+  - plotly
+  - python
+  - pyyaml
+  - sqlalchemy>=1.4.0,<2.0.0
+  - statsmodels
+  - streamlit>=1.24.1
+  - watchdog
