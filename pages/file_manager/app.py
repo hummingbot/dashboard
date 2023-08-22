@@ -8,7 +8,7 @@ from ui_components.editor import Editor
 from utils.st_utils import initialize_st_page
 
 
-initialize_st_page(title="File Manager", icon="🗂️", initial_sidebar_state="collapsed")
+initialize_st_page(title="Strategy Configs", icon="🗂️", initial_sidebar_state="collapsed")
 
 
 if "fe_board" not in st.session_state:

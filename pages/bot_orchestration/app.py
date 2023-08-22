@@ -17,7 +17,7 @@ from ui_components.launch_bot_card import LaunchBotCard
 from ui_components.launch_broker_card import LaunchBrokerCard
 from utils.st_utils import initialize_st_page
 
-initialize_st_page(title="Bots Manager", icon="🦅", initial_sidebar_state="collapsed")
+initialize_st_page(title="Instances", icon="🦅", initial_sidebar_state="collapsed")
 
 if "is_broker_running" not in st.session_state:
     st.session_state.is_broker_running = False

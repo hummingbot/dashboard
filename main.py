@@ -3,7 +3,7 @@ from st_pages import Page, Section, show_pages
 
 from utils.st_utils import initialize_st_page
 
-initialize_st_page(title="Hummingbot Dashboard", icon="📊")
+initialize_st_page(title="Hummingbot Dashboard", icon="📊", initial_sidebar_state="expanded")
 
 show_pages(
     [

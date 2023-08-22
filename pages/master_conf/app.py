@@ -12,7 +12,7 @@ from ui_components.master_conf_file_explorer import MasterConfFileExplorer
 from utils.st_utils import initialize_st_page
 
 
-initialize_st_page(title="Master Conf", icon="🗝️", initial_sidebar_state="expanded")
+initialize_st_page(title="Credentials", icon="🗝️", initial_sidebar_state="collapsed")
 
 
 if "mc_board" not in st.session_state:
