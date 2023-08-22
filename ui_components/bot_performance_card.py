@@ -136,7 +136,7 @@ class BotPerformanceCard(Dashboard.Item):
                             mui.Divider()
                             mui.Typography(str(columns), sx={"fontSize": "0.75rem"})
                             mui.Divider()
-                            mui.DataGrid(rows=rows, columns=columns)
+                            mui.DataGrid(rows=rows, columns=columns, sx={"height": "300px"})
                         else:
                             mui.Typography(str(orders), sx={"fontSize": "0.75rem"})
 
