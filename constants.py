@@ -3,3 +3,4 @@ DOWNLOAD_CANDLES_CONFIG_YML = "hummingbot_files/scripts_configs/data_downloader_
 BOTS_FOLDER = "hummingbot_files/bot_configs"
 DIRECTIONAL_STRATEGIES_PATH = "quants_lab/strategy/experiments"
 OPTIMIZATIONS_PATH = "quants_lab/optimizations"
+HUMMINGBOT_TEMPLATES = "hummingbot_files/templates"
