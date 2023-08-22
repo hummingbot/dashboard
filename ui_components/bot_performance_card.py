@@ -4,7 +4,41 @@ from ui_components.dashboard import Dashboard
 import streamlit as st
 import time
 from utils.os_utils import get_python_files_from_directory, get_yml_files_from_directory
+import pandas as pd
 
+def parse_orders(input_str):
+    # Split the string by lines
+    lines = input_str.split("\n")
+    
+    # Identify the line where the 'Orders:' section starts
+    for i, line in enumerate(lines):
+        if "Orders:" in line:
+            start_idx = i + 1
+            break
+    
+    # Extract relevant lines after "Orders:"
+    order_lines = lines[start_idx:]
+    
+    # Parse each order line into a list of dictionaries
+    orders = []
+    for order_line in order_lines:
+        parts = order_line.split()
+        
+        # Construct order dictionary from the split parts
+        order = {
+            "Exchange": parts[0],
+            "Market": parts[1],
+            "Side": parts[2],
+            "Price": parts[3],
+            "Amount": parts[4],
+            "Age": parts[5]
+        }
+        orders.append(order)
+    
+    # Convert list of dictionaries to DataFrame
+    df_orders = pd.DataFrame(orders)
+    
+    return df_orders
 
 class BotPerformanceCard(Dashboard.Item):
 
@@ -54,7 +88,8 @@ class BotPerformanceCard(Dashboard.Item):
                 with mui.CardContent(sx={"flex": 1}):
                     with mui.Paper(elevation=2, sx={"padding": 2, "marginBottom": 2}):
                         mui.Typography("Status")
-                        mui.Typography(bot_config["status"], sx={"fontSize": "0.75rem"})
+                        msg = parse_orders(bot_config["status"])
+                        mui.Typography(msg, sx={"fontSize": "0.75rem"})
                     with mui.Accordion(sx={"padding": 2, "marginBottom": 2}):
                         with mui.AccordionSummary(expandIcon="▼"):
                             mui.Typography("Trades" + "(" + str(len(bot_config["trades"])) + ")")
