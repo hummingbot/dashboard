@@ -7,6 +7,8 @@ from utils.os_utils import get_python_files_from_directory, get_yml_files_from_d
 from utils.status_parser import StatusParser
 import pandas as pd
 
+TRADES_TO_SHOW = 5
+
 class BotPerformanceCard(Dashboard.Item):
 
     def __init__(self, board, x, y, w, h, **item_props):
@@ -65,10 +67,8 @@ class BotPerformanceCard(Dashboard.Item):
                         balances_cols = [{'field': col, 'headerName': col} for col in df_balances.columns]
 
                         for column in balances_cols:
-                            # Hide the 'id' column
-                            if column['field'] == 'id':
-                                column['width'] = 0
-                            else:
+                            # Customize width for 'exchange' column
+                            if column['field'] == 'Exchange':
                                 column['width'] = 200
 
                         mui.DataGrid(rows=balances_rows,
@@ -94,13 +94,10 @@ class BotPerformanceCard(Dashboard.Item):
                         orders_cols = [{'field': col, 'headerName': col} for col in df_orders.columns]
 
                         for column in orders_cols:
-                            # Hide the 'id' column
-                            if column['field'] == 'id':
-                                column['width'] = 0
-                            # Expand the 'exchange' column
+                            # Customize width for 'exchange' column
                             if column['field'] == 'Exchange':
                                 column['width'] = 200
-                            # Expand the 'price' column
+                            # Customize width for column
                             if column['field'] == 'Price':
                                 column['width'] = 150
 
@@ -117,22 +114,26 @@ class BotPerformanceCard(Dashboard.Item):
                     mui.Divider(sx={"margin": 4})
 
                     # Trades Table
-                    mui.Typography("Trades", variant="h6")
+                    mui.Typography("Recent Trades", variant="h6")
                     df_trades = pd.DataFrame(bot_config["trades"])
 
                     # Add 'id' column to the dataframe by concatenating 'trade_id' and 'trade_timestamp'
-                    df_trades['id'] = df_trades['trade_id'].astype(str) + df_trades['trade_timestamp'].astype(str)
+                    df_trades['id'] = df_trades.get('trade_id', '0').astype(str) + df_trades['trade_timestamp'].astype(str)
+
+                    # Show recent trades only
+                    df_trades['trade_timestamp'] = df_trades['trade_timestamp'].astype(int)
+                    df_trades = df_trades.sort_values(by='trade_timestamp', ascending=False)
+                    df_trades = df_trades.head(TRADES_TO_SHOW)
 
                     trades_rows = df_trades.to_dict(orient='records')
                     trades_cols = [{'field': col, 'headerName': col} for col in df_trades.columns]
 
                     for column in trades_cols:
-                        # Hide the 'id' and 'raw_json' columns
-                        if column['field'] == 'id':
-                            column['width'] = 0
-                        # Expand the 'exchange' column
-                        # if column['field'] == 'Exchange':
-                        #     column['width'] = 200
+                        # Customize width for 'market' column
+                        if column['field'] == 'market':
+                            column['width'] = 200
+                        if column['field'] == 'trade_timestamp':
+                            column['width'] = 150
 
                     mui.DataGrid(rows=trades_rows,
                                     columns=trades_cols,
@@ -140,7 +141,7 @@ class BotPerformanceCard(Dashboard.Item):
                                     density="compact",
                                     disableColumnSelector=True,
                                     hideFooter=True,
-                                    initialState={"columns": {"columnVisibilityModel": {"id": False}}})
+                                    initialState={"columns": {"columnVisibilityModel": {"id": False, "trade_id": False, "base_asset": False, "quote_asset": False, "raw_json": False}}})
             else:
                 with mui.CardContent(sx={"flex": 1}):
                     with mui.Grid(container=True, spacing=2):
