@@ -3,7 +3,7 @@ import time
 
 from docker_manager import DockerManager
 import streamlit as st
-from streamlit_elements import mui, sync
+from streamlit_elements import mui
 
 import constants
 from .dashboard import Dashboard

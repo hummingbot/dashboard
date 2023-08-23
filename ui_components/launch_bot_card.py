@@ -3,7 +3,7 @@ import time
 
 from docker_manager import DockerManager
 import streamlit as st
-from streamlit_elements import mui, sync, lazy
+from streamlit_elements import mui, lazy
 
 import constants
 from utils.os_utils import get_directories_from_directory
