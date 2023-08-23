@@ -4,75 +4,8 @@ from ui_components.dashboard import Dashboard
 import streamlit as st
 import time
 from utils.os_utils import get_python_files_from_directory, get_yml_files_from_directory
-
+from utils.status_parser import StatusParser
 import pandas as pd
-
-def parse_orders(input_str):
-    # Check for "No active maker orders" in the string
-    if "No active maker orders" in input_str:
-        return "No active maker orders"
-    
-    # Split the string by lines
-    lines = input_str.split("\n")
-
-    # Identify the line where the 'Orders:' section starts
-    for i, line in enumerate(lines):
-        if "Orders:" in line:
-            start_idx = i + 1
-            break
-    
-    # Extract relevant lines after "Orders:"
-    order_lines = lines[start_idx:]    
-
-    # Determine the table type based on the header and extract order lines
-    table_type = None
-    for i, line in enumerate(order_lines):
-        if all(keyword in line for keyword in ['Exchange', 'Market', 'Side']):
-            table_type = 'simple_pmm'
-            start_idx = i + 1
-            order_lines_parsed = order_lines[start_idx:]
-            break
-        elif all(keyword in line for keyword in ['Level', 'Amount (Orig)']):
-            table_type = 'pmm'
-            start_idx = i + 1
-            order_lines_parsed = order_lines[start_idx:]
-            break
-    
-    # Parse each order line into a list of dictionaries
-    orders = []
-    for order_line in order_lines_parsed:
-        parts = order_line.split()
-        
-        # Check table type and extract data accordingly
-        if table_type == 'simple_pmm':
-            if len(parts) < 5:
-                continue
-            order = {
-                "id": parts[2] + parts[3] + parts[4] + (parts[5] if len(parts) > 5 else ""),
-                "Exchange": parts[0],
-                "Market": parts[1],
-                "Side": parts[2],
-                "Price": parts[3],
-                "Amount": parts[4],
-                "Age": " ".join(parts[5:]) if len(parts) > 5 else None            
-            }
-            orders.append(order)
-        elif table_type == 'pmm':
-            if len(parts) < 6:
-                continue
-            order = {
-                "id": parts[0] + parts[1] + parts[2] + parts[3] + parts[4] + (parts[6] if len(parts) > 6 else ""),
-                "Level": parts[0],
-                "Type": parts[1],
-                "Price": parts[2],
-                "Spread": parts[3],
-                "Amount (Adj)": parts[4],
-                "Amount (Orig)": parts[5],
-                "Age": " ".join(parts[6:]) if len(parts) > 6 else None 
-            }
-            orders.append(order)
-            
-    return orders
 
 class BotPerformanceCard(Dashboard.Item):
 
@@ -120,25 +53,34 @@ class BotPerformanceCard(Dashboard.Item):
             )
             if bot_config["is_running"]:
                 with mui.CardContent(sx={"flex": 1}):
-                    with mui.Paper(elevation=2, sx={"padding": 2, "marginBottom": 2}):
-                        mui.Typography("Status")
-                        orders = parse_orders(bot_config["status"])
-                        # mui.Typography(str(orders), sx={"fontSize": "0.75rem"})
-                        # mui.Divider()
+                    # with mui.Paper(elevation=2, sx={"padding": 2, "marginBottom": 2}):
+                    mui.Typography("Orders")
+                    parser = StatusParser(bot_config["status"])
+                    orders = parser.parse()
 
-                        # Convert list of dictionaries to DataFrame
-                        if orders != "No active maker orders":
-                            df_orders = pd.DataFrame(orders)
-                            rows = df_orders.to_dict(orient='records')
-                            columns = [{'field': col, 'headerName': col} for col in df_orders.columns]
-                            # rows, columns = df_orders.shape
-                            mui.Typography(str(rows), sx={"fontSize": "0.75rem"})
-                            mui.Divider()
-                            mui.Typography(str(columns), sx={"fontSize": "0.75rem"})
-                            mui.Divider()
-                            mui.DataGrid(rows=rows, columns=columns, sx={"height": "300px"})
-                        else:
-                            mui.Typography(str(orders), sx={"fontSize": "0.75rem"})
+                    # Convert list of dictionaries to DataFrame
+                    if orders != "No active maker orders" or "No matching string":
+                        df_orders = pd.DataFrame(orders)
+                        rows = df_orders.to_dict(orient='records')
+                        columns = [{'field': col, 'headerName': col} for col in df_orders.columns]
+                        for column in columns:
+                            # Hide the 'id' column
+                            if column['field'] == 'id':
+                                column['width'] = 0
+                            # Expand the 'exchange' column
+                            if column['field'] == 'Exchange':
+                                column['width'] = 200
+                            # Expand the 'price' column
+                            if column['field'] == 'Price':
+                                column['width'] = 150
+                        mui.DataGrid(rows=rows,
+                                        columns=columns,
+                                        autoHeight=True,
+                                        density="compact",
+                                        hideFooter=True,
+                                        initialState={"columns": {"columnVisibilityModel": {"id": False}}})
+                    else:
+                        mui.Typography(str(orders), sx={"fontSize": "0.75rem"})
 
                     with mui.Accordion(sx={"padding": 2, "marginBottom": 2}):
                         with mui.AccordionSummary(expandIcon="▼"):
