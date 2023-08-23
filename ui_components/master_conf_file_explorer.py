@@ -21,7 +21,7 @@ class MasterConfFileExplorer(FileExplorerBase):
                     with mui.lab.TreeItem(nodeId=f"strategies_{conf}", label="📜Strategies"):
                         for file in get_yml_files_from_directory(f"{directory}/{conf}/conf/strategies"):
                             mui.lab.TreeItem(nodeId=file, label=f"📄 {file.split('/')[-1]}")
-                    with mui.lab.TreeItem(nodeId=f"configs_{conf}", label="🗄Client Config"):
+                    with mui.lab.TreeItem(nodeId=f"configs_{conf}", label="🔧Client Config"):
                         for file in get_yml_files_from_directory(f"{directory}/{conf}/conf"):
                             mui.lab.TreeItem(nodeId=file, label=f"📄 {file.split('/')[-1]}")
                     with mui.lab.TreeItem(nodeId=f"keys_{conf}", label="🔑Keys"):

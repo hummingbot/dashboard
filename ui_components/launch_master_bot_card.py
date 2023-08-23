@@ -8,6 +8,7 @@ from streamlit_elements import mui, sync
 import constants
 from .dashboard import Dashboard
 
+
 class LaunchMasterBotCard(Dashboard.Item):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
