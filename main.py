@@ -9,9 +9,9 @@ show_pages(
     [
         Page("main.py", "Hummingbot Dashboard", "📊"),
         Section("Bot Orchestration", "🐙"),
-        Page("pages/master_conf/app.py", "Master Conf", "🗝️"),
-        Page("pages/bot_orchestration/app.py", "Bots Manager", "🦅"),
-        Page("pages/file_manager/app.py", "File Manager", "🗂"),
+        Page("pages/master_conf/app.py", "Credentials", "🗝️"),
+        Page("pages/bot_orchestration/app.py", "Instances", "🦅"),
+        Page("pages/file_manager/app.py", "Strategy Configs", "🗂"),
         Section("Backtest Manager", "⚙️"),
         Page("pages/candles_downloader/app.py", "Get Data", "💾"),
         Page("pages/backtest_manager/create.py", "Create", "⚔️"),

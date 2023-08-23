@@ -60,7 +60,7 @@ class Editor(Dashboard.Item):
                 with mui.Grid(container=True, spacing=4, sx={"display": "flex", "alignItems": "center"}):
                     with mui.Grid(item=True, xs=10, sx={"display": "flex", "alignItems": "center"}):
                         mui.icon.Terminal()
-                        mui.Typography("Editor")
+                        mui.Typography("Editor", variant="h6", sx={"marginLeft": 1})
                         with mui.Tabs(value=self._index, onChange=self._change_tab, scrollButtons=True,
                                       variant="scrollable", sx={"flex": 1}):
                             for label in self._tabs.keys():

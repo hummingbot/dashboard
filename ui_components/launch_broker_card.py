@@ -17,11 +17,11 @@ class LaunchBrokerCard(Dashboard.Item):
     def manage_broker_container(self):
         if self.is_broker_running:
             DockerManager().stop_container("hummingbot-broker")
-            with st.spinner('Stopping Hummingbot Broker... you will not going to be able to manage bots anymore.'):
+            with st.spinner('Stopping Hummingbot Broker... This process may take a few seconds...'):
                 time.sleep(5)
         else:
             DockerManager().create_broker()
-            with st.spinner('Starting Hummingbot Broker... This process may take a few seconds'):
+            with st.spinner('Starting Hummingbot Broker... This process may take a few seconds...'):
                 time.sleep(20)
 
     def __call__(self):
@@ -31,13 +31,13 @@ class LaunchBrokerCard(Dashboard.Item):
                        sx={"display": "flex", "flexDirection": "column", "borderRadius": 3, "overflow": "hidden"},
                        elevation=1):
             with self.title_bar(padding="10px 15px 10px 15px", dark_switcher=False):
-                mui.Typography("🐙 Manage Broker", variant="h4")
+                mui.Typography("🐙 Manage Broker", variant="h5")
             with mui.Grid(container=True, spacing=2, sx={"padding": "10px 15px 10px 15px"}):
                 with mui.Grid(item=True, xs=8):
                     if self.is_broker_running:
-                        mui.Alert("Hummingbot Broker is running, you can control your bots now!", severity="success")
+                        mui.Alert("Hummingbot Broker is running - control your bots now!", severity="success")
                     else:
-                        mui.Alert("Humminngbot Broker is not running, start it to start controlling your bots.",
+                        mui.Alert("Hummingbot Broker is not running - start it to control your bots.",
                                   severity="error")
 
                 with mui.Grid(item=True, xs=4):
