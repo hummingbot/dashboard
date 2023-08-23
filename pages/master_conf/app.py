@@ -19,9 +19,9 @@ if "mc_board" not in st.session_state:
     board = Dashboard()
     mc_board = SimpleNamespace(
         dashboard=board,
+        launch_master_bot=LaunchMasterBotCard(board, 0, 0, 12, 1),
         file_explorer=MasterConfFileExplorer(board, 0, 4, 3, 7),
         editor=Editor(board, 4, 4, 9, 7),
-        launch_master_bot=LaunchMasterBotCard(board, 0, 0, 14, 1)
     )
     st.session_state.mc_board = mc_board
 
