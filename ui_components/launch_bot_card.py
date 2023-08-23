@@ -70,17 +70,17 @@ class LaunchBotCard(Dashboard.Item):
                                       sx={"width": "100%"})
 
                 with mui.Grid(item=True, xs=2):
-                    button_text = "Stop" if self.is_master_bot_running else "Start"
-                    color = "error" if self.is_master_bot_running else "success"
-                    icon = mui.icon.Stop if self.is_master_bot_running else mui.icon.PlayCircle
                     with mui.Button(onClick=self.launch_new_bot,
-                                    color=color,
                                     variant="outlined",
+                                    color="success",
                                     sx={"width": "100%", "height": "100%"}):
-                        icon()
-                        mui.Typography(button_text)
+                        mui.icon.AddCircleOutline()
+                        mui.Typography("Create")
+                with mui.Grid(item=True, xs=8):
+                    mui.Alert("The bot will contain the credentials configured in the following Base Bot Configuration.",
+                              severity="info")
 
-                with mui.Grid(item=True, xs=2):
+                with mui.Grid(item=True, xs=4):
                     master_configs = [conf.split("/")[-2] for conf in
                                       get_directories_from_directory(constants.HUMMINGBOT_TEMPLATES) if
                                       "bot_conf" in conf]
