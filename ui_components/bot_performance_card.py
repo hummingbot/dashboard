@@ -53,17 +53,47 @@ class BotPerformanceCard(Dashboard.Item):
             )
             if bot_config["is_running"]:
                 with mui.CardContent(sx={"flex": 1}):
-                    # with mui.Paper(elevation=2, sx={"padding": 2, "marginBottom": 2}):
-                    mui.Typography("Orders")
-                    parser = StatusParser(bot_config["status"])
-                    orders = parser.parse()
+                    
+                    # Balances Table
+                    mui.Typography("Balances", variant="h6")
+
+                    # # Convert list of dictionaries to DataFrame
+                    balances = StatusParser(bot_config["status"], type="balances").parse()
+                    if balances != "No balances":
+                        df_balances = pd.DataFrame(balances)
+                        balances_rows = df_balances.to_dict(orient='records')
+                        balances_cols = [{'field': col, 'headerName': col} for col in df_balances.columns]
+
+                        for column in balances_cols:
+                            # Hide the 'id' column
+                            if column['field'] == 'id':
+                                column['width'] = 0
+                            else:
+                                column['width'] = 200
+
+                        mui.DataGrid(rows=balances_rows,
+                                        columns=balances_cols,
+                                        autoHeight=True,
+                                        density="compact",
+                                        disableColumnSelector=True,
+                                        hideFooter=True,
+                                        initialState={"columns": {"columnVisibilityModel": {"id": False}}})
+                    else:
+                        mui.Typography(str(balances), sx={"fontSize": "0.75rem"})
+                    
+                    mui.Divider(sx={"margin": 4})
+
+                    # Active Orders Table
+                    mui.Typography("Active Orders", variant="h6")
 
                     # Convert list of dictionaries to DataFrame
+                    orders = StatusParser(bot_config["status"], type="orders").parse()
                     if orders != "No active maker orders" or "No matching string":
                         df_orders = pd.DataFrame(orders)
-                        rows = df_orders.to_dict(orient='records')
-                        columns = [{'field': col, 'headerName': col} for col in df_orders.columns]
-                        for column in columns:
+                        orders_rows = df_orders.to_dict(orient='records')
+                        orders_cols = [{'field': col, 'headerName': col} for col in df_orders.columns]
+
+                        for column in orders_cols:
                             # Hide the 'id' column
                             if column['field'] == 'id':
                                 column['width'] = 0
@@ -73,20 +103,44 @@ class BotPerformanceCard(Dashboard.Item):
                             # Expand the 'price' column
                             if column['field'] == 'Price':
                                 column['width'] = 150
-                        mui.DataGrid(rows=rows,
-                                        columns=columns,
+
+                        mui.DataGrid(rows=orders_rows,
+                                        columns=orders_cols,
                                         autoHeight=True,
                                         density="compact",
+                                        disableColumnSelector=True,
                                         hideFooter=True,
                                         initialState={"columns": {"columnVisibilityModel": {"id": False}}})
                     else:
                         mui.Typography(str(orders), sx={"fontSize": "0.75rem"})
 
-                    with mui.Accordion(sx={"padding": 2, "marginBottom": 2}):
-                        with mui.AccordionSummary(expandIcon="▼"):
-                            mui.Typography("Trades" + "(" + str(len(bot_config["trades"])) + ")")
-                        with mui.AccordionDetails():
-                            mui.Typography(str(bot_config["trades"]), sx={"fontSize": "0.75rem"})
+                    mui.Divider(sx={"margin": 4})
+
+                    # Trades Table
+                    mui.Typography("Trades", variant="h6")
+                    df_trades = pd.DataFrame(bot_config["trades"])
+
+                    # Add 'id' column to the dataframe by concatenating 'trade_id' and 'trade_timestamp'
+                    df_trades['id'] = df_trades['trade_id'].astype(str) + df_trades['trade_timestamp'].astype(str)
+
+                    trades_rows = df_trades.to_dict(orient='records')
+                    trades_cols = [{'field': col, 'headerName': col} for col in df_trades.columns]
+
+                    for column in trades_cols:
+                        # Hide the 'id' and 'raw_json' columns
+                        if column['field'] == 'id':
+                            column['width'] = 0
+                        # Expand the 'exchange' column
+                        # if column['field'] == 'Exchange':
+                        #     column['width'] = 200
+
+                    mui.DataGrid(rows=trades_rows,
+                                    columns=trades_cols,
+                                    autoHeight=True,
+                                    density="compact",
+                                    disableColumnSelector=True,
+                                    hideFooter=True,
+                                    initialState={"columns": {"columnVisibilityModel": {"id": False}}})
             else:
                 with mui.CardContent(sx={"flex": 1}):
                     with mui.Grid(container=True, spacing=2):

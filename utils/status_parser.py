@@ -1,16 +1,21 @@
 class StatusParser:
-    def __init__(self, input_str):
+    def __init__(self, input_str, type='orders'):
         self.lines = input_str.split("\n")
         
-        # Check for the type of parser needed
-        if "No active maker orders" in input_str:
-            self.parser = self
-        elif all(keyword in input_str for keyword in ['Exchange', 'Market', 'Side']):
-            self.parser = OrderParser(self.lines, ['Exchange', 'Market', 'Side', 'Price', 'Amount', 'Age'])
-        elif all(keyword in input_str for keyword in ['Level', 'Amount (Orig)']):
-            self.parser = OrderParser(self.lines, ['Level', 'Type', 'Price', 'Spread', 'Amount (Adj)', 'Amount (Orig)', 'Age'])
+        if type == 'orders':
+            if "No active maker orders" in input_str:
+                self.parser = self
+            elif all(keyword in input_str for keyword in ['Orders:','Exchange', 'Market', 'Side', 'Price', 'Amount', 'Age']):
+                self.parser = OrdersParser(self.lines, ['Exchange', 'Market', 'Side', 'Price', 'Amount', 'Age'])
+            elif all(keyword in input_str for keyword in ['Orders:','Level', 'Amount (Orig)', 'Amount (Adj)']):
+                self.parser = OrdersParser(self.lines, ['Level', 'Type', 'Price', 'Spread', 'Amount (Orig)', 'Amount (Adj)', 'Age'])
+            else:
+                raise ValueError("No matching string for type 'order'")
+        elif type == 'balances':
+            self.parser = BalancesParser(self.lines)
+            # if all(keyword in input_str for keyword in ['Balances:']):
         else:
-            raise ValueError("No matching string")
+            raise ValueError(f"Unsupported type: {type}")
 
     def parse(self):
         return self.parser._parse()
@@ -20,7 +25,7 @@ class StatusParser:
             return "No active maker orders"
         raise NotImplementedError
 
-class OrderParser:
+class OrdersParser:
     def __init__(self, lines, columns):
         self.lines = lines
         self.columns = columns
@@ -37,11 +42,20 @@ class OrderParser:
         
         lines = self.lines[start_idx + 1:]
         for line in lines:
+
+            # Ignore warning lines
+            # if line.startswith("***"):
+            #     break
+
+            # Break when there's a blank line
+            if not line.strip():
+                break
+
             parts = line.split()
             if len(parts) < len(self.columns):
                 continue
             
-            # Create the order dictionary based on provided columns
+            # Create the orders dictionary based on provided columns
             order = {}
             for idx, col in enumerate(self.columns):
                 order[col] = parts[idx]
@@ -53,3 +67,43 @@ class OrderParser:
             orders.append(order)
         
         return orders
+
+class BalancesParser:
+    def __init__(self, lines):
+        self.lines = lines
+        self.columns = ['Exchange', 'Asset', 'Total Balance', 'Available Balance']
+
+    def _parse(self):
+        # Check if "Balances:" exists in the lines
+        if not any("Balances:" in line for line in self.lines):
+            return "No balances"
+
+        balances = []
+        for i, line in enumerate(self.lines):
+            if "Balances:" in line:
+                start_idx = i + 1
+                break
+
+        lines = self.lines[start_idx + 1:]
+        for line in lines:
+
+            # Break when there's a blank line
+            if not line.strip():
+                break
+
+            parts = line.split()
+            if len(parts) < len(self.columns):
+                continue
+            
+            # Create the balances dictionary based on provided columns
+            balance = {}
+            for idx, col in enumerate(self.columns):
+                balance[col] = parts[idx]
+                
+            # Special handling for 'id' column (concatenating several parts)
+            if 'id' not in balance:
+                balance['id'] = ''.join(parts[:len(self.columns)-1])
+                
+            balances.append(balance)
+        
+        return balances
