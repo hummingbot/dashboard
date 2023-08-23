@@ -6,8 +6,33 @@ import time
 from utils.os_utils import get_python_files_from_directory, get_yml_files_from_directory
 from utils.status_parser import StatusParser
 import pandas as pd
+import datetime
 
 TRADES_TO_SHOW = 5
+WIDE_COL_WIDTH = 180
+MEDIUM_COL_WIDTH = 150
+
+
+# Define a function to format the time difference
+def time_ago(ts):
+    now_utc = datetime.datetime.now(datetime.timezone.utc)
+    seconds_since_epoch_utc = now_utc.timestamp()
+    delta = round(seconds_since_epoch_utc - ts / 1000)
+    if delta < 60:
+        return f"{delta}s ago"
+    if delta < 3600:
+        return f"{delta // 60}m ago"
+    else:
+        return f"{delta // 3600}h ago"
+
+def convert_to_datetime(val):
+    try:
+        # Try treating it as a UNIX timestamp (seconds since the epoch)
+        timestamp = int(val)
+        return pd.to_datetime(timestamp, unit='s')
+    except ValueError:
+        # If that fails, try treating it as a string representation of a datetime
+        return pd.to_datetime(val)
 
 class BotPerformanceCard(Dashboard.Item):
 
@@ -69,8 +94,7 @@ class BotPerformanceCard(Dashboard.Item):
                         for column in balances_cols:
                             # Customize width for 'exchange' column
                             if column['field'] == 'Exchange':
-                                column['width'] = 200
-
+                                column['width'] = WIDE_COL_WIDTH
                         mui.DataGrid(rows=balances_rows,
                                         columns=balances_cols,
                                         autoHeight=True,
@@ -80,11 +104,9 @@ class BotPerformanceCard(Dashboard.Item):
                                         initialState={"columns": {"columnVisibilityModel": {"id": False}}})
                     else:
                         mui.Typography(str(balances), sx={"fontSize": "0.75rem"})
-                    
-                    mui.Divider(sx={"margin": 4})
 
                     # Active Orders Table
-                    mui.Typography("Active Orders", variant="h6")
+                    mui.Typography("Active Orders", variant="h6", sx={"marginTop": 2})
 
                     # Convert list of dictionaries to DataFrame
                     orders = StatusParser(bot_config["status"], type="orders").parse()
@@ -96,10 +118,10 @@ class BotPerformanceCard(Dashboard.Item):
                         for column in orders_cols:
                             # Customize width for 'exchange' column
                             if column['field'] == 'Exchange':
-                                column['width'] = 200
+                                column['width'] = WIDE_COL_WIDTH
                             # Customize width for column
                             if column['field'] == 'Price':
-                                column['width'] = 150
+                                column['width'] = MEDIUM_COL_WIDTH
 
                         mui.DataGrid(rows=orders_rows,
                                         columns=orders_cols,
@@ -111,19 +133,20 @@ class BotPerformanceCard(Dashboard.Item):
                     else:
                         mui.Typography(str(orders), sx={"fontSize": "0.75rem"})
 
-                    mui.Divider(sx={"margin": 4})
-
                     # Trades Table
-                    mui.Typography("Recent Trades", variant="h6")
+                    mui.Typography("Recent Trades", variant="h6", sx={"marginTop": 2})
                     df_trades = pd.DataFrame(bot_config["trades"])
 
                     # Add 'id' column to the dataframe by concatenating 'trade_id' and 'trade_timestamp'
                     df_trades['id'] = df_trades.get('trade_id', '0').astype(str) + df_trades['trade_timestamp'].astype(str)
 
-                    # Show recent trades only
+                    # Convert timestamp col to datetime
                     df_trades['trade_timestamp'] = df_trades['trade_timestamp'].astype(int)
+
+                    # Show last X trades
                     df_trades = df_trades.sort_values(by='trade_timestamp', ascending=False)
                     df_trades = df_trades.head(TRADES_TO_SHOW)
+                    df_trades['time_ago'] = df_trades['trade_timestamp'].apply(time_ago)
 
                     trades_rows = df_trades.to_dict(orient='records')
                     trades_cols = [{'field': col, 'headerName': col} for col in df_trades.columns]
@@ -131,9 +154,9 @@ class BotPerformanceCard(Dashboard.Item):
                     for column in trades_cols:
                         # Customize width for 'market' column
                         if column['field'] == 'market':
-                            column['width'] = 200
+                            column['width'] = WIDE_COL_WIDTH
                         if column['field'] == 'trade_timestamp':
-                            column['width'] = 150
+                            column['width'] = MEDIUM_COL_WIDTH
 
                     mui.DataGrid(rows=trades_rows,
                                     columns=trades_cols,
@@ -141,7 +164,7 @@ class BotPerformanceCard(Dashboard.Item):
                                     density="compact",
                                     disableColumnSelector=True,
                                     hideFooter=True,
-                                    initialState={"columns": {"columnVisibilityModel": {"id": False, "trade_id": False, "base_asset": False, "quote_asset": False, "raw_json": False}}})
+                                    initialState={"columns": {"columnVisibilityModel": {"id": False, "trade_id": False, "trade_timestamp": False, "base_asset": False, "quote_asset": False, "raw_json": False}}})
             else:
                 with mui.CardContent(sx={"flex": 1}):
                     with mui.Grid(container=True, spacing=2):
