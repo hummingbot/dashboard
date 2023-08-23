@@ -12,8 +12,6 @@ TRADES_TO_SHOW = 5
 WIDE_COL_WIDTH = 180
 MEDIUM_COL_WIDTH = 150
 
-
-# Define a function to format the time difference
 def time_ago(ts):
     now_utc = datetime.datetime.now(datetime.timezone.utc)
     seconds_since_epoch_utc = now_utc.timestamp()
@@ -24,15 +22,6 @@ def time_ago(ts):
         return f"{delta // 60}m ago"
     else:
         return f"{delta // 3600}h ago"
-
-def convert_to_datetime(val):
-    try:
-        # Try treating it as a UNIX timestamp (seconds since the epoch)
-        timestamp = int(val)
-        return pd.to_datetime(timestamp, unit='s')
-    except ValueError:
-        # If that fails, try treating it as a string representation of a datetime
-        return pd.to_datetime(val)
 
 class BotPerformanceCard(Dashboard.Item):
 
