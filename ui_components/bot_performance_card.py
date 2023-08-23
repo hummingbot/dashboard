@@ -49,10 +49,7 @@ class BotPerformanceCard(Dashboard.Item):
         scripts = [file.split("/")[-1] for file in get_python_files_from_directory(scripts_directory)]
         strategies = [file.split("/")[-1] for file in get_yml_files_from_directory(strategies_directory)]
         if bot_config["selected_strategy"] is None:
-            if len(scripts):
-                st.session_state.active_bots[bot_name]["selected_strategy"] = scripts[0]
-            elif len(strategies):
-                st.session_state.active_bots[bot_name]["selected_strategy"] = strategies[0]
+            st.session_state.active_bots[bot_name]["selected_strategy"] = ""
 
         with mui.Card(key=self._key,
                       sx={"display": "flex", "flexDirection": "column", "borderRadius": 2, "overflow": "auto"},
@@ -69,7 +66,6 @@ class BotPerformanceCard(Dashboard.Item):
             )
             if bot_config["is_running"]:
                 with mui.CardContent(sx={"flex": 1}):
-                    
                     # Balances Table
                     mui.Typography("Balances", variant="h6")
 
