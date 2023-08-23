@@ -44,7 +44,8 @@ def update_containers_info(docker_manager):
     if st.session_state.is_broker_running:
         try:
             active_hbot_containers = [container for container in active_containers if
-                                      "hummingbot-" in container and "broker" not in container]
+                                      "hummingbot-" in container and "broker" not in container
+                                      and "master_bot_conf" not in container]
             previous_active_bots = st.session_state.active_bots.keys()
 
             # Remove bots that are no longer active
