@@ -13,9 +13,11 @@ from hbotrc import BotCommands
 from ui_components.bot_performance_card import BotPerformanceCard
 from ui_components.dashboard import Dashboard
 from ui_components.exited_bot_card import ExitedBotCard
+from ui_components.launch_bot_card import LaunchBotCard
+from ui_components.launch_broker_card import LaunchBrokerCard
 from utils.st_utils import initialize_st_page
 
-initialize_st_page(title="Bots Manager", icon="🦅", initial_sidebar_state="collapsed")
+initialize_st_page(title="Instances", icon="🦅", initial_sidebar_state="collapsed")
 
 if "is_broker_running" not in st.session_state:
     st.session_state.is_broker_running = False
@@ -36,31 +38,14 @@ if "editor_tabs" not in st.session_state:
     st.session_state.editor_tabs = {}
 
 
-def manage_broker_container():
-    if st.session_state.is_broker_running:
-        docker_manager.stop_container("hummingbot-broker")
-        with st.spinner('Stopping Hummingbot Broker... you will not going to be able to manage bots anymore.'):
-            time.sleep(5)
-    else:
-        docker_manager.create_broker()
-        with st.spinner('Starting Hummingbot Broker... This process may take a few seconds'):
-            time.sleep(20)
-
-
-def launch_new_bot():
-    bot_name = f"hummingbot-{st.session_state.new_bot_name.target.value}"
-    docker_manager.create_hummingbot_instance(instance_name=bot_name,
-                                              base_conf_folder=f"{constants.BOTS_FOLDER}/master_bot_conf/.",
-                                              target_conf_folder=f"{constants.BOTS_FOLDER}/{bot_name}/.")
-
-
 def update_containers_info(docker_manager):
     active_containers = docker_manager.get_active_containers()
     st.session_state.is_broker_running = "hummingbot-broker" in active_containers
     if st.session_state.is_broker_running:
         try:
             active_hbot_containers = [container for container in active_containers if
-                                      "hummingbot-" in container and "broker" not in container]
+                                      "hummingbot-" in container and "broker" not in container
+                                      and "master_bot_conf" not in container]
             previous_active_bots = st.session_state.active_bots.keys()
 
             # Remove bots that are no longer active
@@ -117,40 +102,25 @@ def get_grid_positions(n_cards: int, cols: int = NUM_CARD_COLS, card_width: int 
     return sorted(x_y, key=lambda x: (x[1], x[0]))
 
 
+if "create_containers_board" not in st.session_state:
+    board = Dashboard()
+    create_containers_board = SimpleNamespace(
+        dashboard=board,
+        launch_bot=LaunchBotCard(board, 0, 0, 8, 1.5),
+        launch_broker=LaunchBrokerCard(board, 8, 0, 4, 1.5)
+    )
+    st.session_state.create_containers_board = create_containers_board
+
+else:
+    create_containers_board = st.session_state.create_containers_board
+
+
 with elements("create_bot"):
-    with mui.Grid(container=True, spacing=2):
-        with mui.Grid(item=True, xs=6):
-            with mui.Paper(style={"padding": "2rem"}, variant="outlined"):
-                with mui.Grid(container=True, spacing=2):
-                    with mui.Grid(item=True, xs=12):
-                        mui.Typography("🚀 Create Instance", variant="h5")
-                    with mui.Grid(item=True, xs=8):
-                        mui.TextField(label="Bot Name", variant="outlined", onChange=lazy(sync("new_bot_name")),
-                                        sx={"width": "100%"})
-                    with mui.Grid(item=True, xs=4):
-                        with mui.Button(onClick=launch_new_bot,
-                                        variant="outlined", 
-                                        color="success",
-                                        sx={"width": "100%", "height": "100%"}):
-                            mui.icon.AddCircleOutline()
-                            mui.Typography("Create")
-        with mui.Grid(item=True, xs=6):
-            with mui.Paper(style={"padding": "2rem"}, variant="outlined"):
-                with mui.Grid(container=True, spacing=2):
-                    with mui.Grid(item=True, xs=12):
-                        mui.Typography("🐙 Manage Broker", variant="h5")
-                    with mui.Grid(item=True, xs=8):
-                        mui.Typography("Hummingbot Broker helps you control and monitor your bot instances.")
-                    with mui.Grid(item=True, xs=4):
-                        button_text = "Stop" if st.session_state.is_broker_running else "Start"
-                        color = "error" if st.session_state.is_broker_running else "success"
-                        icon = mui.icon.Stop if st.session_state.is_broker_running else mui.icon.PlayCircle
-                        with mui.Button(onClick=manage_broker_container,
-                                        color=color,
-                                        variant="outlined",
-                                        sx={"width": "100%", "height": "100%"}):
-                            icon()
-                            mui.Typography(button_text)
+    with mui.Paper(elevation=3, style={"padding": "2rem"}, spacing=[2, 2], container=True):
+        with create_containers_board.dashboard():
+            create_containers_board.launch_bot()
+            create_containers_board.launch_broker()
+
 
 with elements("active_instances_board"):
     with mui.Paper(sx={"padding": "2rem"}, variant="outlined"):

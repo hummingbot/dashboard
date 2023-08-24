@@ -89,7 +89,7 @@ class BotPerformanceCard(Dashboard.Item):
                             mui.icon.DeleteForever()
                             mui.Typography("Stop Instance")
                     with mui.Grid(item=True, xs=6):
-                        mui.TextField(disabled=True,
-                                    label="Attach to bot instance",
+                        mui.TextField(InputProps={"readOnly": True},
+                                    label="Attach to instance",
                                     value="docker attach " + bot_name, 
                                     sx={"width": "100%"})

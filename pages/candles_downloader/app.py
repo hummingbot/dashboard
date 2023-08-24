@@ -10,7 +10,7 @@ from docker_manager import DockerManager
 from utils.st_utils import initialize_st_page
 
 
-initialize_st_page(title="Candles Downloader", icon="🗂️")
+initialize_st_page(title="Get Data", icon="💾", initial_sidebar_state="collapsed")
 
 # Start content here
 docker_manager = DockerManager()

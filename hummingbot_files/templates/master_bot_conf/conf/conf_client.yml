@@ -2,7 +2,7 @@
 ###   client_config_map config   ###
 ####################################
 
-instance_id: 039758736d451914503a45ff596e168902d62557
+instance_id: hummingbot-master_bot_conf
 
 log_level: INFO
 
@@ -67,42 +67,42 @@ pmm_script_mode: {}
 #     BTC: 0.1
 #     USDT: 1000
 balance_asset_limit:
-  bybit_testnet: {}
-  lbank: {}
-  binance_us: {}
-  crypto_com: {}
-  ascend_ex_paper_trade: {}
-  hotbit: {}
-  gate_io_paper_trade: {}
-  bitmex_testnet: {}
-  ndax_testnet: {}
-  huobi: {}
-  probit_kr: {}
   altmarkets: {}
-  hitbtc: {}
-  foxbit: {}
   ascend_ex: {}
+  ascend_ex_paper_trade: {}
   binance: {}
-  okx: {}
-  ciex: {}
-  bitmex: {}
+  binance_paper_trade: {}
+  binance_us: {}
   bitfinex: {}
-  probit: {}
-  kraken: {}
-  kucoin: {}
   bitmart: {}
-  bybit: {}
+  bitmex: {}
+  bitmex_testnet: {}
   bittrex: {}
   btc_markets: {}
-  mock_paper_exchange: {}
+  bybit: {}
+  bybit_testnet: {}
+  ciex: {}
+  coinbase_pro: {}
+  crypto_com: {}
+  foxbit: {}
+  gate_io: {}
+  gate_io_paper_trade: {}
+  hitbtc: {}
+  hotbit: {}
+  huobi: {}
+  kraken: {}
+  kucoin: {}
   kucoin_paper_trade: {}
-  ndax: {}
+  lbank: {}
   loopring: {}
   mexc: {}
+  mock_paper_exchange: {}
+  ndax: {}
+  ndax_testnet: {}
+  okx: {}
+  probit: {}
+  probit_kr: {}
   whitebit: {}
-  coinbase_pro: {}
-  binance_paper_trade: {}
-  gate_io: {}
 
 # Fixed gas price (in Gwei) for Ethereum transactions
 manual_gas_price: 50.0
@@ -162,14 +162,14 @@ paper_trade:
   - gate_io
   paper_trade_account_balance:
     BTC: 1.0
-    USDT: 1000.0
-    ONE: 1000.0
-    USDQ: 1000.0
-    TUSD: 1000.0
-    ETH: 10.0
-    WETH: 10.0
-    USDC: 1000.0
     DAI: 1000.0
+    ETH: 10.0
+    ONE: 1000.0
+    TUSD: 1000.0
+    USDC: 1000.0
+    USDQ: 1000.0
+    USDT: 1000.0
+    WETH: 10.0
 
 color:
   top_pane: '#000000'
