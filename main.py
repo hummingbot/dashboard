@@ -3,22 +3,23 @@ from st_pages import Page, Section, show_pages
 
 from utils.st_utils import initialize_st_page
 
-initialize_st_page(title="Hummingbot Dashboard", icon="📊")
+initialize_st_page(title="Hummingbot Dashboard", icon="📊", initial_sidebar_state="expanded")
 
 show_pages(
     [
         Page("main.py", "Hummingbot Dashboard", "📊"),
         Section("Bot Orchestration", "🐙"),
-        Page("pages/bot_orchestration/app.py", "Bots Manager", "🦅"),
-        Page("pages/file_manager/app.py", "File Manager", "🗂"),
+        Page("pages/master_conf/app.py", "Credentials", "🗝️"),
+        Page("pages/bot_orchestration/app.py", "Instances", "🦅"),
+        Page("pages/file_manager/app.py", "Strategy Configs", "🗂"),
         Section("Backtest Manager", "⚙️"),
+        Page("pages/candles_downloader/app.py", "Get Data", "💾"),
         Page("pages/backtest_manager/create.py", "Create", "⚔️"),
         Page("pages/backtest_manager/optimize.py", "Optimize", "🧪"),
         Page("pages/backtest_manager/analyze.py", "Analyze", "🔬"),
         Page("pages/backtest_manager/simulate.py", "Simulate", "📈"),
         Section("Community Pages", "👨‍👩‍👧‍👦"),
         Page("pages/strategy_performance/app.py", "Strategy Performance", "🚀"),
-        Page("pages/candles_downloader/app.py", "Candles Downloader", "🗂"),
         Page("pages/db_inspector/app.py", "DB Inspector", "🔍"),
         Page("pages/token_spreads/app.py", "Token Spreads", "🧙"),
         Page("pages/tvl_vs_mcap/app.py", "TVL vs Market Cap", "🦉"),
