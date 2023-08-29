@@ -4,7 +4,24 @@ from ui_components.dashboard import Dashboard
 import streamlit as st
 import time
 from utils.os_utils import get_python_files_from_directory, get_yml_files_from_directory
+from utils.status_parser import StatusParser
+import pandas as pd
+import datetime
 
+TRADES_TO_SHOW = 5
+WIDE_COL_WIDTH = 180
+MEDIUM_COL_WIDTH = 150
+
+def time_ago(ts):
+    now_utc = datetime.datetime.now(datetime.timezone.utc)
+    seconds_since_epoch_utc = now_utc.timestamp()
+    delta = round(seconds_since_epoch_utc - ts / 1000)
+    if delta < 60:
+        return f"{delta}s ago"
+    if delta < 3600:
+        return f"{delta // 60}m ago"
+    else:
+        return f"{delta // 3600}h ago"
 
 class BotPerformanceCard(Dashboard.Item):
 
@@ -32,10 +49,7 @@ class BotPerformanceCard(Dashboard.Item):
         scripts = [file.split("/")[-1] for file in get_python_files_from_directory(scripts_directory)]
         strategies = [file.split("/")[-1] for file in get_yml_files_from_directory(strategies_directory)]
         if bot_config["selected_strategy"] is None:
-            if len(scripts):
-                st.session_state.active_bots[bot_name]["selected_strategy"] = scripts[0]
-            elif len(strategies):
-                st.session_state.active_bots[bot_name]["selected_strategy"] = strategies[0]
+            st.session_state.active_bots[bot_name]["selected_strategy"] = ""
 
         with mui.Card(key=self._key,
                       sx={"display": "flex", "flexDirection": "column", "borderRadius": 2, "overflow": "auto"},
@@ -52,14 +66,90 @@ class BotPerformanceCard(Dashboard.Item):
             )
             if bot_config["is_running"]:
                 with mui.CardContent(sx={"flex": 1}):
-                    with mui.Paper(elevation=2, sx={"padding": 2, "marginBottom": 2}):
-                        mui.Typography("Status")
-                        mui.Typography(bot_config["status"], sx={"fontSize": "0.75rem"})
-                    with mui.Accordion(sx={"padding": 2, "marginBottom": 2}):
-                        with mui.AccordionSummary(expandIcon="▼"):
-                            mui.Typography("Trades" + "(" + str(len(bot_config["trades"])) + ")")
-                        with mui.AccordionDetails():
-                            mui.Typography(str(bot_config["trades"]), sx={"fontSize": "0.75rem"})
+                    # Balances Table
+                    mui.Typography("Balances", variant="h6")
+
+                    # # Convert list of dictionaries to DataFrame
+                    balances = StatusParser(bot_config["status"], type="balances").parse()
+                    if balances != "No balances":
+                        df_balances = pd.DataFrame(balances)
+                        balances_rows = df_balances.to_dict(orient='records')
+                        balances_cols = [{'field': col, 'headerName': col} for col in df_balances.columns]
+
+                        for column in balances_cols:
+                            # Customize width for 'exchange' column
+                            if column['field'] == 'Exchange':
+                                column['width'] = WIDE_COL_WIDTH
+                        mui.DataGrid(rows=balances_rows,
+                                        columns=balances_cols,
+                                        autoHeight=True,
+                                        density="compact",
+                                        disableColumnSelector=True,
+                                        hideFooter=True,
+                                        initialState={"columns": {"columnVisibilityModel": {"id": False}}})
+                    else:
+                        mui.Typography(str(balances), sx={"fontSize": "0.75rem"})
+
+                    # Active Orders Table
+                    mui.Typography("Active Orders", variant="h6", sx={"marginTop": 2})
+
+                    # Convert list of dictionaries to DataFrame
+                    orders = StatusParser(bot_config["status"], type="orders").parse()
+                    if orders != "No active maker orders" or "No matching string":
+                        df_orders = pd.DataFrame(orders)
+                        orders_rows = df_orders.to_dict(orient='records')
+                        orders_cols = [{'field': col, 'headerName': col} for col in df_orders.columns]
+
+                        for column in orders_cols:
+                            # Customize width for 'exchange' column
+                            if column['field'] == 'Exchange':
+                                column['width'] = WIDE_COL_WIDTH
+                            # Customize width for column
+                            if column['field'] == 'Price':
+                                column['width'] = MEDIUM_COL_WIDTH
+
+                        mui.DataGrid(rows=orders_rows,
+                                        columns=orders_cols,
+                                        autoHeight=True,
+                                        density="compact",
+                                        disableColumnSelector=True,
+                                        hideFooter=True,
+                                        initialState={"columns": {"columnVisibilityModel": {"id": False}}})
+                    else:
+                        mui.Typography(str(orders), sx={"fontSize": "0.75rem"})
+
+                    # Trades Table
+                    mui.Typography("Recent Trades", variant="h6", sx={"marginTop": 2})
+                    df_trades = pd.DataFrame(bot_config["trades"])
+
+                    # Add 'id' column to the dataframe by concatenating 'trade_id' and 'trade_timestamp'
+                    df_trades['id'] = df_trades.get('trade_id', '0').astype(str) + df_trades['trade_timestamp'].astype(str)
+
+                    # Convert timestamp col to datetime
+                    df_trades['trade_timestamp'] = df_trades['trade_timestamp'].astype(int)
+
+                    # Show last X trades
+                    df_trades = df_trades.sort_values(by='trade_timestamp', ascending=False)
+                    df_trades = df_trades.head(TRADES_TO_SHOW)
+                    df_trades['time_ago'] = df_trades['trade_timestamp'].apply(time_ago)
+
+                    trades_rows = df_trades.to_dict(orient='records')
+                    trades_cols = [{'field': col, 'headerName': col} for col in df_trades.columns]
+
+                    for column in trades_cols:
+                        # Customize width for 'market' column
+                        if column['field'] == 'market':
+                            column['width'] = WIDE_COL_WIDTH
+                        if column['field'] == 'trade_timestamp':
+                            column['width'] = MEDIUM_COL_WIDTH
+
+                    mui.DataGrid(rows=trades_rows,
+                                    columns=trades_cols,
+                                    autoHeight=True,
+                                    density="compact",
+                                    disableColumnSelector=True,
+                                    hideFooter=True,
+                                    initialState={"columns": {"columnVisibilityModel": {"id": False, "trade_id": False, "trade_timestamp": False, "base_asset": False, "quote_asset": False, "raw_json": False}}})
             else:
                 with mui.CardContent(sx={"flex": 1}):
                     with mui.Grid(container=True, spacing=2):

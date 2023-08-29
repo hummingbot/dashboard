@@ -17,6 +17,10 @@ from ui_components.launch_bot_card import LaunchBotCard
 from ui_components.launch_broker_card import LaunchBrokerCard
 from utils.st_utils import initialize_st_page
 
+CARD_WIDTH = 6
+CARD_HEIGHT = 3
+NUM_CARD_COLS = 2
+
 initialize_st_page(title="Instances", icon="🦅", initial_sidebar_state="collapsed")
 
 if "is_broker_running" not in st.session_state:
@@ -85,10 +89,6 @@ def update_containers_info(docker_manager):
 
 
 docker_manager = DockerManager()
-CARD_WIDTH = 6
-CARD_HEIGHT = 3
-NUM_CARD_COLS = 2
-
 if not docker_manager.is_docker_running():
     st.warning("Docker is not running. Please start Docker and refresh the page.")
     st.stop()
