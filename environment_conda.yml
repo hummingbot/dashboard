@@ -1,11 +1,14 @@
 name: dashboard
 channels:
+  - defaults
   - conda-forge
 dependencies:
-  - python=3.9
+  - python=3.10
   - sqlalchemy
+  - pydantic=1.9.*
   - pip
   - pip:
+      - hummingbot
       - streamlit
       - watchdog
       - plotly
@@ -13,7 +16,7 @@ dependencies:
       - glom
       - defillama
       - statsmodels
-      - pandas_ta
+      - pandas_ta==0.3.14b
       - pyyaml
       - commlib-py
       - jupyter
