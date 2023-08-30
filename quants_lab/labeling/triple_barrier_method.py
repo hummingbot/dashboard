@@ -60,20 +60,6 @@ def apply_tp_sl_on_tl(df: pd.DataFrame, tp: float, sl: float):
         stop_loss = pd.Series(index=df.index)  # NaNs
 
     for loc, tl in events['tl'].fillna(df.index[-1]).items():
-        # In the future we can think about including High and Low prices in the calculation
-        # side = events.at[loc, 'side']  # side (1 or -1)
-        # sl = stop_loss[loc]
-        # tp = take_profit[loc]
-        # close = df.close[loc]  # path close price
-        # # path_close = df.close[loc:tl]  # path prices
-        # path_high = (df.high[loc:tl] / close) - 1  # path high prices
-        # path_low = (df.low[loc:tl] / close) - 1  # path low prices
-        # if side == 1:
-        #     df.loc[loc, 'stop_loss_time'] = path_low[path_low < sl].index.min()  # earliest stop loss.
-        #     df.loc[loc, 'take_profit_time'] = path_high[path_high > tp].index.min()  # earliest profit taking.
-        # elif side == -1:
-        #     df.loc[loc, 'stop_loss_time'] = path_high[path_high > -sl].index.min()
-        #     df.loc[loc, 'take_profit_time'] = path_low[path_low < -tp].index.min()
         df0 = df.close[loc:tl]  # path prices
         df0 = (df0 / df.close[loc] - 1) * events.at[loc, 'side']  # path returns
         df.loc[loc, 'stop_loss_time'] = df0[df0 < stop_loss[loc]].index.min()  # earliest stop loss.
