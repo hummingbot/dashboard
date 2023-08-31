@@ -138,5 +138,6 @@ quants_lab/strategy/experiments/*
 
 # Master bot template user-added configs
 hummingbot_files/templates/master_bot_conf/conf/*
+hummingbot_files/templates/master_bot_conf/logs/*
 
 **/.DS_Store

@@ -5,6 +5,8 @@ class StatusParser:
         if type == 'orders':
             if "No active maker orders" in input_str:
                 self.parser = self
+            if "Market connectors are not ready" in input_str:
+                self.parser = self
             elif all(keyword in input_str for keyword in ['Orders:','Exchange', 'Market', 'Side', 'Price', 'Amount', 'Age']):
                 self.parser = OrdersParser(self.lines, ['Exchange', 'Market', 'Side', 'Price', 'Amount', 'Age'])
             elif all(keyword in input_str for keyword in ['Orders:','Level', 'Amount (Orig)', 'Amount (Adj)']):
@@ -23,6 +25,8 @@ class StatusParser:
     def _parse(self):
         if "No active maker orders" in self.lines:
             return "No active maker orders"
+        if "Market connectors are not ready" in "\n".join(self.lines):
+            return "Market connectors are not ready"
         raise NotImplementedError
 
 class OrdersParser:
@@ -34,6 +38,9 @@ class OrdersParser:
         if "No active maker orders" in "\n".join(self.lines):
             return "No active maker orders"
         
+        if "Market connectors are not ready" in "\n".join(self.lines):
+            return "Market connectors are not ready"
+
         orders = []
         for i, line in enumerate(self.lines):
             if "Orders:" in line:
