@@ -11,6 +11,7 @@ env_remove:
 
 env_create:
 	conda env create -f environment_conda.yml
+	conda env update -f environment_conda_forge.yml
 
 docker_build:
 	docker build -t dashboard:latest .

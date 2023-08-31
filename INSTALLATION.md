@@ -36,7 +36,7 @@ streamlit run main.py
 
 ## Updating
 
-To update the `dashboard` environment for changes to dependencies defined in `environment.yml`, remove the environment and re-create it:
+To update the `dashboard` environment for changes to dependencies defined in `environment_conda.yml`, remove the environment and re-create it:
 ```
 make env_remove
 make env_create

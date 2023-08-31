@@ -25,8 +25,10 @@ intervals = {
 
 @st.cache_resource
 def get_databases():
-    sqlite_files = [db_name for db_name in os.listdir("data") if db_name.endswith(".sqlite")]
-    databases_list = [DatabaseManager(db) for db in sqlite_files]
+    databases_list = []
+    if "data" in os.listdir():
+        sqlite_files = [db_name for db_name in os.listdir("data") if db_name.endswith(".sqlite")]
+        databases_list = [DatabaseManager(db) for db in sqlite_files]
     return {database.db_name: database for database in databases_list}
 
 
