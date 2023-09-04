@@ -41,8 +41,8 @@ def download_csv(df: pd.DataFrame, filename: str, key: str):
             )
 
 
-st.session_state["dbs"] = get_databases()
-db_names = [x.db_name for x in st.session_state["dbs"].values() if x.status == 'OK']
+dbs = get_databases()
+db_names = [x.db_name for x in dbs.values() if x.status == 'OK']
 if not db_names:
     st.warning("No trades have been recorded in the selected database")
     selected_db_name = None
@@ -52,23 +52,23 @@ else:
     col1, col2, col3, col4 = st.columns(4)
     with col1:
         selected_db_name = st.selectbox("Select a database to use:", db_names)
-        st.session_state["selected_db"] = st.session_state["dbs"][selected_db_name]
+        selected_db = dbs[selected_db_name]
     with col2:
-        if st.session_state.selected_db:
-            st.session_state.selected_config_file = st.selectbox("Select a config file to analyze:", st.session_state.selected_db.config_files)
+        if selected_db:
+            selected_config_file = st.selectbox("Select a config file to analyze:", selected_db.config_files)
         else:
-            st.session_state.selected_config_file = None
+            selected_config_file = None
     with col3:
-        if st.session_state.selected_config_file:
-            st.session_state.selected_exchange = st.selectbox("Exchange:", st.session_state.selected_db.configs[st.session_state.selected_config_file].keys())
+        if selected_config_file:
+            selected_exchange = st.selectbox("Exchange:", selected_db.configs[selected_config_file].keys())
     with col4:
-        if st.session_state.selected_exchange:
-            st.session_state.selected_trading_pair = st.selectbox("Trading Pair:", options=st.session_state.selected_db.configs[st.session_state.selected_config_file][st.session_state.selected_exchange])
+        if selected_exchange:
+            selected_trading_pair = st.selectbox("Trading Pair:", options=selected_db.configs[selected_config_file][selected_exchange])
 
     single_market = True
     if single_market:
-        strategy_data = st.session_state["dbs"][selected_db_name].get_strategy_data(st.session_state.selected_config_file)
-        single_market_strategy_data = strategy_data.get_single_market_strategy_data(st.session_state.selected_exchange, st.session_state.selected_trading_pair)
+        strategy_data = selected_db.get_strategy_data(selected_config_file)
+        single_market_strategy_data = strategy_data.get_single_market_strategy_data(selected_exchange, selected_trading_pair)
         date_array = pd.date_range(start=strategy_data.start_time, end=strategy_data.end_time, periods=60)
         start_time, end_time = st.select_slider("Select a time range to analyze",
                                                 options=date_array.tolist(),
