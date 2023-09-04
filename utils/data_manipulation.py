@@ -9,6 +9,7 @@ class StrategyData:
     order_status: pd.DataFrame
     trade_fill: pd.DataFrame
     market_data: pd.DataFrame = None
+    position_executor: pd.DataFrame = None
 
     def get_single_market_strategy_data(self, exchange: str, trading_pair: str):
         orders = self.orders[(self.orders["market"] == exchange) & (self.orders["symbol"] == trading_pair)].copy()
@@ -19,6 +20,11 @@ class StrategyData:
                                            (self.market_data["trading_pair"] == trading_pair)].copy()
         else:
             market_data = None
+        if self.position_executor is not None:
+            position_executor = self.position_executor[(self.position_executor["exchange"] == exchange) &
+                                                       (self.position_executor["trading_pair"] == trading_pair)].copy()
+        else:
+            position_executor = None
         return SingleMarketStrategyData(
             exchange=exchange,
             trading_pair=trading_pair,
@@ -26,6 +32,7 @@ class StrategyData:
             order_status=order_status,
             trade_fill=trade_fill,
             market_data=market_data,
+            position_executor=position_executor
         )
 
     @property
@@ -77,6 +84,7 @@ class SingleMarketStrategyData:
     order_status: pd.DataFrame
     trade_fill: pd.DataFrame
     market_data: pd.DataFrame = None
+    position_executor: pd.DataFrame = None
 
     def get_filtered_strategy_data(self, start_date: datetime.datetime, end_date: datetime.datetime):
         orders = self.orders[
@@ -88,6 +96,11 @@ class SingleMarketStrategyData:
                 (self.market_data.index >= start_date) & (self.market_data.index <= end_date)].copy()
         else:
             market_data = None
+        if self.position_executor is not None:
+            position_executor = self.position_executor[(self.position_executor.datetime >= start_date) &
+                                                       (self.position_executor.datetime <= end_date)].copy()
+        else:
+            position_executor = None
         return SingleMarketStrategyData(
             exchange=self.exchange,
             trading_pair=self.trading_pair,
@@ -95,6 +108,7 @@ class SingleMarketStrategyData:
             order_status=order_status,
             trade_fill=trade_fill,
             market_data=market_data,
+            position_executor=position_executor
         )
 
     def get_market_data_resampled(self, interval):

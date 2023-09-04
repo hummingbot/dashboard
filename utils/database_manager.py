@@ -9,10 +9,11 @@ from utils.data_manipulation import StrategyData
 
 
 class DatabaseManager:
-    def __init__(self, db_name):
+    def __init__(self, db_name: str, executors_path: str = "data"):
         self.db_name = db_name
         # TODO: Create db path for all types of db
         self.db_path = f'sqlite:///{os.path.join("data", db_name)}'
+        self.executors_path = executors_path
         self.engine = create_engine(self.db_path, connect_args={'check_same_thread': False})
         self.session_maker = sessionmaker(bind=self.engine)
 
@@ -157,13 +158,49 @@ class DatabaseManager:
             market_data["best_ask"] = market_data["best_ask"] / 1e6
         return market_data
 
-    def get_strategy_data(self, config_file_path=None, start_date=None, end_date=None):
-        orders = self.get_orders(config_file_path, start_date, end_date)
-        trade_fills = self.get_trade_fills(config_file_path, start_date, end_date)
-        order_status = self.get_order_status(orders['id'].tolist(), start_date, end_date)
+    def get_position_executor_data(self, start_date=None, end_date=None) -> pd.DataFrame:
+        df = pd.DataFrame()
+        files = [file for file in os.listdir(self.executors_path) if ".csv" in file and file is not "trades_market_making_.csv"]
+        for file in files:
+            df0 = pd.read_csv(f"{self.executors_path}/{file}")
+            df = pd.concat([df, df0])
+        df["datetime"] = pd.to_datetime(df["timestamp"], unit="s")
+        if start_date:
+            df = df[df["datetime"] >= start_date]
+        if end_date:
+            df = df[df["datetime"] <= end_date]
+        return df
+
+    @staticmethod
+    def _safe_table_loading(func, *args, **kwargs):
         try:
-            market_data = self.get_market_data(start_date, end_date)
-        except Exception as e:
-            market_data = None
-        strategy_data = StrategyData(orders, order_status, trade_fills, market_data)
+            table = func(*args, **kwargs)
+        except Exception:
+            table = None
+        return table
+
+    def get_strategy_data(self, config_file_path=None, start_date=None, end_date=None):
+        def load_orders():
+            return self.get_orders(config_file_path, start_date, end_date)
+
+        def load_trade_fills():
+            return self.get_trade_fills(config_file_path, start_date, end_date)
+
+        def load_order_status():
+            return self.get_order_status(orders['id'].tolist(), start_date, end_date)
+
+        def load_market_data():
+            return self.get_market_data(start_date, end_date)
+
+        def load_position_executor():
+            return self.get_position_executor_data(start_date, end_date)
+
+        # Use _safe_table_loading to load tables
+        orders = self._safe_table_loading(load_orders)
+        trade_fills = self._safe_table_loading(load_trade_fills)
+        order_status = self._safe_table_loading(load_order_status)
+        market_data = self._safe_table_loading(load_market_data)
+        position_executor = self._safe_table_loading(load_position_executor)
+
+        strategy_data = StrategyData(orders, order_status, trade_fills, market_data, position_executor)
         return strategy_data
