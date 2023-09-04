@@ -75,7 +75,7 @@ else:
                                                 value=(date_array[0], date_array[-1]))
         strategy_data_filtered = single_market_strategy_data.get_filtered_strategy_data(start_time, end_time)
 
-        st.markdown("<hr>", unsafe_allow_html=True)
+        st.divider()
         with st.container():
             col1, col2 = st.columns(2)
             with col1:
@@ -94,7 +94,7 @@ else:
                 st.metric(label='Duration (Hours)', value=round(strategy_data_filtered.duration_seconds / 3600, 2))
                 st.metric(label='Price change', value=f"{round(strategy_data_filtered.price_change * 100, 2)} %")
 
-            st.markdown("<hr>", unsafe_allow_html=True)
+            st.divider()
             st.subheader("📈 Performance")
             col131, col132, col133, col134 = st.columns(4)
             with col131:
@@ -120,7 +120,7 @@ else:
                 st.metric(label='Average Buy Price', value=round(strategy_data_filtered.average_buy_price, 4))
                 st.metric(label='Average Sell Price', value=round(strategy_data_filtered.average_sell_price, 4))
 
-        st.markdown("<hr>", unsafe_allow_html=True)
+        st.divider()
         st.subheader("🕯️ Candlestick")
         if strategy_data_filtered.market_data is not None:
             with st.expander("Market activity", expanded=True):
@@ -153,7 +153,7 @@ else:
         else:
             st.warning("Market data is not available so the candles graph is not going to be rendered. "
                        "Make sure that you are using the latest version of Hummingbot and market data recorder activated.")
-        st.markdown("<hr>", unsafe_allow_html=True)
+        st.divider()
         st.subheader("Tables")
         with st.expander("💵 Trades"):
             st.write(strategy_data.trade_fill)
