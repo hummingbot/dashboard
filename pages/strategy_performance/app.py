@@ -156,11 +156,11 @@ else:
         st.markdown("<hr>", unsafe_allow_html=True)
         st.subheader("Tables")
         with st.expander("💵 Trades"):
-            st.write(strategy_data_filtered.trade_fill)
-            download_csv(strategy_data_filtered.trade_fill, "trade_fill", "download-trades")
+            st.write(strategy_data.trade_fill)
+            download_csv(strategy_data.trade_fill, "trade_fill", "download-trades")
         with st.expander("📩 Orders"):
-            st.write(strategy_data_filtered.orders)
-            download_csv(strategy_data_filtered.orders, "orders", "download-orders")
+            st.write(strategy_data.orders)
+            download_csv(strategy_data.orders, "orders", "download-orders")
         with st.expander("⌕ Order Status"):
-            st.write(strategy_data_filtered.order_status)
-            download_csv(strategy_data_filtered.order_status, "order_status", "download-order-status")
+            st.write(strategy_data.order_status)
+            download_csv(strategy_data.order_status, "order_status", "download-order-status")
