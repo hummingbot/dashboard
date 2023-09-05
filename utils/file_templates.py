@@ -52,6 +52,21 @@ class {strategy_cls_name}(DirectionalStrategyBase[{strategy_config_cls_name}]):
 
 
 def get_optuna_suggest_str(field_name: str, properties: Dict):
+    if field_name == "candles_config":
+        return f"""{field_name}=[
+                        CandlesConfig(connector=exchange, trading_pair=trading_pair, 
+                                      interval="3m", max_records=1000000)  # Max number of candles for the real-time bot,
+                    ]"""
+    if field_name == "order_levels":
+        return f"{field_name}=order_levels"
+    if field_name == "trading_pair":
+        return f"{field_name}=trading_pair"
+    if field_name == "exchange":
+        return f"{field_name}=exchange"
+    if field_name == "position_mode":
+        return f"{field_name}=PositionMode.HEDGE"
+    if field_name == "leverage":
+        return f"{field_name}=10"
     map_by_type = {
         "number": "trial.suggest_float",
         "integer": "trial.suggest_int",
@@ -70,50 +85,68 @@ def strategy_optimization_template(strategy_info: dict):
     strategy_config = strategy_info["config"]
     strategy_module = strategy_info["module"]
     field_schema = strategy_config.schema()["properties"]
+    config_to_save_str = "{config: value for config, value in config.dict().items() if config not in ['position_mode', 'order_levels']}"
     fields_str = [get_optuna_suggest_str(field_name, properties) for field_name, properties in field_schema.items()]
     fields_str = "".join([f"                    {field_str},\n" for field_str in fields_str])
     return f"""import traceback
+from decimal import Decimal
 
-from optuna import TrialPruned    
+from hummingbot.core.data_type.common import OrderType
+from hummingbot.core.data_type.common import TradeType, PositionMode
+from hummingbot.data_feed.candles_feed.candles_factory import CandlesConfig
+from hummingbot.smart_components.strategy_frameworks.data_types import TripleBarrierConf, OrderLevel
+from hummingbot.smart_components.strategy_frameworks.directional_trading import DirectionalTradingBacktestingEngine
+from optuna import TrialPruned   
 
-from quants_lab.strategy.experiments.{strategy_module} import {strategy_cls.__name__}, {strategy_config.__name__}
-from quants_lab.strategy.strategy_analysis import StrategyAnalysis
+from quants_lab.strategy.controllers.{strategy_module} import {strategy_cls.__name__}, {strategy_config.__name__}
 
 
 def objective(trial):
     try:
+        exchange = trial.suggest_categorical('exchange', ['binance_perpetual', ])
+        trading_pair = trial.suggest_categorical('trading_pair', ['BTC-USDT', ])
+        stop_loss = trial.suggest_float('stop_loss', 0.001, 0.01)
+        take_profit = trial.suggest_float('take_profit', 0.01, 0.05)
+        time_limit = trial.suggest_int('time_limit', 60 * 60 * 2, 60 * 60 * 24)
+
+        triple_barrier_conf = TripleBarrierConf(
+            stop_loss=Decimal(stop_loss), take_profit=Decimal(take_profit),
+            time_limit=time_limit,
+            trailing_stop_activation_price_delta=Decimal("0.008"),
+            trailing_stop_trailing_delta=Decimal("0.004"),
+        )
+        order_levels = [
+            OrderLevel(level=0, side=TradeType.BUY, order_amount_usd=Decimal(15),
+                       cooldown_time=15, triple_barrier_conf=triple_barrier_conf),
+            OrderLevel(level=0, side=TradeType.SELL, order_amount_usd=Decimal(15),
+                       cooldown_time=15, triple_barrier_conf=triple_barrier_conf),
+        ]
         config = {strategy_config.__name__}(
 {fields_str}
         )
-        strategy = {strategy_cls.__name__}(config=config)
-        market_data, positions = strategy.run_backtesting(
-            start='2021-04-01',
-            order_amount=50,
-            leverage=20,
-            initial_portfolio=100,
-            take_profit_multiplier=trial.suggest_float("take_profit_multiplier", 1.0, 3.0),
-            stop_loss_multiplier=trial.suggest_float("stop_loss_multiplier", 1.0, 3.0),
-            time_limit=60 * 60 * trial.suggest_int("time_limit", 1, 24),
-            std_span=None,
-        )
-        strategy_analysis = StrategyAnalysis(
-            positions=positions,
-        )
-    
-        trial.set_user_attr("net_profit_usd", strategy_analysis.net_profit_usd())
-        trial.set_user_attr("net_profit_pct", strategy_analysis.net_profit_pct())
-        trial.set_user_attr("max_drawdown_usd", strategy_analysis.max_drawdown_usd())
-        trial.set_user_attr("max_drawdown_pct", strategy_analysis.max_drawdown_pct())
-        trial.set_user_attr("sharpe_ratio", strategy_analysis.sharpe_ratio())
-        trial.set_user_attr("accuracy", strategy_analysis.accuracy())
-        trial.set_user_attr("total_positions", strategy_analysis.total_positions())
-        trial.set_user_attr("win_signals", strategy_analysis.win_signals().shape[0])
-        trial.set_user_attr("loss_signals", strategy_analysis.loss_signals().shape[0])
-        trial.set_user_attr("profit_factor", strategy_analysis.profit_factor())
-        trial.set_user_attr("duration_in_hours", strategy_analysis.duration_in_minutes() / 60)
-        trial.set_user_attr("avg_trading_time_in_hours", strategy_analysis.avg_trading_time_in_minutes() / 60)
-        trial.set_user_attr("config", config.dict())
-        return strategy_analysis.net_profit_pct()
+        controller = {strategy_cls.__name__}(config=config)
+        engine = DirectionalTradingBacktestingEngine(controller=controller)
+        engine.load_controller_data("./data/candles")
+        backtesting_results = engine.run_backtesting()
+
+        strategy_analysis = backtesting_results["results"]
+        config_to_save = {config_to_save_str}
+
+        config_to_save["order_levels"] = [order_level.to_dict() for order_level in config.order_levels]
+        trial.set_user_attr("net_pnl_quote", strategy_analysis["net_pnl_quote"])
+        trial.set_user_attr("net_pnl_pct", strategy_analysis["net_pnl"])
+        trial.set_user_attr("max_drawdown_usd", strategy_analysis["max_drawdown_usd"])
+        trial.set_user_attr("max_drawdown_pct", strategy_analysis["max_drawdown_pct"])
+        trial.set_user_attr("sharpe_ratio", strategy_analysis["sharpe_ratio"])
+        trial.set_user_attr("accuracy", strategy_analysis["accuracy"])
+        trial.set_user_attr("total_positions", strategy_analysis["total_positions"])
+        trial.set_user_attr("profit_factor", strategy_analysis["profit_factor"])
+        trial.set_user_attr("duration_in_hours", strategy_analysis["duration_minutes"] / 60)
+        trial.set_user_attr("avg_trading_time_in_hours", strategy_analysis["avg_trading_time_minutes"] / 60)
+        trial.set_user_attr("win_signals", strategy_analysis["win_signals"])
+        trial.set_user_attr("loss_signals", strategy_analysis["loss_signals"])
+        trial.set_user_attr("config", config_to_save)
+        return strategy_analysis["net_pnl"]
     except Exception as e:
         traceback.print_exc()
         raise TrialPruned()
