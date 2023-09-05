@@ -121,21 +121,22 @@ class DatabaseManager:
         return orders
 
     def get_trade_fills(self, config_file_path=None, start_date=None, end_date=None):
+        groupers = ["config_file_path", "market", "symbol"]
         with self.session_maker() as session:
             query = self._get_trade_fills_query(config_file_path, start_date, end_date)
             trade_fills = pd.read_sql_query(query, session.connection())
+            trade_fills.sort_values(by="timestamp", ascending=True, inplace=True)
             trade_fills["amount"] = trade_fills["amount"] / 1e6
             trade_fills["price"] = trade_fills["price"] / 1e6
             trade_fills["trade_fee_in_quote"] = trade_fills["trade_fee_in_quote"] / 1e6
-            trade_fills["cum_fees_in_quote"] = trade_fills["trade_fee_in_quote"].cumsum()
-            trade_fills.loc[:, "net_amount"] = trade_fills['amount'] * trade_fills['trade_type'].apply(
-                lambda x: 1 if x == 'BUY' else -1)
-            trade_fills.loc[:, "net_amount_quote"] = trade_fills['net_amount'] * trade_fills['price']
-            trade_fills.loc[:, "cum_net_amount"] = trade_fills["net_amount"].cumsum()
-            trade_fills.loc[:, "unrealized_trade_pnl"] = -1 * trade_fills["net_amount_quote"].cumsum()
-            trade_fills.loc[:, "inventory_cost"] = trade_fills["cum_net_amount"] * trade_fills["price"]
-            trade_fills.loc[:, "realized_trade_pnl"] = trade_fills["unrealized_trade_pnl"] + trade_fills["inventory_cost"]
-            trade_fills.loc[:, "net_realized_pnl"] = trade_fills["realized_trade_pnl"] - trade_fills["cum_fees_in_quote"]
+            trade_fills["cum_fees_in_quote"] = trade_fills.groupby(groupers)["trade_fee_in_quote"].cumsum()
+            trade_fills["net_amount"] = trade_fills['amount'] * trade_fills['trade_type'].apply(lambda x: 1 if x == 'BUY' else -1)
+            trade_fills["net_amount_quote"] = trade_fills['net_amount'] * trade_fills['price']
+            trade_fills["cum_net_amount"] = trade_fills.groupby(groupers)["net_amount"].cumsum()
+            trade_fills["unrealized_trade_pnl"] = -1 * trade_fills.groupby(groupers)["net_amount_quote"].cumsum()
+            trade_fills["inventory_cost"] = trade_fills["cum_net_amount"] * trade_fills["price"]
+            trade_fills["realized_trade_pnl"] = trade_fills["unrealized_trade_pnl"] + trade_fills["inventory_cost"]
+            trade_fills["net_realized_pnl"] = trade_fills["realized_trade_pnl"] - trade_fills["cum_fees_in_quote"]
             trade_fills["timestamp"] = pd.to_datetime(trade_fills["timestamp"], unit="ms")
             trade_fills["market"] = trade_fills["market"].apply(lambda x: x.lower().replace("_papertrade", ""))
 
