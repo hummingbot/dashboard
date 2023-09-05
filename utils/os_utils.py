@@ -3,10 +3,8 @@ import subprocess
 import importlib.util
 import inspect
 import os
+from hummingbot.smart_components.strategy_frameworks.directional_trading import DirectionalTradingControllerBase, DirectionalTradingControllerConfigBase
 
-from pydantic import BaseModel
-
-from quants_lab.strategy.directional_strategy_base import DirectionalStrategyBase  # update this to the actual import
 import yaml
 
 
@@ -89,9 +87,9 @@ def load_directional_strategies(path):
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
             for name, cls in inspect.getmembers(module, inspect.isclass):
-                if issubclass(cls, DirectionalStrategyBase) and cls is not DirectionalStrategyBase:
+                if issubclass(cls, DirectionalTradingControllerBase) and cls is not DirectionalTradingControllerBase:
                     strategies[module_name]["class"] = cls
-                if issubclass(cls, BaseModel) and cls is not BaseModel:
+                if issubclass(cls, DirectionalTradingControllerConfigBase) and cls is not DirectionalTradingControllerConfigBase:
                     strategies[module_name]["config"] = cls
     return strategies
 
