@@ -54,13 +54,14 @@ else:
     trial = trials[trial_selected]
     # Transform trial config in a dictionary
     trial_config = json.loads(trial["config"])
+    st.write(trial_config)
 
     # Strategy parameters section
     st.write("## Strategy parameters")
     # Load strategies (class, config, module)
     strategies = load_directional_strategies(constants.DIRECTIONAL_STRATEGIES_PATH)
     # Select strategy
-    strategy = strategies[trial_config["name"]]
+    strategy = strategies[trial_config["strategy_name"]]
     # Get field schema
     field_schema = strategy["config"].schema()["properties"]
     c1, c2 = st.columns([5, 1])
