@@ -11,6 +11,39 @@ class StrategyData:
     market_data: pd.DataFrame = None
     position_executor: pd.DataFrame = None
 
+    @property
+    def strategy_summary(self):
+        if self.trade_fill is not None:
+            return self.get_strategy_summary()
+        else:
+            return None
+
+    def get_strategy_summary(self):
+        def full_series(series):
+            return list(series)
+
+        strategy_data = self.trade_fill.copy()
+        strategy_data["volume"] = strategy_data["amount"] * strategy_data["price"]
+        strategy_data["margin_volume"] = strategy_data["amount"] * strategy_data["price"] / strategy_data["leverage"]
+        strategy_summary = strategy_data.groupby(["strategy", "market", "symbol"]).agg({"order_id": "count",
+                                                                                        "volume": "sum",
+                                                                                        "margin_volume": "sum",
+                                                                                        "net_realized_pnl": [full_series,
+                                                                                                             "last"]}).reset_index()
+        strategy_summary.columns = [f"{col[0]}_{col[1]}" if isinstance(col, tuple) and col[1] is not None else col for col in strategy_summary.columns]
+        strategy_summary.rename(columns={"strategy_": "Strategy",
+                                         "market_": "Exchange",
+                                         "symbol_": "Trading Pair",
+                                         "order_id_count": "# Trades",
+                                         "volume_sum": "Volume",
+                                         "margin_volume_sum": "Margin volume",
+                                         "net_realized_pnl_full_series": "PnL Over Time",
+                                         "net_realized_pnl_last": "Realized PnL"}, inplace=True)
+        strategy_summary.sort_values(["Realized PnL"], ascending=True, inplace=True)
+        strategy_summary["Examine"] = False
+        strategy_summary["Examine"][0] = True
+        return strategy_summary
+
     def get_single_market_strategy_data(self, exchange: str, trading_pair: str):
         orders = self.orders[(self.orders["market"] == exchange) & (self.orders["symbol"] == trading_pair)].copy()
         trade_fill = self.trade_fill[self.trade_fill["order_id"].isin(orders["id"])].copy()
