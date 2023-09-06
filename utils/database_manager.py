@@ -17,19 +17,41 @@ class DatabaseManager:
         self.engine = create_engine(self.db_path, connect_args={'check_same_thread': False})
         self.session_maker = sessionmaker(bind=self.engine)
 
+    def get_strategy_data(self, config_file_path=None, start_date=None, end_date=None):
+        def load_data(table_loader):
+            try:
+                return table_loader()
+            except Exception as e:
+                return None  # Return None to indicate failure
+
+        # Use load_data to load tables
+        orders = load_data(self.get_orders)
+        trade_fills = load_data(self.get_trade_fills)
+        order_status = load_data(self.get_order_status)
+        market_data = load_data(self.get_market_data)
+        position_executor = load_data(self.get_position_executor_data)
+
+        strategy_data = StrategyData(orders, order_status, trade_fills, market_data, position_executor)
+        return strategy_data
+
+    @staticmethod
+    def _get_table_status(table_loader):
+        try:
+            data = table_loader()
+            return "Correct" if len(data) > 0 else f"Error - No records matched"
+        except Exception as e:
+            return f"Error - {str(e)}"
+
     @property
     def status(self):
-        try:
-            with self.session_maker() as session:
-                query = 'SELECT DISTINCT config_file_path FROM TradeFill'
-                config_files = pd.read_sql_query(query, session.connection())
-            if len(config_files) > 0:
-            # TODO: improve error handling, think what to do with other cases
-                return "OK"
-            else:
-                return "No records found in the TradeFill table with non-null config_file_path"
-        except Exception as e:
-            return f"Error: {str(e)}"
+        status = {"db_name": self.db_name,
+                  "trade_fill": self._get_table_status(self.get_trade_fills),
+                  "orders": self._get_table_status(self.get_orders),
+                  "order_status": self._get_table_status(self.get_order_status),
+                  "market_data": self._get_table_status(self.get_market_data),
+                  "position_executor": self._get_table_status(self.get_position_executor_data),
+                  }
+        return status
 
     @property
     def config_files(self):
@@ -161,7 +183,7 @@ class DatabaseManager:
 
     def get_position_executor_data(self, start_date=None, end_date=None) -> pd.DataFrame:
         df = pd.DataFrame()
-        files = [file for file in os.listdir(self.executors_path) if ".csv" in file and file is not "trades_market_making_.csv"]
+        files = [file for file in os.listdir(self.executors_path) if ".csv" in file and file != "trades_market_making_.csv"]
         for file in files:
             df0 = pd.read_csv(f"{self.executors_path}/{file}")
             df = pd.concat([df, df0])
@@ -172,36 +194,4 @@ class DatabaseManager:
             df = df[df["datetime"] <= end_date]
         return df
 
-    @staticmethod
-    def _safe_table_loading(func, *args, **kwargs):
-        try:
-            table = func(*args, **kwargs)
-        except Exception:
-            table = None
-        return table
 
-    def get_strategy_data(self, config_file_path=None, start_date=None, end_date=None):
-        def load_orders():
-            return self.get_orders(config_file_path, start_date, end_date)
-
-        def load_trade_fills():
-            return self.get_trade_fills(config_file_path, start_date, end_date)
-
-        def load_order_status():
-            return self.get_order_status(orders['id'].tolist(), start_date, end_date)
-
-        def load_market_data():
-            return self.get_market_data(start_date, end_date)
-
-        def load_position_executor():
-            return self.get_position_executor_data(start_date, end_date)
-
-        # Use _safe_table_loading to load tables
-        orders = self._safe_table_loading(load_orders)
-        trade_fills = self._safe_table_loading(load_trade_fills)
-        order_status = self._safe_table_loading(load_order_status)
-        market_data = self._safe_table_loading(load_market_data)
-        position_executor = self._safe_table_loading(load_position_executor)
-
-        strategy_data = StrategyData(orders, order_status, trade_fills, market_data, position_executor)
-        return strategy_data
