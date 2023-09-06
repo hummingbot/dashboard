@@ -241,3 +241,30 @@ class SingleMarketStrategyData:
     @property
     def inventory_change_base_asset(self):
         return self.total_buy_amount - self.total_sell_amount
+
+    @property
+    def properties_table(self):
+        properties_dict = {"Base Asset": self.base_asset,
+                           "Quote Asset": self.quote_asset,
+                           # "Start Time": self.start_time,
+                           # "End Time": self.end_time,
+                           "Exchange": self.exchange,
+                           "Trading pair": self.trading_pair,
+                           "Duration (seconds)": self.duration_seconds,
+                           "Start Price": self.start_price,
+                           "End Price": self.end_price,
+                           "Total Buy Amount": self.total_buy_amount,
+                           "Total Sell Amount": self.total_sell_amount,
+                           "Total Buy Trades": self.total_buy_trades,
+                           "Total Sell Trades": self.total_sell_trades,
+                           "Total Orders": self.total_orders,
+                           "Average Buy Price": self.average_buy_price,
+                           "Average Sell Price": self.average_sell_price,
+                           "Price Change": self.price_change,
+                           "Trade PnL Quote": self.trade_pnl_quote,
+                           "Cum Fees in Quote": self.cum_fees_in_quote,
+                           "Net PnL Quote": self.net_pnl_quote,
+                           "Inventory Change (base asset)": self.inventory_change_base_asset}
+        properties_table = pd.DataFrame([properties_dict]).transpose().reset_index()
+        properties_table.columns = ["Metric", "Value"]
+        return properties_table
