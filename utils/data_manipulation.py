@@ -41,7 +41,7 @@ class StrategyData:
                                          "net_realized_pnl_last": "Realized PnL"}, inplace=True)
         strategy_summary.sort_values(["Realized PnL"], ascending=True, inplace=True)
         strategy_summary["Examine"] = False
-        strategy_summary["Examine"][0] = True
+        strategy_summary.loc[0, "Examine"] = True
         return strategy_summary
 
     def get_single_market_strategy_data(self, exchange: str, trading_pair: str):

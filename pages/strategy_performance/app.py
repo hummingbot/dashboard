@@ -81,6 +81,7 @@ with upload_tab:
 if selected_db is not None:
     strategy_data = selected_db.get_strategy_data()
     if strategy_data.strategy_summary is not None:
+        st.divider()
         st.subheader("📝 Strategy summary")
         table_tab, chart_tab = st.tabs(["Table", "Chart"])
         with table_tab:
@@ -192,13 +193,13 @@ if selected_db is not None:
                     st.write(strategy_data.order_status)
                     download_csv(strategy_data.order_status, "order_status", "download-order-status")
         else:
-            st.warning("We have problems to keep analyzing this database")
+            st.warning("We are encountering challenges in maintaining continuous analysis of this database.")
             with st.expander("DB Status"):
                 status_df = pd.DataFrame([selected_db.status]).transpose().reset_index()
                 status_df.columns = ["Attribute", "Value"]
                 st.table(status_df)
     else:
-        st.warning("We couldn't process this sqlite database.")
+        st.warning("We were unable to process this SQLite database.")
         with st.expander("DB Status"):
             status_df = pd.DataFrame([selected_db.status]).transpose().reset_index()
             status_df.columns = ["Attribute", "Value"]
