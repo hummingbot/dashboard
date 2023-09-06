@@ -63,22 +63,22 @@ def summary_chart(df: pd.DataFrame):
     return fig
 
 
+st.subheader("🔫 Data source")
 dbs = get_databases()
 db_names = [x.db_name for x in dbs.values()]
-if not db_names:
-    st.warning("No trades have been recorded in the selected database")
-    selected_db_name = None
-    selected_db = None
-else:
-    st.subheader("🔫 Data source")
-    select_tab, upload_tab = st.tabs(["Select", "Upload"])
-    with select_tab:
+select_tab, upload_tab = st.tabs(["Select", "Upload"])
+with select_tab:
+    if db_names is not None:
         selected_db_name = st.selectbox("Select a database to use:", db_names)
         selected_db = dbs[selected_db_name]
-    with upload_tab:
-        uploaded_db = st.file_uploader("Upload your sqlite database", type=["sqlite", "db"])
-        if uploaded_db is not None:
-            selected_db = DatabaseManager(uploaded_db)
+    else:
+        st.warning("Ups! No databases were founded. Try uploading one in Upload tab.")
+        selected_db = None
+with upload_tab:
+    uploaded_db = st.file_uploader("Upload your sqlite database", type=["sqlite", "db"])
+    if uploaded_db is not None:
+        selected_db = DatabaseManager(uploaded_db)
+if selected_db is not None:
     strategy_data = selected_db.get_strategy_data()
     if strategy_data.strategy_summary is not None:
         st.subheader("📝 Strategy summary")
@@ -91,7 +91,7 @@ else:
             summary_chart = summary_chart(strategy_data.strategy_summary)
             st.plotly_chart(summary_chart, use_container_width=True)
         st.subheader("🔍 Examine Trading Pair")
-        if not any("🇽" in value for value in selected_db.status.values()):
+        if not any("Error" in value for key, value in selected_db.status.items() if key != "position_executor"):
             date_array = pd.date_range(start=strategy_data.start_time, end=strategy_data.end_time, periods=60)
             start_time, end_time = st.select_slider("Select a time range to analyze",
                                                     options=date_array.tolist(),
@@ -197,7 +197,6 @@ else:
                 status_df = pd.DataFrame([selected_db.status]).transpose().reset_index()
                 status_df.columns = ["Attribute", "Value"]
                 st.table(status_df)
-
     else:
         st.warning("We couldn't process this sqlite database.")
         with st.expander("DB Status"):
