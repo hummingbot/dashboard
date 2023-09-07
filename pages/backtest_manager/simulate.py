@@ -7,15 +7,7 @@ from streamlit_elements import elements, mui
 
 import constants
 from quants_lab.strategy.strategy_analysis import StrategyAnalysis
-from ui_components.dashboard import Dashboard
-from ui_components.directional_strategies_file_explorer import DirectionalStrategiesFileExplorer
-from ui_components.directional_strategy_creation_card import DirectionalStrategyCreationCard
-from ui_components.editor import Editor
-from ui_components.optimization_creation_card import OptimizationCreationCard
-from ui_components.optimization_run_card import OptimizationRunCard
-from ui_components.optimizations_file_explorer import OptimizationsStrategiesFileExplorer
-from utils import os_utils
-from utils.os_utils import load_directional_strategies
+from utils.os_utils import load_controllers
 
 from utils.st_utils import initialize_st_page
 
@@ -31,7 +23,7 @@ if "strategy_params" not in st.session_state:
 #    * Add videos explaining how to the triple barrier method works and how the backtesting is designed,
 #  link to video of how to create a strategy, etc in a toggle.
 #    * Add performance analysis graphs of the backtesting run
-strategies = load_directional_strategies(constants.DIRECTIONAL_STRATEGIES_PATH)
+strategies = load_controllers(constants.DIRECTIONAL_STRATEGIES_PATH)
 strategy_to_optimize = st.selectbox("Select strategy to backtest", strategies.keys())
 strategy = strategies[strategy_to_optimize]
 strategy_config = strategy["config"]
