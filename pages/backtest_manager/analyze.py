@@ -1,12 +1,19 @@
+from hummingbot.core.data_type.common import PositionMode, TradeType, OrderType
+from hummingbot.data_feed.candles_feed.candles_factory import CandlesConfig
+from hummingbot.smart_components.strategy_frameworks.data_types import OrderLevel
+from hummingbot.smart_components.strategy_frameworks.directional_trading import DirectionalTradingBacktestingEngine
+
 import constants
 import os
 import json
 import streamlit as st
+from docker_manager import DockerManager
 
 from quants_lab.strategy.strategy_analysis import StrategyAnalysis
+from utils.enum_encoder import EnumEncoderDecoder
 from utils.graphs import BacktestingGraphs
 from utils.optuna_database_manager import OptunaDBManager
-from utils.os_utils import load_directional_strategies
+from utils.os_utils import load_controllers, dump_dict_to_yaml
 from utils.st_utils import initialize_st_page
 
 initialize_st_page(title="Analyze", icon="🔬", initial_sidebar_state="collapsed")
@@ -53,33 +60,36 @@ else:
     trial_selected = st.selectbox("Select a trial to backtest", list(trials.keys()))
     trial = trials[trial_selected]
     # Transform trial config in a dictionary
-    trial_config = json.loads(trial["config"])
-    st.write(trial_config)
+    encoder_decoder = EnumEncoderDecoder(TradeType, OrderType, PositionMode)
+    trial_config = encoder_decoder.decode(json.loads(trial["config"]))
 
     # Strategy parameters section
     st.write("## Strategy parameters")
     # Load strategies (class, config, module)
-    strategies = load_directional_strategies(constants.DIRECTIONAL_STRATEGIES_PATH)
+    controllers = load_controllers(constants.DIRECTIONAL_STRATEGIES_PATH)
     # Select strategy
-    strategy = strategies[trial_config["strategy_name"]]
+    controller = controllers[trial_config["strategy_name"]]
     # Get field schema
-    field_schema = strategy["config"].schema()["properties"]
+    field_schema = controller["config"].schema()["properties"]
+
     c1, c2 = st.columns([5, 1])
     # Render every field according to schema
     with c1:
         columns = st.columns(4)
         column_index = 0
         for field_name, properties in field_schema.items():
-            field_type = properties["type"]
+            field_type = properties.get("type", "string")
             field_value = trial_config[field_name]
             with columns[column_index]:
-                if field_type in ["number", "integer"]:
+                if field_type == "array" or field_name == "position_mode":
+                    pass
+                elif field_type in ["number", "integer"]:
                     field_value = st.number_input(field_name,
                                                   value=field_value,
                                                   min_value=properties.get("minimum"),
                                                   max_value=properties.get("maximum"),
                                                   key=field_name)
-                elif field_type == "string":
+                elif field_type in ["string"]:
                     field_value = st.text_input(field_name, value=field_value)
                 elif field_type == "boolean":
                     # TODO: Add support for boolean fields in optimize tab
@@ -87,6 +97,13 @@ else:
                 else:
                     raise ValueError(f"Field type {field_type} not supported")
                 try:
+                    # TODO: figure out how to make this configurable
+                    if field_name == "candles_config":
+                        candles_config = [CandlesConfig(**value) for value in field_value]
+                        st.session_state["strategy_params"][field_name] = candles_config
+                    elif field_name == "order_levels":
+                        order_levels = [OrderLevel(**value) for value in field_value]
+                        st.session_state["strategy_params"][field_name] = order_levels
                     st.session_state["strategy_params"][field_name] = field_value
                 except KeyError as e:
                     pass
@@ -98,60 +115,50 @@ else:
 
     # Backtesting parameters section
     st.write("## Backtesting parameters")
-    # Get every trial params
-    # TODO: Filter only from selected study
+    # # Get every trial params
+    # # TODO: Filter only from selected study
     backtesting_configs = opt_db.load_params()
-    # Get trial backtesting params
+    # # Get trial backtesting params
     backtesting_params = backtesting_configs[trial_selected]
     col1, col2, col3 = st.columns(3)
     with col1:
-        selected_order_amount = st.number_input("Order amount",
-                                                value=50.0,
-                                                min_value=0.1,
-                                                max_value=999999999.99)
-        selected_leverage = st.number_input("Leverage",
-                                            value=10,
-                                            min_value=1,
-                                            max_value=200)
+        trade_cost = st.number_input("Trade cost",
+                                     value=0.0006,
+                                     min_value=0.0001, format="%.4f",)
     with col2:
-        selected_initial_portfolio = st.number_input("Initial portfolio",
-                                                     value=10000.00,
-                                                     min_value=1.00,
-                                                     max_value=999999999.99)
-        selected_time_limit = st.number_input("Time Limit",
-                                              value=60 * 60 * backtesting_params["time_limit"]["param_value"],
-                                              min_value=60 * 60 * float(backtesting_params["time_limit"]["low"]),
-                                              max_value=60 * 60 * float(backtesting_params["time_limit"]["high"]))
+        initial_portfolio_usd = st.number_input("Initial portfolio usd",
+                                                value=10000.00,
+                                                min_value=1.00,
+                                                max_value=999999999.99)
     with col3:
-        selected_tp_multiplier = st.number_input("Take Profit Multiplier",
-                                                 value=backtesting_params["take_profit_multiplier"]["param_value"],
-                                                 min_value=backtesting_params["take_profit_multiplier"]["low"],
-                                                 max_value=backtesting_params["take_profit_multiplier"]["high"])
-        selected_sl_multiplier = st.number_input("Stop Loss Multiplier",
-                                                 value=backtesting_params["stop_loss_multiplier"]["param_value"],
-                                                 min_value=backtesting_params["stop_loss_multiplier"]["low"],
-                                                 max_value=backtesting_params["stop_loss_multiplier"]["high"])
-
+        start = st.text_input("Start", value="2023-01-01")
+        end = st.text_input("End", value="2023-08-01")
+    deploy_button = st.button("🚀Deploy!")
+    config = controller["config"](**st.session_state["strategy_params"])
+    controller = controller["class"](config=config)
+    if deploy_button:
+        dump_dict_to_yaml(config.dict(),
+                          f"hummingbot_files/controller_configs/{config.strategy_name}_{trial_selected}.yml")
+        DockerManager().create_hummingbot_instance(instance_name=config.strategy_name,
+                                                   base_conf_folder=f"{constants.HUMMINGBOT_TEMPLATES}/master_bot_conf/.",
+                                                   target_conf_folder=f"{constants.BOTS_FOLDER}/{config.strategy_name}/.",
+                                                   controllers_folder="quants_lab/controllers",
+                                                   controllers_config_folder="hummingbot_files/controller_configs",
+                                                   image="dardonacci/hummingbot")
     if st.button("Run Backtesting!"):
-        config = strategy["config"](**st.session_state["strategy_params"])
-        strategy = strategy["class"](config=config)
         try:
-            market_data, positions = strategy.run_backtesting(
-                order_amount=selected_order_amount,
-                leverage=selected_order_amount,
-                initial_portfolio=selected_initial_portfolio,
-                take_profit_multiplier=selected_tp_multiplier,
-                stop_loss_multiplier=selected_sl_multiplier,
-                time_limit=selected_time_limit,
-                std_span=None,
-            )
+            engine = DirectionalTradingBacktestingEngine(controller=controller)
+            engine.load_controller_data("./data/candles")
+            backtesting_results = engine.run_backtesting(initial_portfolio_usd=initial_portfolio_usd,
+                                                         trade_cost=trade_cost,
+                                                         start=start, end=end)
             strategy_analysis = StrategyAnalysis(
-                positions=positions,
-                candles_df=market_data,
+                positions=backtesting_results["executors_df"],
+                candles_df=backtesting_results["processed_data"],
             )
             metrics_container = bt_graphs.get_trial_metrics(strategy_analysis,
                                                             add_positions=add_positions,
-                                                            add_volume=add_volume,
-                                                            add_pnl=add_pnl)
+                                                            add_volume=add_volume)
+
         except FileNotFoundError:
             st.warning(f"The requested candles could not be found.")
