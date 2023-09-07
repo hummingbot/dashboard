@@ -57,12 +57,10 @@ def get_optuna_suggest_str(field_name: str, properties: Dict):
                         CandlesConfig(connector=exchange, trading_pair=trading_pair, 
                                       interval="3m", max_records=1000000)  # Max number of candles for the real-time bot,
                     ]"""
-    if field_name == "order_levels":
-        return f"{field_name}=order_levels"
-    if field_name == "trading_pair":
-        return f"{field_name}=trading_pair"
-    if field_name == "exchange":
-        return f"{field_name}=exchange"
+    if field_name == "strategy_name":
+        return f"{field_name}='{properties.get('default', '_')}'"
+    if field_name in ["order_levels", "trading_pair", "exchange"]:
+        return f"{field_name}={field_name}"
     if field_name == "position_mode":
         return f"{field_name}=PositionMode.HEDGE"
     if field_name == "leverage":
@@ -85,40 +83,48 @@ def strategy_optimization_template(strategy_info: dict):
     strategy_config = strategy_info["config"]
     strategy_module = strategy_info["module"]
     field_schema = strategy_config.schema()["properties"]
-    config_to_save_str = "{config: value for config, value in config.dict().items() if config not in ['position_mode', 'order_levels']}"
     fields_str = [get_optuna_suggest_str(field_name, properties) for field_name, properties in field_schema.items()]
     fields_str = "".join([f"                    {field_str},\n" for field_str in fields_str])
     return f"""import traceback
 from decimal import Decimal
 
-from hummingbot.core.data_type.common import OrderType
-from hummingbot.core.data_type.common import TradeType, PositionMode
+from hummingbot.core.data_type.common import PositionMode, TradeType, OrderType
 from hummingbot.data_feed.candles_feed.candles_factory import CandlesConfig
 from hummingbot.smart_components.strategy_frameworks.data_types import TripleBarrierConf, OrderLevel
 from hummingbot.smart_components.strategy_frameworks.directional_trading import DirectionalTradingBacktestingEngine
 from optuna import TrialPruned   
 
 from quants_lab.strategy.controllers.{strategy_module} import {strategy_cls.__name__}, {strategy_config.__name__}
+from utils.enum_encoder import EnumEncoderDecoder
 
 
 def objective(trial):
     try:
+        # General configuration for the backtesting
         exchange = trial.suggest_categorical('exchange', ['binance_perpetual', ])
         trading_pair = trial.suggest_categorical('trading_pair', ['BTC-USDT', ])
-        stop_loss = trial.suggest_float('stop_loss', 0.001, 0.01)
-        take_profit = trial.suggest_float('take_profit', 0.01, 0.05)
+        start = "2023-01-01"
+        end = "2023-08-01"
+        initial_portfolio_usd = 1000.0
+        trade_cost = 0.0006
+        
+        # The definition of order levels is not so necessary for directional strategies now but let's you customize the
+        # amounts for going long or short, the cooldown time between orders and the triple barrier configuration
+        stop_loss = trial.suggest_float('stop_loss', 0.005, 0.02)
+        take_profit = trial.suggest_float('take_profit', 0.005, 0.05)
         time_limit = trial.suggest_int('time_limit', 60 * 60 * 2, 60 * 60 * 24)
 
         triple_barrier_conf = TripleBarrierConf(
             stop_loss=Decimal(stop_loss), take_profit=Decimal(take_profit),
             time_limit=time_limit,
-            trailing_stop_activation_price_delta=Decimal("0.008"),
+            trailing_stop_activation_price_delta=Decimal("0.008"),  # It's not working yet with the backtesting engine
             trailing_stop_trailing_delta=Decimal("0.004"),
         )
+        
         order_levels = [
-            OrderLevel(level=0, side=TradeType.BUY, order_amount_usd=Decimal(15),
+            OrderLevel(level=0, side=TradeType.BUY, order_amount_usd=Decimal(50),
                        cooldown_time=15, triple_barrier_conf=triple_barrier_conf),
-            OrderLevel(level=0, side=TradeType.SELL, order_amount_usd=Decimal(15),
+            OrderLevel(level=0, side=TradeType.SELL, order_amount_usd=Decimal(50),
                        cooldown_time=15, triple_barrier_conf=triple_barrier_conf),
         ]
         config = {strategy_config.__name__}(
@@ -127,12 +133,12 @@ def objective(trial):
         controller = {strategy_cls.__name__}(config=config)
         engine = DirectionalTradingBacktestingEngine(controller=controller)
         engine.load_controller_data("./data/candles")
-        backtesting_results = engine.run_backtesting()
+        backtesting_results = engine.run_backtesting(initial_portfolio_usd=initial_portfolio_usd, trade_cost=trade_cost, 
+                                                     start=start, end=end)
 
         strategy_analysis = backtesting_results["results"]
-        config_to_save = {config_to_save_str}
+        encoder_decoder = EnumEncoderDecoder(TradeType, OrderType, PositionMode)
 
-        config_to_save["order_levels"] = [order_level.to_dict() for order_level in config.order_levels]
         trial.set_user_attr("net_pnl_quote", strategy_analysis["net_pnl_quote"])
         trial.set_user_attr("net_pnl_pct", strategy_analysis["net_pnl"])
         trial.set_user_attr("max_drawdown_usd", strategy_analysis["max_drawdown_usd"])
@@ -145,7 +151,7 @@ def objective(trial):
         trial.set_user_attr("avg_trading_time_in_hours", strategy_analysis["avg_trading_time_minutes"] / 60)
         trial.set_user_attr("win_signals", strategy_analysis["win_signals"])
         trial.set_user_attr("loss_signals", strategy_analysis["loss_signals"])
-        trial.set_user_attr("config", config_to_save)
+        trial.set_user_attr("config", encoder_decoder.encode(config.dict()))
         return strategy_analysis["net_pnl"]
     except Exception as e:
         traceback.print_exc()
