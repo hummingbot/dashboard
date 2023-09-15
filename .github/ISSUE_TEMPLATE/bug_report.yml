@@ -1,0 +1,24 @@
+name: Bug Report
+description: Create a bug report to help us improve
+title: "Bug Report"
+labels: bug
+body:
+ - type: textarea
+   id: what-happened
+   attributes:
+     label: Describe the bug
+     description: A clear and concise description of the bug or issue. 
+     placeholder: Tell us what happened? Please make sure to add all screenshots and error message to help us investigate. 
+   validations:
+     required: true
+ - type: textarea
+   id: reproduce
+   attributes:
+     label: Steps to reproduce bug
+     placeholder: Exact steps to reproduce the buggy behavior     
+     value: |
+       1. 
+       2. 
+       3. 
+   validations:
+     required: true
