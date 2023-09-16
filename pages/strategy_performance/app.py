@@ -7,7 +7,6 @@ from utils.database_manager import DatabaseManager
 from utils.graphs import CandlesGraph
 from utils.st_utils import initialize_st_page
 
-
 initialize_st_page(title="Strategy Performance", icon="🚀")
 
 BULLISH_COLOR = "#61C766"
@@ -44,6 +43,37 @@ def download_csv(df: pd.DataFrame, filename: str, key: str):
             )
 
 
+def style_metric_cards(
+    background_color: str = "rgba(255, 255, 255, 0)",
+    border_size_px: int = 1,
+    border_color: str = "rgba(255, 255, 255, 0.3)",
+    border_radius_px: int = 5,
+    border_left_color: str = "rgba(255, 255, 255, 0.5)",
+    box_shadow: bool = True,
+):
+
+    box_shadow_str = (
+        "box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15) !important;"
+        if box_shadow
+        else "box-shadow: none !important;"
+    )
+    st.markdown(
+        f"""
+        <style>
+            div[data-testid="metric-container"] {{
+                background-color: {background_color};
+                border: {border_size_px}px solid {border_color};
+                padding: 5% 5% 5% 10%;
+                border-radius: {border_radius_px}px;
+                border-left: 0.5rem solid {border_left_color} !important;
+                {box_shadow_str}
+            }}
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
 def show_strategy_summary(summary_df: pd.DataFrame):
     summary = st.data_editor(summary_df,
                              column_config={"PnL Over Time": st.column_config.LineChartColumn("PnL Over Time",
@@ -63,6 +93,135 @@ def summary_chart(df: pd.DataFrame):
     return fig
 
 
+def pnl_over_time(df: pd.DataFrame):
+    df.reset_index(drop=True, inplace=True)
+    df_above = df[df['net_realized_pnl'] >= 0]
+    df_below = df[df['net_realized_pnl'] < 0]
+
+    fig = go.Figure()
+    fig.add_trace(go.Bar(x=df_above.index, y=df_above["net_realized_pnl"], marker_color=BULLISH_COLOR, showlegend=False))
+    fig.add_trace(go.Bar(x=df_below.index, y=df_below["net_realized_pnl"], marker_color=BEARISH_COLOR, showlegend=False))
+    fig.update_layout(title=dict(
+        text='Cummulative PnL',  # Your title text
+        x=0.43,
+        y=0.95,
+    ),
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)')
+    return fig
+
+
+def top_n_trades(series, n: int = 8):
+    podium = list(range(0, n))
+    top_three_profits = series[series >= 0].sort_values(ascending=True)[-n:]
+    top_three_losses = series[series < 0].sort_values(ascending=False)[-n:]
+    fig = go.Figure()
+    fig.add_trace(go.Bar(name="Top Profits",
+                         y=podium,
+                         x=top_three_profits,
+                         base=[0, 0, 0, 0],
+                         marker_color=BULLISH_COLOR,
+                         orientation='h',
+                         text=top_three_profits.apply(lambda x: f"{x:.2f}"),
+                         textposition="inside",
+                         insidetextfont=dict(color='white')))
+    fig.add_trace(go.Bar(name="Top Losses",
+                         y=podium,
+                         x=top_three_losses,
+                         marker_color=BEARISH_COLOR,
+                         orientation='h',
+                         text=top_three_losses.apply(lambda x: f"{x:.2f}"),
+                         textposition="inside",
+                         insidetextfont=dict(color='white')))
+    fig.update_layout(barmode='stack',
+                      title=dict(
+                          text='Top/Worst Realized PnLs',  # Your title text
+                          x=0.5,
+                          y=0.95,
+                          xanchor="center",
+                          yanchor="top"
+                      ),
+                      xaxis=dict(showgrid=True, gridwidth=0.01, gridcolor="rgba(211, 211, 211, 0.5)"),  # Show vertical grid lines
+                      yaxis=dict(showgrid=False),
+                      legend=dict(orientation="h",
+                                  x=0.5,
+                                  y=1.08,
+                                  xanchor="center",
+                                  yanchor="bottom"))
+    fig.update_yaxes(showticklabels=False,
+                     showline=False,
+                     range=[- n + 6, n + 1])
+    return fig
+
+
+def intraday_performance(df: pd.DataFrame):
+    def hr2angle(hr):
+        return (hr * 15) % 360
+
+    def hr_str(hr):
+        # Normalize hr to be between 1 and 12
+        hr_str = str(((hr - 1) % 12) + 1)
+        suffix = ' AM' if (hr % 24) < 12 else ' PM'
+        return hr_str + suffix
+
+    df["hour"] = df["timestamp"].dt.hour
+    profits = df[df["net_realized_pnl"] >= 0]
+    losses = df[df["net_realized_pnl"] < 0]
+    polar_profits = profits.groupby("hour")["net_realized_pnl"].sum().reset_index()
+    polar_losses = losses.groupby("hour")["net_realized_pnl"].sum().reset_index()
+    polar_losses["net_realized_pnl"] = abs(polar_losses["net_realized_pnl"])
+    fig = go.Figure()
+    fig.add_trace(go.Barpolar(
+        name="Profits",
+        # mode="none",
+        r=polar_profits["net_realized_pnl"],
+        theta=polar_profits["hour"] * 15,
+        # fill="toself",
+        # fillcolor=BULLISH_COLOR,
+        marker_color=BULLISH_COLOR))
+    fig.add_trace(go.Barpolar(
+        name="Losses",
+        # mode="none",
+        r=polar_losses["net_realized_pnl"],
+        theta=polar_losses["hour"] * 15,
+        # fill="toself",
+        # fillcolor=BEARISH_COLOR,
+        marker_color=BEARISH_COLOR))
+    fig.update_layout(
+        polar=dict(
+            radialaxis=dict(
+                visible=True,
+                showline=False,
+            ),
+            angularaxis=dict(
+                rotation=90,
+                direction="clockwise",
+                tickvals=[hr2angle(hr) for hr in range(24)],
+                ticktext=[hr_str(hr) for hr in range(24)],
+            ),
+            bgcolor='rgba(255, 255, 255, 0)',
+
+        ),
+        legend=dict(
+            orientation="h",
+            x=0.5,
+            y=1.08,
+            xanchor="center",
+            yanchor="bottom"
+        ),
+        title=dict(
+            text='Intraday Performance',  # Your title text
+            x=0.5,
+            y=0.93,
+            xanchor="center",
+            yanchor="bottom"
+        ),
+    )
+
+    return fig
+
+
+style_metric_cards()
 st.subheader("🔫 Data source")
 dbs = get_databases()
 db_names = [x.db_name for x in dbs.values()]
