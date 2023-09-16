@@ -7,6 +7,9 @@ from utils.data_manipulation import StrategyData, SingleMarketStrategyData
 from quants_lab.strategy.strategy_analysis import StrategyAnalysis
 import plotly.graph_objs as go
 
+BULLISH_COLOR = "rgba(97, 199, 102, 0.9)"
+BEARISH_COLOR = "rgba(255, 102, 90, 0.9)"
+FEE_COLOR = "rgba(51, 0, 51, 0.9)"
 
 class CandlesGraph:
     def __init__(self, candles_df: pd.DataFrame, show_volume=True, extra_rows=1):
