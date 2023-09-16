@@ -12,6 +12,7 @@ initialize_st_page(title="Strategy Performance", icon="🚀")
 
 BULLISH_COLOR = "rgba(97, 199, 102, 0.9)"
 BEARISH_COLOR = "rgba(255, 102, 90, 0.9)"
+UPLOAD_FOLDER = "data"
 
 # Start content here
 intervals = {
@@ -26,11 +27,13 @@ intervals = {
 }
 
 
-@st.cache_resource
 def get_databases():
     sqlite_files = [db_name for db_name in os.listdir("data") if db_name.endswith(".sqlite")]
     databases_list = [DatabaseManager(db) for db in sqlite_files]
-    return {database.db_name: database for database in databases_list}
+    if len(databases_list) > 0:
+        return {database.db_name: database for database in databases_list}
+    else:
+        return None
 
 
 def download_csv(df: pd.DataFrame, filename: str, key: str):
@@ -220,20 +223,22 @@ def intraday_performance(df: pd.DataFrame):
 
 style_metric_cards()
 st.subheader("🔫 Data source")
-dbs = get_databases()
-db_names = [x.db_name for x in dbs.values()]
-select_tab, upload_tab = st.tabs(["Select", "Upload"])
-with select_tab:
-    if db_names is not None:
-        selected_db_name = st.selectbox("Select a database to use:", db_names)
-        selected_db = dbs[selected_db_name]
-    else:
-        st.warning("Ups! No databases were founded. Try uploading one in Upload tab.")
-        selected_db = None
-with upload_tab:
-    uploaded_db = st.file_uploader("Upload your sqlite database", type=["sqlite", "db"])
+with st.expander("⬆️ Upload"):
+    uploaded_db = st.file_uploader("Select a Hummingbot SQLite Database", type=["sqlite", "db"])
     if uploaded_db is not None:
-        selected_db = DatabaseManager(uploaded_db)
+        file_contents = uploaded_db.read()
+        with open(os.path.join(UPLOAD_FOLDER, uploaded_db.name), "wb") as f:
+            f.write(file_contents)
+        st.success("File uploaded and saved successfully!")
+        selected_db = DatabaseManager(uploaded_db.name)
+dbs = get_databases()
+if dbs is not None:
+    db_names = [x.db_name for x in dbs.values()]
+    selected_db_name = st.selectbox("Select a database to start:", db_names)
+    selected_db = dbs[selected_db_name]
+else:
+    st.warning("Ups! No databases were founded. Start uploading one")
+    selected_db = None
 if selected_db is not None:
     strategy_data = selected_db.get_strategy_data()
     if strategy_data.strategy_summary is not None:
@@ -249,7 +254,7 @@ if selected_db is not None:
             summary_chart = summary_chart(strategy_data.strategy_summary)
             st.plotly_chart(summary_chart, use_container_width=True)
         if selection is None:
-            st.info("Choose a trading pair and start analyzing!")
+            st.info("💡 Choose a trading pair and start analyzing!")
         else:
             st.divider()
             st.subheader("🔍 Examine Trading Pair")
