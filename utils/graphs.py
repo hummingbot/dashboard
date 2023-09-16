@@ -224,19 +224,19 @@ class CandlesGraph:
         self.base_figure.update_layout(
             title={
                 'text': "Market activity",
-                'y': 0.95,
+                'y': 0.99,
                 'x': 0.5,
                 'xanchor': 'center',
                 'yanchor': 'top'
             },
             legend=dict(
                 orientation="h",
-                yanchor="bottom",
-                y=-0.2,
-                xanchor="right",
-                x=1
+                x=0.5,
+                y=1.04,
+                xanchor="center",
+                yanchor="bottom"
             ),
-            height=1500,
+            height=1000,
             xaxis=dict(rangeslider_visible=False,
                        range=[self.min_time, self.max_time]),
             yaxis=dict(range=[self.candles_df.low.min(), self.candles_df.high.max()]),
