@@ -9,26 +9,49 @@ from utils.data_manipulation import StrategyData
 
 
 class DatabaseManager:
-    def __init__(self, db_name):
+    def __init__(self, db_name: str, executors_path: str = "data"):
         self.db_name = db_name
         # TODO: Create db path for all types of db
         self.db_path = f'sqlite:///{os.path.join("data", db_name)}'
+        self.executors_path = executors_path
         self.engine = create_engine(self.db_path, connect_args={'check_same_thread': False})
         self.session_maker = sessionmaker(bind=self.engine)
 
+    def get_strategy_data(self, config_file_path=None, start_date=None, end_date=None):
+        def load_data(table_loader):
+            try:
+                return table_loader()
+            except Exception as e:
+                return None  # Return None to indicate failure
+
+        # Use load_data to load tables
+        orders = load_data(self.get_orders)
+        trade_fills = load_data(self.get_trade_fills)
+        order_status = load_data(self.get_order_status)
+        market_data = load_data(self.get_market_data)
+        position_executor = load_data(self.get_position_executor_data)
+
+        strategy_data = StrategyData(orders, order_status, trade_fills, market_data, position_executor)
+        return strategy_data
+
+    @staticmethod
+    def _get_table_status(table_loader):
+        try:
+            data = table_loader()
+            return "Correct" if len(data) > 0 else f"Error - No records matched"
+        except Exception as e:
+            return f"Error - {str(e)}"
+
     @property
     def status(self):
-        try:
-            with self.session_maker() as session:
-                query = 'SELECT DISTINCT config_file_path FROM TradeFill'
-                config_files = pd.read_sql_query(query, session.connection())
-            if len(config_files) > 0:
-            # TODO: improve error handling, think what to do with other cases
-                return "OK"
-            else:
-                return "No records found in the TradeFill table with non-null config_file_path"
-        except Exception as e:
-            return f"Error: {str(e)}"
+        status = {"db_name": self.db_name,
+                  "trade_fill": self._get_table_status(self.get_trade_fills),
+                  "orders": self._get_table_status(self.get_orders),
+                  "order_status": self._get_table_status(self.get_order_status),
+                  "market_data": self._get_table_status(self.get_market_data),
+                  "position_executor": self._get_table_status(self.get_position_executor_data),
+                  }
+        return status
 
     @property
     def config_files(self):
@@ -120,24 +143,23 @@ class DatabaseManager:
         return orders
 
     def get_trade_fills(self, config_file_path=None, start_date=None, end_date=None):
+        groupers = ["config_file_path", "market", "symbol"]
+        float_cols = ["amount", "price", "trade_fee_in_quote"]
         with self.session_maker() as session:
             query = self._get_trade_fills_query(config_file_path, start_date, end_date)
             trade_fills = pd.read_sql_query(query, session.connection())
-            trade_fills["amount"] = trade_fills["amount"] / 1e6
-            trade_fills["price"] = trade_fills["price"] / 1e6
-            trade_fills["trade_fee_in_quote"] = trade_fills["trade_fee_in_quote"] / 1e6
-            trade_fills["cum_fees_in_quote"] = trade_fills["trade_fee_in_quote"].cumsum()
-            trade_fills.loc[:, "net_amount"] = trade_fills['amount'] * trade_fills['trade_type'].apply(
-                lambda x: 1 if x == 'BUY' else -1)
-            trade_fills.loc[:, "net_amount_quote"] = trade_fills['net_amount'] * trade_fills['price']
-            trade_fills.loc[:, "cum_net_amount"] = trade_fills["net_amount"].cumsum()
-            trade_fills.loc[:, "unrealized_trade_pnl"] = -1 * trade_fills["net_amount_quote"].cumsum()
-            trade_fills.loc[:, "inventory_cost"] = trade_fills["cum_net_amount"] * trade_fills["price"]
-            trade_fills.loc[:, "realized_trade_pnl"] = trade_fills["unrealized_trade_pnl"] + trade_fills["inventory_cost"]
-            trade_fills.loc[:, "net_realized_pnl"] = trade_fills["realized_trade_pnl"] - trade_fills["cum_fees_in_quote"]
+            trade_fills[float_cols] = trade_fills[float_cols] / 1e6
+            trade_fills["cum_fees_in_quote"] = trade_fills.groupby(groupers)["trade_fee_in_quote"].cumsum()
+            trade_fills["net_amount"] = trade_fills['amount'] * trade_fills['trade_type'].apply(lambda x: 1 if x == 'BUY' else -1)
+            trade_fills["net_amount_quote"] = trade_fills['net_amount'] * trade_fills['price']
+            trade_fills["cum_net_amount"] = trade_fills.groupby(groupers)["net_amount"].cumsum()
+            trade_fills["unrealized_trade_pnl"] = -1 * trade_fills.groupby(groupers)["net_amount_quote"].cumsum()
+            trade_fills["inventory_cost"] = trade_fills["cum_net_amount"] * trade_fills["price"]
+            trade_fills["realized_trade_pnl"] = trade_fills["unrealized_trade_pnl"] + trade_fills["inventory_cost"]
+            trade_fills["net_realized_pnl"] = trade_fills["realized_trade_pnl"] - trade_fills["cum_fees_in_quote"]
+            trade_fills["realized_pnl"] = trade_fills["net_realized_pnl"].diff()
             trade_fills["timestamp"] = pd.to_datetime(trade_fills["timestamp"], unit="ms")
             trade_fills["market"] = trade_fills["market"].apply(lambda x: x.lower().replace("_papertrade", ""))
-
         return trade_fills
 
     def get_order_status(self, order_ids=None, start_date=None, end_date=None):
@@ -157,13 +179,17 @@ class DatabaseManager:
             market_data["best_ask"] = market_data["best_ask"] / 1e6
         return market_data
 
-    def get_strategy_data(self, config_file_path=None, start_date=None, end_date=None):
-        orders = self.get_orders(config_file_path, start_date, end_date)
-        trade_fills = self.get_trade_fills(config_file_path, start_date, end_date)
-        order_status = self.get_order_status(orders['id'].tolist(), start_date, end_date)
-        try:
-            market_data = self.get_market_data(start_date, end_date)
-        except Exception as e:
-            market_data = None
-        strategy_data = StrategyData(orders, order_status, trade_fills, market_data)
-        return strategy_data
+    def get_position_executor_data(self, start_date=None, end_date=None) -> pd.DataFrame:
+        df = pd.DataFrame()
+        files = [file for file in os.listdir(self.executors_path) if ".csv" in file and file != "trades_market_making_.csv"]
+        for file in files:
+            df0 = pd.read_csv(f"{self.executors_path}/{file}")
+            df = pd.concat([df, df0])
+        df["datetime"] = pd.to_datetime(df["timestamp"], unit="s")
+        if start_date:
+            df = df[df["datetime"] >= start_date]
+        if end_date:
+            df = df[df["datetime"] <= end_date]
+        return df
+
+

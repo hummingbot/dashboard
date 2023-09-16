@@ -9,6 +9,40 @@ class StrategyData:
     order_status: pd.DataFrame
     trade_fill: pd.DataFrame
     market_data: pd.DataFrame = None
+    position_executor: pd.DataFrame = None
+
+    @property
+    def strategy_summary(self):
+        if self.trade_fill is not None:
+            return self.get_strategy_summary()
+        else:
+            return None
+
+    def get_strategy_summary(self):
+        def full_series(series):
+            return list(series)
+
+        strategy_data = self.trade_fill.copy()
+        strategy_data["volume"] = strategy_data["amount"] * strategy_data["price"]
+        strategy_data["margin_volume"] = strategy_data["amount"] * strategy_data["price"] / strategy_data["leverage"]
+        strategy_summary = strategy_data.groupby(["strategy", "market", "symbol"]).agg({"order_id": "count",
+                                                                                        "volume": "sum",
+                                                                                        "margin_volume": "sum",
+                                                                                        "net_realized_pnl": [full_series,
+                                                                                                             "last"]}).reset_index()
+        strategy_summary.columns = [f"{col[0]}_{col[1]}" if isinstance(col, tuple) and col[1] is not None else col for col in strategy_summary.columns]
+        strategy_summary.rename(columns={"strategy_": "Strategy",
+                                         "market_": "Exchange",
+                                         "symbol_": "Trading Pair",
+                                         "order_id_count": "# Trades",
+                                         "volume_sum": "Volume",
+                                         "margin_volume_sum": "Margin volume",
+                                         "net_realized_pnl_full_series": "PnL Over Time",
+                                         "net_realized_pnl_last": "Realized PnL"}, inplace=True)
+        strategy_summary.sort_values(["Realized PnL"], ascending=True, inplace=True)
+        strategy_summary["Examine"] = False
+        strategy_summary.loc[0, "Examine"] = True
+        return strategy_summary
 
     def get_single_market_strategy_data(self, exchange: str, trading_pair: str):
         orders = self.orders[(self.orders["market"] == exchange) & (self.orders["symbol"] == trading_pair)].copy()
@@ -19,6 +53,11 @@ class StrategyData:
                                            (self.market_data["trading_pair"] == trading_pair)].copy()
         else:
             market_data = None
+        if self.position_executor is not None:
+            position_executor = self.position_executor[(self.position_executor["exchange"] == exchange) &
+                                                       (self.position_executor["trading_pair"] == trading_pair)].copy()
+        else:
+            position_executor = None
         return SingleMarketStrategyData(
             exchange=exchange,
             trading_pair=trading_pair,
@@ -26,6 +65,7 @@ class StrategyData:
             order_status=order_status,
             trade_fill=trade_fill,
             market_data=market_data,
+            position_executor=position_executor
         )
 
     @property
@@ -77,6 +117,7 @@ class SingleMarketStrategyData:
     order_status: pd.DataFrame
     trade_fill: pd.DataFrame
     market_data: pd.DataFrame = None
+    position_executor: pd.DataFrame = None
 
     def get_filtered_strategy_data(self, start_date: datetime.datetime, end_date: datetime.datetime):
         orders = self.orders[
@@ -88,6 +129,11 @@ class SingleMarketStrategyData:
                 (self.market_data.index >= start_date) & (self.market_data.index <= end_date)].copy()
         else:
             market_data = None
+        if self.position_executor is not None:
+            position_executor = self.position_executor[(self.position_executor.datetime >= start_date) &
+                                                       (self.position_executor.datetime <= end_date)].copy()
+        else:
+            position_executor = None
         return SingleMarketStrategyData(
             exchange=self.exchange,
             trading_pair=self.trading_pair,
@@ -95,6 +141,7 @@ class SingleMarketStrategyData:
             order_status=order_status,
             trade_fill=trade_fill,
             market_data=market_data,
+            position_executor=position_executor
         )
 
     def get_market_data_resampled(self, interval):
@@ -194,3 +241,42 @@ class SingleMarketStrategyData:
     @property
     def inventory_change_base_asset(self):
         return self.total_buy_amount - self.total_sell_amount
+
+    @property
+    def accuracy(self):
+        total_wins = len(self.trade_fill["net_realized_pnl"] >= 0)
+        total_losses = len(self.trade_fill["net_realized_pnl"] < 0)
+        return total_wins / (total_wins + total_losses)
+
+    @property
+    def profit_factor(self):
+        total_profit = (self.trade_fill["net_realized_pnl"] >= 0).sum()
+        total_loss = (self.trade_fill["net_realized_pnl"] < 0).sum()
+        return total_profit / total_loss
+
+    @property
+    def properties_table(self):
+        properties_dict = {"Base Asset": self.base_asset,
+                           "Quote Asset": self.quote_asset,
+                           # "Start Time": self.start_time,
+                           # "End Time": self.end_time,
+                           "Exchange": self.exchange,
+                           "Trading pair": self.trading_pair,
+                           "Duration (seconds)": self.duration_seconds,
+                           "Start Price": self.start_price,
+                           "End Price": self.end_price,
+                           "Total Buy Amount": self.total_buy_amount,
+                           "Total Sell Amount": self.total_sell_amount,
+                           "Total Buy Trades": self.total_buy_trades,
+                           "Total Sell Trades": self.total_sell_trades,
+                           "Total Orders": self.total_orders,
+                           "Average Buy Price": self.average_buy_price,
+                           "Average Sell Price": self.average_sell_price,
+                           "Price Change": self.price_change,
+                           "Trade PnL Quote": self.trade_pnl_quote,
+                           "Cum Fees in Quote": self.cum_fees_in_quote,
+                           "Net PnL Quote": self.net_pnl_quote,
+                           "Inventory Change (base asset)": self.inventory_change_base_asset}
+        properties_table = pd.DataFrame([properties_dict]).transpose().reset_index()
+        properties_table.columns = ["Metric", "Value"]
+        return properties_table
