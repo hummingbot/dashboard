@@ -10,8 +10,8 @@ from utils.st_utils import initialize_st_page
 
 initialize_st_page(title="Strategy Performance", icon="🚀")
 
-BULLISH_COLOR = "#61C766"
-BEARISH_COLOR = "#FF665A"
+BULLISH_COLOR = "rgba(97, 199, 102, 0.9)"
+BEARISH_COLOR = "rgba(255, 102, 90, 0.9)"
 
 # Start content here
 intervals = {
@@ -251,6 +251,7 @@ if selected_db is not None:
         with chart_tab:
             summary_chart = summary_chart(strategy_data.strategy_summary)
             st.plotly_chart(summary_chart, use_container_width=True)
+        st.divider()
         st.subheader("🔍 Examine Trading Pair")
         if not any("Error" in value for key, value in selected_db.status.items() if key != "position_executor"):
             date_array = pd.date_range(start=strategy_data.start_time, end=strategy_data.end_time, periods=60)
