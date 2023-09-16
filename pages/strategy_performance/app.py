@@ -326,7 +326,7 @@ if selected_db is not None:
                             cg.add_buy_trades(page_data_filtered.buys)
                             cg.add_sell_trades(page_data_filtered.sells)
                             cg.add_pnl(page_data_filtered, row=2)
-                            cg.add_base_inventory_change(page_data_filtered, row=3)
+                            cg.add_quote_inventory_change(page_data_filtered, row=3)
                             fig = cg.figure()
                             st.plotly_chart(fig, use_container_width=True)
                         with col2:

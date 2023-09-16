@@ -146,36 +146,23 @@ class CandlesGraph:
             row=row, col=1,
         )
 
-    def add_base_inventory_change(self, strategy_data: StrategyData, row=3):
-        # Create a list of colors based on the sign of the amount_new column
-        self.base_figure.add_trace(
-            go.Bar(
-                x=strategy_data.trade_fill["timestamp"],
-                y=strategy_data.trade_fill["net_amount"],
-                name="Base Inventory Change",
-                opacity=0.5,
-                marker=dict(color=["lightgreen" if amount > 0 else "indianred" for amount in
-                                   strategy_data.trade_fill["net_amount"]])
-            ),
-            row=row, col=1,
-        )
-        # TODO: Review impact in different subgraphs
-        merged_df = self.get_merged_df(strategy_data)
+    def add_quote_inventory_change(self, strategy_data: StrategyData, row=3):
         self.base_figure.add_trace(
             go.Scatter(
-                x=merged_df.index,
-                y=merged_df["cum_net_amount"],
-                name="Cumulative Base Inventory Change",
+                x=strategy_data.trade_fill.timestamp,
+                y=strategy_data.trade_fill.inventory_cost,
+                name="Quote Inventory",
                 mode="lines+markers",
-                marker=dict(color="black", size=6),
-                line=dict(color="royalblue", width=2),
-                # text=merged_df["cum_net_amount"],
-                # textposition="top center",
-                # texttemplate="%{text:.2f}"
+                marker=dict(
+                    size=10,
+                    symbol="arrow",
+                    angleref="previous",
+                ),
+                line=dict(shape="hv"),
             ),
             row=row, col=1
         )
-        self.base_figure.update_yaxes(title_text='Base Inventory Change', row=row, col=1)
+        self.base_figure.update_yaxes(title_text='Quote Inventory Change', row=row, col=1)
 
     def add_pnl(self, strategy_data: SingleMarketStrategyData, row=4):
         self.base_figure.add_trace(
