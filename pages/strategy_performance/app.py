@@ -1,6 +1,7 @@
 import os
 import pandas as pd
 import streamlit as st
+import plotly.graph_objects as go
 import math
 import plotly.express as px
 from utils.database_manager import DatabaseManager
@@ -261,51 +262,36 @@ if selected_db is not None:
             if single_market:
                 single_market_strategy_data = strategy_data.get_single_market_strategy_data(selected_exchange, selected_trading_pair)
                 strategy_data_filtered = single_market_strategy_data.get_filtered_strategy_data(start_time, end_time)
-
-                st.divider()
                 with st.container():
-                    col1, col2 = st.columns(2)
+                    col1, col2, col3, col4, col5, col6, col7, col8 = st.columns(8)
                     with col1:
-                        st.subheader(f"🏦 Market")
-                    with col2:
-                        st.subheader("📋 General stats")
-                    col1, col2, col3, col4 = st.columns(4)
-                    with col1:
-                        st.metric(label="Exchange", value=strategy_data_filtered.exchange.capitalize())
-                    with col2:
-                        st.metric(label="Trading pair", value=strategy_data_filtered.trading_pair.upper())
-                    with col3:
-                        st.metric(label='Start date', value=strategy_data_filtered.start_time.strftime("%Y-%m-%d %H:%M"))
-                        st.metric(label='End date', value=strategy_data_filtered.end_time.strftime("%Y-%m-%d %H:%M"))
-                    with col4:
-                        st.metric(label='Duration (Hours)', value=round(strategy_data_filtered.duration_seconds / 3600, 2))
-                        st.metric(label='Price change', value=f"{round(strategy_data_filtered.price_change * 100, 2)} %")
-
-                    st.divider()
-                    st.subheader("📈 Performance")
-                    col131, col132, col133, col134 = st.columns(4)
-                    with col131:
                         st.metric(label=f'Net PNL {strategy_data_filtered.quote_asset}',
                                   value=round(strategy_data_filtered.net_pnl_quote, 2))
-                        st.metric(label=f'Trade PNL {strategy_data_filtered.quote_asset}',
-                                  value=round(strategy_data_filtered.trade_pnl_quote, 2))
-                        st.metric(label=f'Fees {strategy_data_filtered.quote_asset}',
-                                  value=round(strategy_data_filtered.cum_fees_in_quote, 2))
-                    with col132:
+                    with col2:
                         st.metric(label='Total Trades', value=strategy_data_filtered.total_orders)
-                        st.metric(label='Total Buy Trades', value=strategy_data_filtered.total_buy_trades)
-                        st.metric(label='Total Sell Trades', value=strategy_data_filtered.total_sell_trades)
-                    with col133:
-                        st.metric(label='Inventory change in Base asset',
-                                  value=round(strategy_data_filtered.inventory_change_base_asset, 4))
-                        st.metric(label='Total Buy Trades Amount',
-                                  value=round(strategy_data_filtered.total_buy_amount, 2))
-                        st.metric(label='Total Sell Trades Amount',
-                                  value=round(strategy_data_filtered.total_sell_amount, 2))
-                    with col134:
-                        st.metric(label='End Price', value=round(strategy_data_filtered.end_price, 4))
-                        st.metric(label='Average Buy Price', value=round(strategy_data_filtered.average_buy_price, 4))
-                        st.metric(label='Average Sell Price', value=round(strategy_data_filtered.average_sell_price, 4))
+                    with col3:
+                        st.metric(label='Accuracy',
+                                  value=round(strategy_data_filtered.accuracy, 2))
+                    with col4:
+                        st.metric(label="Profit Factor",
+                                  value=round(strategy_data_filtered.profit_factor, 2))
+                    with col5:
+                        st.metric(label='Duration (Hours)',
+                                  value=round(strategy_data_filtered.duration_seconds / 3600, 2))
+                    with col6:
+                        st.metric(label='Price change',
+                                  value=f"{round(strategy_data_filtered.price_change * 100, 2)} %")
+                    with col7:
+                        buy_trades_amount = round(strategy_data_filtered.total_buy_amount, 2)
+                        avg_buy_price = round(strategy_data_filtered.average_buy_price, 4)
+                        st.metric(label="Total Buy Volume",
+                                  value=round(buy_trades_amount * avg_buy_price, 2))
+                    with col8:
+                        sell_trades_amount = round(strategy_data_filtered.total_sell_amount, 2)
+                        avg_sell_price = round(strategy_data_filtered.average_sell_price, 4)
+                        st.metric(label="Total Sell Volume",
+                                  value=round(sell_trades_amount * avg_sell_price, 2))
+                    st.plotly_chart(pnl_over_time(strategy_data_filtered.trade_fill), use_container_width=True)
 
                 st.divider()
                 st.subheader("🕯️ Candlestick")
