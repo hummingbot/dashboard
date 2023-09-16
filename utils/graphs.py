@@ -178,46 +178,51 @@ class CandlesGraph:
         self.base_figure.update_yaxes(title_text='Base Inventory Change', row=row, col=1)
 
     def add_pnl(self, strategy_data: SingleMarketStrategyData, row=4):
-        merged_df = self.get_merged_df(strategy_data)
         self.base_figure.add_trace(
             go.Scatter(
-                x=merged_df.index,
-                y=merged_df["cum_fees_in_quote"].apply(lambda x: round(-x, 2)),
+                x=strategy_data.trade_fill.timestamp,
+                y=[max(0, realized_pnl) for realized_pnl in strategy_data.trade_fill["realized_trade_pnl"].apply(lambda x: round(x, 4))],
+                name="Cum Profit",
+                mode='lines',
+                line=dict(shape="hv", color="rgba(1, 1, 1, 0.5)", dash="dash", width=0.1),
+                # marker=dict(symbol="arrow"),
+                fill="tozeroy",  # Fill to the line below (trade pnl)
+                fillcolor="rgba(0, 255, 0, 0.5)"
+            ),
+            row=row, col=1
+        )
+        self.base_figure.add_trace(
+            go.Scatter(
+                x=strategy_data.trade_fill.timestamp,
+                y=[min(0, realized_pnl) for realized_pnl in strategy_data.trade_fill["realized_trade_pnl"].apply(lambda x: round(x, 4))],
+                name="Cum Loss",
+                mode='lines',
+                line=dict(shape="hv", color="rgba(1, 1, 1, 0.5)", dash="dash", width=0.3),
+                # marker=dict(symbol="arrow"),
+                fill="tozeroy",  # Fill to the line below (trade pnl)
+                fillcolor="rgba(255, 0, 0, 0.5)",
+            ),
+            row=row, col=1
+        )
+        self.base_figure.add_trace(
+            go.Scatter(
+                x=strategy_data.trade_fill.timestamp,
+                y=strategy_data.trade_fill["cum_fees_in_quote"].apply(lambda x: round(x, 4)),
                 name="Cum Fees",
                 mode='lines',
-                line_color='teal',
+                line=dict(shape="hv", color="rgba(1, 1, 1, 0.1)", dash="dash", width=0.1),
                 fill="tozeroy",  # Fill to the line below (trade pnl)
-                stackgroup='one'
+                fillcolor="rgba(51, 0, 51, 0.5)"
             ),
             row=row, col=1
         )
-
-        self.base_figure.add_trace(
-            go.Scatter(
-                x=merged_df.index,
-                y=merged_df["trade_pnl_continuos"].apply(lambda x: round(x, 2)),
-                name="Cum Trade PnL",
-                mode='lines',
-                line_color='pink',
-                fill="tonexty",  # Fill to the line below (net pnl)
-                stackgroup='one'
-            ),
-            row=row, col=1
-        )
-        self.base_figure.add_trace(
-            go.Scatter(
-                x=merged_df.index,
-                y=merged_df["net_pnl_continuos"].apply(lambda x: round(x, 2)),
-                name="Cum Net PnL",
-                mode="lines+markers",
-                marker=dict(color="black", size=6),
-                line=dict(color="black", width=2),
-                # textposition="top center",
-                # text=merged_df["net_pnl_continuos"],
-                # texttemplate="%{text:.1f}"
-            ),
-            row=row, col=1
-        )
+        self.base_figure.add_trace(go.Scatter(name="Net Realized Profit",
+                                              x=strategy_data.trade_fill.timestamp,
+                                              y=strategy_data.trade_fill["net_realized_pnl"],
+                                              mode="lines",
+                                              line=dict(shape="hv")),
+                                   row=row, col=1
+                                   )
         self.base_figure.update_yaxes(title_text='PNL', row=row, col=1)
 
     def update_layout(self):
