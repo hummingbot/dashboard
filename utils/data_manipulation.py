@@ -243,6 +243,18 @@ class SingleMarketStrategyData:
         return self.total_buy_amount - self.total_sell_amount
 
     @property
+    def accuracy(self):
+        total_wins = len(self.trade_fill["net_realized_pnl"] >= 0)
+        total_losses = len(self.trade_fill["net_realized_pnl"] < 0)
+        return total_wins / (total_wins + total_losses)
+
+    @property
+    def profit_factor(self):
+        total_profit = (self.trade_fill["net_realized_pnl"] >= 0).sum()
+        total_loss = (self.trade_fill["net_realized_pnl"] < 0).sum()
+        return total_profit / total_loss
+
+    @property
     def properties_table(self):
         properties_dict = {"Base Asset": self.base_asset,
                            "Quote Asset": self.quote_asset,
