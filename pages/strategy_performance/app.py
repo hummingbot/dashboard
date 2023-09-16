@@ -336,6 +336,29 @@ if selected_db is not None:
                     st.warning("Market data is not available so the candles graph is not going to be rendered. "
                                "Make sure that you are using the latest version of Hummingbot and market data recorder activated.")
                 st.divider()
+                st.subheader("📈 Metrics")
+                with st.container():
+                    col1, col2, col3, col4, col5 = st.columns(5)
+                    with col1:
+                        st.metric(label=f'Trade PNL {strategy_data_filtered.quote_asset}',
+                                  value=round(strategy_data_filtered.trade_pnl_quote, 2))
+                        st.metric(label=f'Fees {strategy_data_filtered.quote_asset}',
+                                  value=round(strategy_data_filtered.cum_fees_in_quote, 2))
+                    with col2:
+                        st.metric(label='Total Buy Trades', value=strategy_data_filtered.total_buy_trades)
+                        st.metric(label='Total Sell Trades', value=strategy_data_filtered.total_sell_trades)
+                    with col3:
+                        st.metric(label='Total Buy Trades Amount',
+                                  value=round(strategy_data_filtered.total_buy_amount, 2))
+                        st.metric(label='Total Sell Trades Amount',
+                                  value=round(strategy_data_filtered.total_sell_amount, 2))
+                    with col4:
+                        st.metric(label='Average Buy Price', value=round(strategy_data_filtered.average_buy_price, 4))
+                        st.metric(label='Average Sell Price', value=round(strategy_data_filtered.average_sell_price, 4))
+                    with col5:
+                        st.metric(label='Inventory change in Base asset',
+                                  value=round(strategy_data_filtered.inventory_change_base_asset, 4))
+                st.divider()
                 st.subheader("Tables")
                 with st.expander("💵 Trades"):
                     st.write(strategy_data.trade_fill)
