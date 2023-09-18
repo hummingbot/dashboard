@@ -27,7 +27,7 @@ class OptimizationCreationCard(Dashboard.Item):
                   path=constants.OPTIMIZATIONS_PATH)
 
     def __call__(self):
-        available_strategies = load_controllers(constants.DIRECTIONAL_STRATEGIES_PATH)
+        available_strategies = load_controllers(constants.CONTROLLERS_PATH)
         strategy_names = list(available_strategies.keys())
         with mui.Paper(key=self._key,
                        sx={"display": "flex", "flexDirection": "column", "borderRadius": 3, "overflow": "hidden"},
