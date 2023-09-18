@@ -76,16 +76,15 @@ def get_optuna_suggest_str(field_name: str, properties: Dict):
         return f"{field_name}=PositionMode.HEDGE"
     if field_name == "leverage":
         return f"{field_name}=10"
-    map_by_type = {
-        "number": "trial.suggest_float",
-        "integer": "trial.suggest_int",
-        "string": "trial.suggest_categorical",
-    }
-    config_num = f"('{field_name}', {properties.get('minimum', '_')}, {properties.get('maximum', '_')}, step=0.01)"
-    config_cat = f"('{field_name}', ['{properties.get('default', '_')}',])"
-    optuna_trial_str = map_by_type[properties["type"]] + config_num if properties["type"] != "string" \
-        else map_by_type[properties["type"]] + config_cat
 
+    if properties["type"] == "number":
+        optuna_trial_str = f"trial.suggest_float('{field_name}', {properties.get('minimum', '_')}, {properties.get('maximum', '_')}, step=0.01)"
+    elif properties["type"] == "integer":
+        optuna_trial_str = f"trial.suggest_int('{field_name}', {properties.get('minimum', '_')}, {properties.get('maximum', '_')})"
+    elif properties["type"] == "string":
+        optuna_trial_str = f"trial.suggest_categorical('{field_name}', ['{properties.get('default', '_')}',])"
+    else:
+        raise Exception(f"Unknown type {properties['type']} for field {field_name}")
     return f"{field_name}={optuna_trial_str}"
 
 
@@ -121,8 +120,8 @@ def objective(trial):
         
         # The definition of order levels is not so necessary for directional strategies now but let's you customize the
         # amounts for going long or short, the cooldown time between orders and the triple barrier configuration
-        stop_loss = trial.suggest_float('stop_loss', 0.005, 0.02)
-        take_profit = trial.suggest_float('take_profit', 0.005, 0.05)
+        stop_loss = trial.suggest_float('stop_loss', 0.01, 0.02, step=0.01)
+        take_profit = trial.suggest_float('take_profit', 0.01, 0.05, step=0.01)
         time_limit = trial.suggest_int('time_limit', 60 * 60 * 2, 60 * 60 * 24)
 
         triple_barrier_conf = TripleBarrierConf(
