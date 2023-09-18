@@ -66,7 +66,7 @@ else:
     # Strategy parameters section
     st.write("## Strategy parameters")
     # Load strategies (class, config, module)
-    controllers = load_controllers(constants.DIRECTIONAL_STRATEGIES_PATH)
+    controllers = load_controllers(constants.CONTROLLERS_PATH)
     # Select strategy
     controller = controllers[trial_config["strategy_name"]]
     # Get field schema
@@ -87,7 +87,7 @@ else:
                     field_value = st.number_input(field_name,
                                                   value=field_value,
                                                   min_value=properties.get("minimum"),
-                                                  max_value=properties.get("maximum"),
+                                                  # max_value=properties.get("maximum"),
                                                   key=field_name)
                 elif field_type in ["string"]:
                     field_value = st.text_input(field_name, value=field_value)
@@ -120,7 +120,7 @@ else:
     backtesting_configs = opt_db.load_params()
     # # Get trial backtesting params
     backtesting_params = backtesting_configs[trial_selected]
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3, col4 = st.columns([1, 1, 1, 0.5])
     with col1:
         trade_cost = st.number_input("Trade cost",
                                      value=0.0006,
@@ -133,19 +133,22 @@ else:
     with col3:
         start = st.text_input("Start", value="2023-01-01")
         end = st.text_input("End", value="2023-08-01")
-    deploy_button = st.button("🚀Deploy!")
-    config = controller["config"](**st.session_state["strategy_params"])
-    controller = controller["class"](config=config)
-    if deploy_button:
-        dump_dict_to_yaml(config.dict(),
-                          f"hummingbot_files/controller_configs/{config.strategy_name}_{trial_selected}.yml")
-        DockerManager().create_hummingbot_instance(instance_name=config.strategy_name,
-                                                   base_conf_folder=f"{constants.HUMMINGBOT_TEMPLATES}/master_bot_conf/.",
-                                                   target_conf_folder=f"{constants.BOTS_FOLDER}/{config.strategy_name}/.",
-                                                   controllers_folder="quants_lab/controllers",
-                                                   controllers_config_folder="hummingbot_files/controller_configs",
-                                                   image="dardonacci/hummingbot")
-    if st.button("Run Backtesting!"):
+    c1, c2 = st.columns([1, 1])
+    with col4:
+        deploy_button = st.button("💾Save controller config!")
+        config = controller["config"](**st.session_state["strategy_params"])
+        controller = controller["class"](config=config)
+        if deploy_button:
+            encoder_decoder.yaml_dump(config.dict(),
+                                      f"hummingbot_files/controller_configs/{config.strategy_name}_{trial_selected}.yml")
+        # DockerManager().create_hummingbot_instance(instance_name=config.strategy_name,
+        #                                            base_conf_folder=f"{constants.HUMMINGBOT_TEMPLATES}/master_bot_conf/.",
+        #                                            target_conf_folder=f"{constants.BOTS_FOLDER}/{config.strategy_name}/.",
+        #                                            controllers_folder="quants_lab/controllers",
+        #                                            controllers_config_folder="hummingbot_files/controller_configs",
+        #                                            image="dardonacci/hummingbot")
+        run_backtesting_button = st.button("⚙️Run Backtesting!")
+    if run_backtesting_button:
         try:
             engine = DirectionalTradingBacktestingEngine(controller=controller)
             engine.load_controller_data("./data/candles")
