@@ -1,7 +1,7 @@
 from streamlit_elements import mui, lazy
 
 import constants
-from utils.file_templates import directional_strategy_template
+from utils.file_templates import directional_trading_controller_template
 from utils.os_utils import save_file
 from .dashboard import Dashboard
 
@@ -20,9 +20,9 @@ class DirectionalStrategyCreationCard(Dashboard.Item):
 
     def _create_strategy(self):
         if self._strategy_type == "directional":
-            strategy_code = directional_strategy_template(self._strategy_name)
+            strategy_code = directional_trading_controller_template(self._strategy_name)
         save_file(name=f"{self._strategy_name.lower()}.py", content=strategy_code,
-                  path=constants.DIRECTIONAL_STRATEGIES_PATH)
+                  path=constants.CONTROLLERS_PATH)
 
     def __call__(self):
         with mui.Paper(key=self._key, sx={"display": "flex", "flexDirection": "column", "borderRadius": 3, "overflow": "hidden"}, elevation=1):
