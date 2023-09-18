@@ -2,15 +2,14 @@ from hummingbot.core.data_type.common import PositionMode, TradeType, OrderType
 from hummingbot.data_feed.candles_feed.candles_factory import CandlesConfig
 from hummingbot.smart_components.strategy_frameworks.data_types import OrderLevel
 from hummingbot.smart_components.strategy_frameworks.directional_trading import DirectionalTradingBacktestingEngine
+from hummingbot.smart_components.utils import ConfigEncoderDecoder
 
 import constants
 import os
 import json
 import streamlit as st
-from docker_manager import DockerManager
 
 from quants_lab.strategy.strategy_analysis import StrategyAnalysis
-from utils.enum_encoder import EnumEncoderDecoder
 from utils.graphs import BacktestingGraphs
 from utils.optuna_database_manager import OptunaDBManager
 from utils.os_utils import load_controllers, dump_dict_to_yaml
@@ -60,7 +59,7 @@ else:
     trial_selected = st.selectbox("Select a trial to backtest", list(trials.keys()))
     trial = trials[trial_selected]
     # Transform trial config in a dictionary
-    encoder_decoder = EnumEncoderDecoder(TradeType, OrderType, PositionMode)
+    encoder_decoder = ConfigEncoderDecoder(TradeType, OrderType, PositionMode)
     trial_config = encoder_decoder.decode(json.loads(trial["config"]))
 
     # Strategy parameters section

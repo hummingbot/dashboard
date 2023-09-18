@@ -8,11 +8,10 @@ from hummingbot.core.data_type.common import TradeType, OrderType, PositionMode
 from hummingbot.data_feed.candles_feed.candles_factory import CandlesConfig
 from hummingbot.smart_components.strategy_frameworks.data_types import OrderLevel, TripleBarrierConf
 from hummingbot.smart_components.strategy_frameworks.directional_trading import DirectionalTradingBacktestingEngine
-from streamlit_elements import elements, mui
+from hummingbot.smart_components.utils import ConfigEncoderDecoder
 
 import constants
 from quants_lab.strategy.strategy_analysis import StrategyAnalysis
-from utils.enum_encoder import EnumEncoderDecoder
 from utils.graphs import BacktestingGraphs
 from utils.os_utils import load_controllers
 
@@ -128,9 +127,10 @@ with col4:
     config = controller["config"](**st.session_state["strategy_params"])
     controller = controller["class"](config=config)
     if save_config:
-        encoder_decoder = EnumEncoderDecoder(TradeType, OrderType, PositionMode)
+        encoder_decoder = ConfigEncoderDecoder(TradeType, OrderType, PositionMode)
+        # TODO: make this configurable
         encoder_decoder.yaml_dump(config.dict(),
-                                  f"hummingbot_files/controller_configs/{config.strategy_name}_{trial_selected}.yml")
+                                  f"hummingbot_files/controller_configs/{config.strategy_name}.yml")
     run_backtesting_button = st.button("⚙️Run Backtesting!")
 if run_backtesting_button:
     try:
