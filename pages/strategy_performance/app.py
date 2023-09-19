@@ -338,42 +338,41 @@ if selected_db is not None:
 
                     st.subheader("💱 Market activity")
                     if "Error" not in selected_db.status["market_data"] and strategy_data_filtered.market_data is not None:
-                        with st.expander("Market activity", expanded=True):
-                            col1, col2, col3 = st.columns([1, 1, 2])
-                            with col1:
-                                interval = st.selectbox("Candles Interval:", intervals.keys(), index=2)
-                            with col2:
-                                rows_per_page = st.number_input("Candles per Page", value=100, min_value=1, max_value=5000)
-                            with col3:
-                                total_rows = len(
-                                    strategy_data_filtered.get_market_data_resampled(interval=f"{intervals[interval]}S"))
-                                total_pages = math.ceil(total_rows / rows_per_page)
-                                if total_pages > 1:
-                                    selected_page = st.select_slider("Select page", list(range(total_pages)), total_pages - 1,
-                                                                     key="page_slider")
-                                else:
-                                    selected_page = 0
-                                start_idx = selected_page * rows_per_page
-                                end_idx = start_idx + rows_per_page
-                                candles_df = strategy_data_filtered.get_market_data_resampled(
-                                    interval=f"{intervals[interval]}S").iloc[
-                                             start_idx:end_idx]
-                                start_time_page = candles_df.index.min()
-                                end_time_page = candles_df.index.max()
-                                page_data_filtered = single_market_strategy_data.get_filtered_strategy_data(start_time_page,
-                                                                                                            end_time_page)
-                            col1, col2 = st.columns([5.5, 1.5])
-                            with col1:
-                                cg = CandlesGraph(candles_df, show_volume=False, extra_rows=2)
-                                cg.add_buy_trades(page_data_filtered.buys)
-                                cg.add_sell_trades(page_data_filtered.sells)
-                                cg.add_pnl(page_data_filtered, row=2)
-                                cg.add_quote_inventory_change(page_data_filtered, row=3)
-                                fig = cg.figure()
-                                st.plotly_chart(fig, use_container_width=True)
-                            with col2:
-                                st.plotly_chart(intraday_performance(page_data_filtered.trade_fill), use_container_width=True)
-                                st.plotly_chart(top_n_trades(page_data_filtered.trade_fill.realized_pnl), use_container_width=True)
+                        col1, col2, col3 = st.columns([1, 1, 2])
+                        with col1:
+                            interval = st.selectbox("Candles Interval:", intervals.keys(), index=2)
+                        with col2:
+                            rows_per_page = st.number_input("Candles per Page", value=1500, min_value=1, max_value=5000)
+                        with col3:
+                            total_rows = len(
+                                strategy_data_filtered.get_market_data_resampled(interval=f"{intervals[interval]}S"))
+                            total_pages = math.ceil(total_rows / rows_per_page)
+                            if total_pages > 1:
+                                selected_page = st.select_slider("Select page", list(range(total_pages)), total_pages - 1,
+                                                                 key="page_slider")
+                            else:
+                                selected_page = 0
+                            start_idx = selected_page * rows_per_page
+                            end_idx = start_idx + rows_per_page
+                            candles_df = strategy_data_filtered.get_market_data_resampled(
+                                interval=f"{intervals[interval]}S").iloc[
+                                         start_idx:end_idx]
+                            start_time_page = candles_df.index.min()
+                            end_time_page = candles_df.index.max()
+                            page_data_filtered = single_market_strategy_data.get_filtered_strategy_data(start_time_page,
+                                                                                                        end_time_page)
+                        col1, col2 = st.columns([5.5, 1.5])
+                        with col1:
+                            cg = CandlesGraph(candles_df, show_volume=False, extra_rows=2)
+                            cg.add_buy_trades(page_data_filtered.buys)
+                            cg.add_sell_trades(page_data_filtered.sells)
+                            cg.add_pnl(page_data_filtered, row=2)
+                            cg.add_quote_inventory_change(page_data_filtered, row=3)
+                            fig = cg.figure()
+                            st.plotly_chart(fig, use_container_width=True)
+                        with col2:
+                            st.plotly_chart(intraday_performance(page_data_filtered.trade_fill), use_container_width=True)
+                            st.plotly_chart(returns_histogram(page_data_filtered.trade_fill), use_container_width=True)
                     else:
                         st.warning("Market data is not available so the candles graph is not going to be rendered. "
                                    "Make sure that you are using the latest version of Hummingbot and market data recorder activated.")
