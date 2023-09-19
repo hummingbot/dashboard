@@ -83,13 +83,14 @@ def show_strategy_summary(summary_df: pd.DataFrame):
                              column_config={"PnL Over Time": st.column_config.LineChartColumn("PnL Over Time",
                                                                                               y_min=0,
                                                                                               y_max=5000),
-                                            "Examine": st.column_config.CheckboxColumn(required=True)
+                                            "Explore": st.column_config.CheckboxColumn(required=True)
                                             },
-                             use_container_width=True
+                             use_container_width=True,
+                             hide_index=True
                              )
-    selected_rows = summary[summary.Examine]
+    selected_rows = summary[summary.Explore]
     if len(selected_rows) > 0:
-        return selected_rows.drop('Examine', axis=1)
+        return selected_rows.drop('Explore', axis=1)
     else:
         return None
 
