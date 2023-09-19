@@ -152,12 +152,7 @@ class CandlesGraph:
                 x=strategy_data.trade_fill.timestamp,
                 y=strategy_data.trade_fill.inventory_cost,
                 name="Quote Inventory",
-                mode="lines+markers",
-                marker=dict(
-                    size=10,
-                    symbol="arrow",
-                    angleref="previous",
-                ),
+                mode="lines",
                 line=dict(shape="hv"),
             ),
             row=row, col=1
@@ -172,7 +167,6 @@ class CandlesGraph:
                 name="Cum Profit",
                 mode='lines',
                 line=dict(shape="hv", color="rgba(1, 1, 1, 0.5)", dash="dash", width=0.1),
-                # marker=dict(symbol="arrow"),
                 fill="tozeroy",  # Fill to the line below (trade pnl)
                 fillcolor="rgba(0, 255, 0, 0.5)"
             ),
