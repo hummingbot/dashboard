@@ -160,6 +160,7 @@ class DatabaseManager:
             trade_fills["realized_pnl"] = trade_fills["net_realized_pnl"].diff()
             trade_fills["timestamp"] = pd.to_datetime(trade_fills["timestamp"], unit="ms")
             trade_fills["market"] = trade_fills["market"].apply(lambda x: x.lower().replace("_papertrade", ""))
+            trade_fills["quote_volume"] = trade_fills["price"] * trade_fills["amount"]
         return trade_fills
 
     def get_order_status(self, order_ids=None, start_date=None, end_date=None):
