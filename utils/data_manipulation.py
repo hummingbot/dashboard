@@ -249,9 +249,9 @@ class SingleMarketStrategyData:
 
     @property
     def profit_factor(self):
-        total_profit = (self.trade_fill["net_realized_pnl"] >= 0).sum()
-        total_loss = (self.trade_fill["net_realized_pnl"] < 0).sum()
-        return total_profit / total_loss
+        total_profit = self.trade_fill.loc[self.trade_fill["realized_pnl"] >= 0, "realized_pnl"].sum()
+        total_loss = self.trade_fill.loc[self.trade_fill["realized_pnl"] < 0, "realized_pnl"].sum()
+        return total_profit / -total_loss
 
     @property
     def properties_table(self):
