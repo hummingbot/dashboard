@@ -94,6 +94,7 @@ def show_strategy_summary(summary_df: pd.DataFrame):
     else:
         return None
 
+
 def summary_chart(df: pd.DataFrame):
     fig = px.bar(df, x="Trading Pair", y="Realized PnL", color="Exchange")
     fig.update_traces(width=min(1.0, 0.1 * len(strategy_data.strategy_summary)))
@@ -172,20 +173,20 @@ def intraday_performance(df: pd.DataFrame):
         return hr_str + suffix
 
     df["hour"] = df["timestamp"].dt.hour
-    profits = df[df["net_realized_pnl"] >= 0]
-    losses = df[df["net_realized_pnl"] < 0]
-    polar_profits = profits.groupby("hour")["net_realized_pnl"].sum().reset_index()
-    polar_losses = losses.groupby("hour")["net_realized_pnl"].sum().reset_index()
-    polar_losses["net_realized_pnl"] = abs(polar_losses["net_realized_pnl"])
+    profits = df[df["realized_pnl"] >= 0]
+    losses = df[df["realized_pnl"] < 0]
+    polar_profits = profits.groupby("hour")["realized_pnl"].sum().reset_index()
+    polar_losses = losses.groupby("hour")["realized_pnl"].sum().reset_index()
+    polar_losses["realized_pnl"] = abs(polar_losses["realized_pnl"])
     fig = go.Figure()
     fig.add_trace(go.Barpolar(
         name="Profits",
-        r=polar_profits["net_realized_pnl"],
+        r=polar_profits["realized_pnl"],
         theta=polar_profits["hour"] * 15,
         marker_color=BULLISH_COLOR))
     fig.add_trace(go.Barpolar(
         name="Losses",
-        r=polar_losses["net_realized_pnl"],
+        r=polar_losses["realized_pnl"],
         theta=polar_losses["hour"] * 15,
         marker_color=BEARISH_COLOR))
     fig.update_layout(
@@ -258,7 +259,7 @@ if selected_db is not None:
             st.info("💡 Choose a trading pair and start analyzing!")
         else:
             st.divider()
-            st.subheader("🔍 Examine Trading Pair")
+            st.subheader("🔍 Explore Trading Pair")
             if not any("Error" in value for key, value in selected_db.status.items() if key != "position_executor"):
                 date_array = pd.date_range(start=strategy_data.start_time, end=strategy_data.end_time, periods=60)
                 start_time, end_time = st.select_slider("Select a time range to analyze",
@@ -278,7 +279,7 @@ if selected_db is not None:
                             st.metric(label='Total Trades', value=strategy_data_filtered.total_orders)
                         with col3:
                             st.metric(label='Accuracy',
-                                      value=round(strategy_data_filtered.accuracy, 2))
+                                      value=f"{100 * strategy_data_filtered.accuracy:.2f} %")
                         with col4:
                             st.metric(label="Profit Factor",
                                       value=round(strategy_data_filtered.profit_factor, 2))
@@ -337,7 +338,7 @@ if selected_db is not None:
                                 st.plotly_chart(fig, use_container_width=True)
                             with col2:
                                 st.plotly_chart(intraday_performance(page_data_filtered.trade_fill), use_container_width=True)
-                                st.plotly_chart(top_n_trades(page_data_filtered.trade_fill.net_realized_pnl), use_container_width=True)
+                                st.plotly_chart(top_n_trades(page_data_filtered.trade_fill.realized_pnl), use_container_width=True)
                     else:
                         st.warning("Market data is not available so the candles graph is not going to be rendered. "
                                    "Make sure that you are using the latest version of Hummingbot and market data recorder activated.")
