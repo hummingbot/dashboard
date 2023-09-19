@@ -173,22 +173,27 @@ def intraday_performance(df: pd.DataFrame):
         return hr_str + suffix
 
     df["hour"] = df["timestamp"].dt.hour
-    profits = df[df["realized_pnl"] >= 0]
-    losses = df[df["realized_pnl"] < 0]
-    polar_profits = profits.groupby("hour")["realized_pnl"].sum().reset_index()
-    polar_losses = losses.groupby("hour")["realized_pnl"].sum().reset_index()
-    polar_losses["realized_pnl"] = abs(polar_losses["realized_pnl"])
+    realized_pnl_per_hour = df.groupby("hour")[["realized_pnl", "quote_volume"]].sum().reset_index()
     fig = go.Figure()
     fig.add_trace(go.Barpolar(
         name="Profits",
-        r=polar_profits["realized_pnl"],
-        theta=polar_profits["hour"] * 15,
-        marker_color=BULLISH_COLOR))
-    fig.add_trace(go.Barpolar(
-        name="Losses",
-        r=polar_losses["realized_pnl"],
-        theta=polar_losses["hour"] * 15,
-        marker_color=BEARISH_COLOR))
+        r=realized_pnl_per_hour["quote_volume"],
+        theta=realized_pnl_per_hour["hour"] * 15,
+        marker=dict(
+            color=realized_pnl_per_hour["realized_pnl"],
+            colorscale="RdYlGn",
+            cmin=-(abs(realized_pnl_per_hour["realized_pnl"]).max()),
+            cmid=0.0,
+            cmax=(abs(realized_pnl_per_hour["realized_pnl"]).max()),
+            colorbar=dict(
+                title='Realized PnL',
+                x=0,
+                y=-0.5,
+                xanchor='left',
+                yanchor='bottom',
+                orientation='h'
+            )
+        )))
     fig.update_layout(
         polar=dict(
             radialaxis=dict(
