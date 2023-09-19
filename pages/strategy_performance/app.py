@@ -90,7 +90,7 @@ def show_strategy_summary(summary_df: pd.DataFrame):
                              )
     selected_rows = summary[summary.Explore]
     if len(selected_rows) > 0:
-        return selected_rows.drop('Explore', axis=1)
+        return selected_rows
     else:
         return None
 
@@ -250,6 +250,9 @@ if selected_db is not None:
         with table_tab:
             selection = show_strategy_summary(strategy_data.strategy_summary)
             if selection is not None:
+                if len(selection) > 1:
+                    st.warning("This version doesn't support multiple selections. Please try selecting only one.")
+                    st.stop()
                 selected_exchange = selection["Exchange"].values[0]
                 selected_trading_pair = selection["Trading Pair"].values[0]
         with chart_tab:
