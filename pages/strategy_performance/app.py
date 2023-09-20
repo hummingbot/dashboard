@@ -238,7 +238,6 @@ def intraday_performance(df: pd.DataFrame):
 
 
 def returns_histogram(df: pd.DataFrame):
-    colors = [BULLISH_COLOR if val > 0 else BEARISH_COLOR for val in df["realized_pnl"]]
     fig = go.Figure()
     fig.add_trace(go.Histogram(name="Losses",
                                x=df.loc[df["realized_pnl"] < 0, "realized_pnl"],
@@ -246,16 +245,14 @@ def returns_histogram(df: pd.DataFrame):
     fig.add_trace(go.Histogram(name="Profits",
                                x=df.loc[df["realized_pnl"] > 0, "realized_pnl"],
                                marker_color=BULLISH_COLOR))
-    fig.update_layout(title=dict(
-                            text='Returns Histogram',
+    fig.update_layout(
+        title=dict(
+                            text='Returns Distribution',
                             x=0.5,
-                            # y=0.93,
                             xanchor="center",
-                            # yanchor="bottom"
                         ),
         legend=dict(
             orientation="h",
-            # entrywidth=70,
             yanchor="bottom",
             y=1.02,
             xanchor="center",
