@@ -107,8 +107,17 @@ def pnl_over_time(df: pd.DataFrame):
     df_below = df[df['net_realized_pnl'] < 0]
 
     fig = go.Figure()
-    fig.add_trace(go.Bar(x=df_above.index, y=df_above["net_realized_pnl"], marker_color=BULLISH_COLOR, showlegend=False))
-    fig.add_trace(go.Bar(x=df_below.index, y=df_below["net_realized_pnl"], marker_color=BEARISH_COLOR, showlegend=False))
+    fig.add_trace(go.Bar(name="Cum Realized PnL",
+                         x=df_above.index,
+                         y=df_above["net_realized_pnl"],
+                         marker_color=BULLISH_COLOR,
+                         # hoverdq
+                         showlegend=False))
+    fig.add_trace(go.Bar(name="Cum Realized PnL",
+                         x=df_below.index,
+                         y=df_below["net_realized_pnl"],
+                         marker_color=BEARISH_COLOR,
+                         showlegend=False))
     fig.update_layout(title=dict(
         text='Cummulative PnL',  # Your title text
         x=0.43,
