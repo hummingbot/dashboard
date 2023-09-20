@@ -390,10 +390,10 @@ if selected_db is not None:
                                     st.plotly_chart(intraday_performance(page_data_filtered.trade_fill), use_container_width=True)
                                     st.plotly_chart(returns_histogram(page_data_filtered.trade_fill), use_container_width=True)
                                 with table_tab:
-                                    st.dataframe(page_data_filtered.trade_fill[["timestamp", "realized_pnl"]].dropna(subset="realized_pnl"),
+                                    st.dataframe(page_data_filtered.trade_fill[["timestamp", "gross_pnl", "trade_fee", "realized_pnl"]].dropna(subset="realized_pnl"),
                                                  use_container_width=True,
                                                  hide_index=True,
-                                                 height=candles_chart.layout.height - 180)
+                                                 height=(min(len(page_data_filtered.trade_fill) * 39, candles_chart.layout.height - 180)))
                         else:
                             st.plotly_chart(candles_graph(candles_df, page_data_filtered), use_container_width=True)
                     else:

@@ -158,6 +158,8 @@ class DatabaseManager:
             trade_fills["realized_trade_pnl"] = trade_fills["unrealized_trade_pnl"] + trade_fills["inventory_cost"]
             trade_fills["net_realized_pnl"] = trade_fills["realized_trade_pnl"] - trade_fills["cum_fees_in_quote"]
             trade_fills["realized_pnl"] = trade_fills["net_realized_pnl"].diff()
+            trade_fills["gross_pnl"] = trade_fills["realized_trade_pnl"].diff()
+            trade_fills["trade_fee"] = trade_fills["cum_fees_in_quote"].diff()
             trade_fills["timestamp"] = pd.to_datetime(trade_fills["timestamp"], unit="ms")
             trade_fills["market"] = trade_fills["market"].apply(lambda x: x.lower().replace("_papertrade", ""))
             trade_fills["quote_volume"] = trade_fills["price"] * trade_fills["amount"]
