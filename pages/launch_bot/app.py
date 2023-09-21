@@ -32,7 +32,7 @@ if "launch_bots_board" not in st.session_state:
     board = Dashboard()
     launch_bots_board = SimpleNamespace(
         dashboard=board,
-        launch_bot=LaunchStrategyV2(board, 0, 0, 12, 4),
+        launch_bot=LaunchStrategyV2(board, 0, 0, 12, 10),
     )
     st.session_state.launch_bots_board = launch_bots_board
 
