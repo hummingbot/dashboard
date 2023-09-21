@@ -17,7 +17,6 @@ RUN conda env create -f /tmp/environment_conda.yml && \
 # Copy remaining files
 COPY . .
 
-
 SHELL [ "/bin/bash", "-lc" ]
 RUN echo "conda activate dashboard" >> ~/.bashrc
 
@@ -44,8 +43,13 @@ ENV INSTALLATION_TYPE=docker
 
 # Install system dependencies
 RUN apt-get update && \
-    apt-get install -y && \
+    apt-get install -y curl && \
     rm -rf /var/lib/apt/lists/*
+
+# Install Docker CLI
+RUN curl -fsSL https://get.docker.com -o get-docker.sh && \
+    sh get-docker.sh && \
+    rm get-docker.sh
 
 # Create mount points
 RUN mkdir -p /home/dashboard/data
@@ -62,5 +66,4 @@ EXPOSE 8501
 SHELL [ "/bin/bash", "-lc" ]
 
 # Set the default command to run when starting the container
-
 CMD conda activate dashboard && streamlit run main.py
