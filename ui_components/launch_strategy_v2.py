@@ -98,12 +98,13 @@ class LaunchStrategyV2(Dashboard.Item):
                                   onChange=lazy(self._set_image_name),
                                   sx={"width": "100%"})
                 with mui.Grid(item=True, xs=4):
-                    with mui.FormControl(variant="standard", sx={"width": "100%"}):
-                        mui.FormHelperText("Controller")
-                        with mui.Select(label="Controller", defaultValue=self._controller_selected,
-                                        variant="standard", onChange=lazy(self._set_controller)):
-                            for controller in self._controllers_available:
-                                mui.MenuItem(controller, value=controller)
+                    with mui.Button(onClick=self.launch_new_bot,
+                                variant="outlined",
+                                color="success",
+                                sx={"width": "100%", "height": "100%"}):
+                        mui.icon.AddCircleOutline()
+                        mui.Typography("Create")
+
                 with mui.Grid(item=True, xs=8):
                     try:
                         encoder_decoder = ConfigEncoderDecoder(TradeType, OrderType, PositionMode)
@@ -117,7 +118,7 @@ class LaunchStrategyV2(Dashboard.Item):
 
                     with mui.Paper(key=self._key,
                                    sx={"display": "flex", "flexDirection": "column", "borderRadius": 3,
-                                       "overflow": "hidden", "height": 400},
+                                       "overflow": "hidden", "height": 1000},
                                    elevation=1):
                         with self.title_bar(padding="10px 15px 10px 15px", dark_switcher=False):
                             mui.icon.ViewCompact()
@@ -127,16 +128,10 @@ class LaunchStrategyV2(Dashboard.Item):
                             mui.DataGrid(
                                 columns=self.DEFAULT_COLUMNS,
                                 rows=data,
-                                pageSize=5,
-                                rowsPerPageOptions=[5],
+                                pageSize=15,
+                                rowsPerPageOptions=[15],
                                 checkboxSelection=True,
                                 disableSelectionOnClick=True,
                                 onSelectionModelChange=self._handle_row_selection,
                             )
-                with mui.Grid(item=True, xs=4):
-                    with mui.Button(onClick=self.launch_new_bot,
-                                variant="outlined",
-                                color="success",
-                                sx={"width": "100%", "height": "100%"}):
-                        mui.icon.AddCircleOutline()
-                        mui.Typography("Create")
+
