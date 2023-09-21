@@ -134,7 +134,7 @@ class StrategyAnalysis:
                 xanchor="right",
                 x=1
             ),
-            height=1000,
+            height=1500,
             xaxis_rangeslider_visible=False,
             hovermode="x unified"
         )
