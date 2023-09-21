@@ -52,9 +52,23 @@ else:
     study_selected = st.selectbox("Select a study:", studies.keys())
     # Filter trials from selected study
     merged_df = opt_db.merged_df[opt_db.merged_df["study_name"] == study_selected]
-    bt_graphs = BacktestingGraphs(merged_df)
-    # Show and compare all of the study trials
-    st.plotly_chart(bt_graphs.pnl_vs_maxdrawdown(), use_container_width=True)
+    filters_column, scatter_column = st.columns([1, 6])
+    with filters_column:
+        accuracy = st.slider("Accuracy", min_value=0.0, max_value=1.0, value=[0.4, 1.0], step=0.01)
+        net_profit = st.slider("Net PNL (%)", min_value=merged_df["net_pnl_pct"].min(), max_value=merged_df["net_pnl_pct"].max(),
+                               value=[merged_df["net_pnl_pct"].min(), merged_df["net_pnl_pct"].max()], step=0.01)
+        max_drawdown = st.slider("Max Drawdown (%)", min_value=merged_df["max_drawdown_pct"].min(), max_value=merged_df["max_drawdown_pct"].max(),
+                                  value=[merged_df["max_drawdown_pct"].min(), merged_df["max_drawdown_pct"].max()], step=0.01)
+        total_positions = st.slider("Total Positions", min_value=merged_df["total_positions"].min(), max_value=merged_df["total_positions"].max(),
+                                    value=[merged_df["total_positions"].min(), merged_df["total_positions"].max()], step=1)
+        net_profit_filter = (merged_df["net_pnl_pct"] >= net_profit[0]) & (merged_df["net_pnl_pct"] <= net_profit[1])
+        accuracy_filter = (merged_df["accuracy"] >= accuracy[0]) & (merged_df["accuracy"] <= accuracy[1])
+        max_drawdown_filter = (merged_df["max_drawdown_pct"] >= max_drawdown[0]) & (merged_df["max_drawdown_pct"] <= max_drawdown[1])
+        total_positions_filter = (merged_df["total_positions"] >= total_positions[0]) & (merged_df["total_positions"] <= total_positions[1])
+    with scatter_column:
+        bt_graphs = BacktestingGraphs(merged_df[net_profit_filter & accuracy_filter & max_drawdown_filter & total_positions_filter])
+        # Show and compare all of the study trials
+        st.plotly_chart(bt_graphs.pnl_vs_maxdrawdown(), use_container_width=True)
     # Get study trials
     trials = studies[study_selected]
     # Choose trial
