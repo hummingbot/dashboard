@@ -48,7 +48,7 @@ class LaunchStrategyV2(Dashboard.Item):
         self._controller_config_selected = params
 
     def launch_new_bot(self):
-        if self._bot_name and self._image_name:
+        if self._bot_name and self._image_name and len(self._controller_config_selected) > 0:
             bot_name = f"hummingbot-{self._bot_name}"
             extra_environment_variables = ["-e", "CONFIG_FILE_NAME=strategy_v2_launcher.py",
                                            "-e", f"controller_configs={','.join(self._controller_config_selected)}"]
@@ -63,7 +63,8 @@ class LaunchStrategyV2(Dashboard.Item):
             with st.spinner('Starting Master Configs instance... This process may take a few seconds'):
                 time.sleep(3)
         else:
-            st.warning("You need to define the bot name and image in order to create one.")
+            st.warning("You need to define the bot name and select the controllers configs "
+                       "that you want to deploy.")
 
     def __call__(self):
         with mui.Paper(key=self._key,
