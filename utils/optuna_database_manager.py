@@ -225,8 +225,8 @@ class OptunaDBManager:
                          f"Loss Signals: {x['loss_signals']}<br>"
                          f"Max Drawdown [%]: {100 * x['max_drawdown_pct']:.2f} %<br>"
                          f"Max Drawdown [USD]: $ {x['max_drawdown_usd']:.2f}<br>"
-                         f"Net Profit [%]: {100 * x['net_profit_pct']:.2f} %<br>"
-                         f"Net Profit [$]: $ {x['net_profit_usd']:.2f}<br>"
+                         f"Net Profit [%]: {100 * x['net_pnl_pct']:.2f} %<br>"
+                         f"Net Profit [$]: $ {x['net_pnl_quote']:.2f}<br>"
                          f"Profit Factor: {x['profit_factor']:.2f}<br>"
                          f"Sharpe Ratio: {x['sharpe_ratio']:.4f}<br>"
                          f"Total Positions: {x['total_positions']}<br>"
@@ -238,7 +238,7 @@ class OptunaDBManager:
 
     def _get_merged_df(self):
         float_cols = ["accuracy", "avg_trading_time_in_hours", "duration_in_hours", "max_drawdown_pct", "max_drawdown_usd",
-                      "net_profit_pct", "net_profit_usd", "profit_factor", "sharpe_ratio", "value"]
+                      "net_pnl_pct", "net_pnl_quote", "profit_factor", "sharpe_ratio", "value"]
         int_cols = ["loss_signals", "total_positions", "win_signals"]
         merged_df = self.trials\
             .merge(self.studies, on="study_id")\

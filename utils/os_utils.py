@@ -3,10 +3,8 @@ import subprocess
 import importlib.util
 import inspect
 import os
+from hummingbot.smart_components.strategy_frameworks.directional_trading import DirectionalTradingControllerBase, DirectionalTradingControllerConfigBase
 
-from pydantic import BaseModel
-
-from quants_lab.strategy.directional_strategy_base import DirectionalStrategyBase  # update this to the actual import
 import yaml
 
 
@@ -14,8 +12,10 @@ def remove_files_from_directory(directory: str):
     for file in os.listdir(directory):
         os.remove(f"{directory}/{file}")
 
+
 def remove_file(file_path: str):
     os.remove(file_path)
+
 
 def remove_directory(directory: str):
     process = subprocess.Popen(f"rm -rf {directory}", shell=True)
@@ -78,22 +78,22 @@ def get_yml_files_from_directory(directory: str) -> list:
     return yml
 
 
-def load_directional_strategies(path):
-    strategies = {}
+def load_controllers(path):
+    controllers = {}
     for filename in os.listdir(path):
         if filename.endswith('.py') and "__init__" not in filename:
             module_name = filename[:-3]  # strip the .py to get the module name
-            strategies[module_name] = {"module": module_name}
+            controllers[module_name] = {"module": module_name}
             file_path = os.path.join(path, filename)
             spec = importlib.util.spec_from_file_location(module_name, file_path)
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
             for name, cls in inspect.getmembers(module, inspect.isclass):
-                if issubclass(cls, DirectionalStrategyBase) and cls is not DirectionalStrategyBase:
-                    strategies[module_name]["class"] = cls
-                if issubclass(cls, BaseModel) and cls is not BaseModel:
-                    strategies[module_name]["config"] = cls
-    return strategies
+                if issubclass(cls, DirectionalTradingControllerBase) and cls is not DirectionalTradingControllerBase:
+                    controllers[module_name]["class"] = cls
+                if issubclass(cls, DirectionalTradingControllerConfigBase) and cls is not DirectionalTradingControllerConfigBase:
+                    controllers[module_name]["config"] = cls
+    return controllers
 
 
 def get_function_from_file(file_path: str, function_name: str):

@@ -5,22 +5,16 @@ from types import SimpleNamespace
 import streamlit as st
 from streamlit_elements import elements, mui
 
-import constants
-from quants_lab.strategy.strategy_analysis import StrategyAnalysis
 from ui_components.dashboard import Dashboard
-from ui_components.directional_strategies_file_explorer import DirectionalStrategiesFileExplorer
-from ui_components.directional_strategy_creation_card import DirectionalStrategyCreationCard
 from ui_components.editor import Editor
 from ui_components.optimization_creation_card import OptimizationCreationCard
 from ui_components.optimization_run_card import OptimizationRunCard
 from ui_components.optimizations_file_explorer import OptimizationsStrategiesFileExplorer
 from utils import os_utils
-from utils.os_utils import load_directional_strategies
 
 from utils.st_utils import initialize_st_page
 
 initialize_st_page(title="Optimize", icon="🧪", initial_sidebar_state="collapsed")
-
 
 def run_optuna_dashboard():
     os_utils.execute_bash_command(f"optuna-dashboard sqlite:///data/backtesting/backtesting_report.db")

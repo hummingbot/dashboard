@@ -242,7 +242,7 @@ class BacktestingGraphs:
         fig = go.Figure()
         fig.add_trace(go.Scatter(name="Pnl vs Max Drawdown",
                                  x=-100 * self.study_df["max_drawdown_pct"],
-                                 y=100 * self.study_df["net_profit_pct"],
+                                 y=100 * self.study_df["net_pnl_pct"],
                                  mode="markers",
                                  text=None,
                                  hovertext=self.study_df["hover_text"]))

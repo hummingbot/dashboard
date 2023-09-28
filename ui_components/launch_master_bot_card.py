@@ -20,6 +20,8 @@ class LaunchMasterBotCard(Dashboard.Item):
             with st.spinner('Stopping Master Configs instance... This process may take a few seconds.'):
                 time.sleep(5)
         else:
+            DockerManager().remove_container("hummingbot-master_bot_conf")
+            time.sleep(2)
             DockerManager().create_hummingbot_instance(instance_name="hummingbot-master_bot_conf",
                                                        base_conf_folder="hummingbot_files/templates/master_bot_conf/.",
                                                        target_conf_folder="hummingbot_files/templates/master_bot_conf/."
@@ -41,31 +43,24 @@ class LaunchMasterBotCard(Dashboard.Item):
                 mui.Typography("Master Configs", variant="h6", sx={"marginLeft": 1})
 
             with mui.Grid(container=True, spacing=2, sx={"padding": "10px 15px 10px 15px"}):
-                with mui.Grid(item=True, xs=12):
+                with mui.Grid(item=True, xs=8):
                     if not is_master_password_set:
                         base_warning = "You need to set a master password in order to use the dashboard."
                         if self.is_master_bot_running:
                             mui.Alert(f"{base_warning} The Master Configs instance is running."
-                                        f" Attach to it in Terminal to set the master password.", severity="success")
+                                      f" Attach to it in Terminal to set the master password.", severity="success")
                         else:
                             mui.Alert(f"{base_warning} Master Configs instance isn't running. Start it and"
-                                        f" set the master password to continue.", severity="error")
+                                      f" set the master password to continue.", severity="error")
                     else:
                         if self.is_master_bot_running:
                             mui.Alert("The Master Configs instance is running."
-                                        " Attach to it in Terminal to add credentials.",
-                                        severity="success",
-                                        sx={"margin": 2})                        
+                                      " Attach to it in Terminal to add credentials.",
+                                      severity="success",
+                                      sx={"margin": 2})
                         else:
                             mui.Alert("Master Configs instance isn't running. Start it to add credentials.",
-                                        severity="error")
-
-                with mui.Grid(item=True, xs=8):
-                    if self.is_master_bot_running:
-                        mui.TextField(InputProps={"readOnly": True},
-                                    label="Attach to Master Configs instance",
-                                    value="docker attach hummingbot-master_bot_conf", 
-                                    sx={"width": "100%"})
+                                      severity="error")
                 with mui.Grid(item=True, xs=4):
                     button_text = "Stop" if self.is_master_bot_running else "Start"
                     color = "error" if self.is_master_bot_running else "success"
@@ -76,3 +71,11 @@ class LaunchMasterBotCard(Dashboard.Item):
                                     sx={"width": "100%", "height": "100%"}):
                         icon()
                         mui.Typography(button_text)
+
+                with mui.Grid(item=True, xs=8):
+                    if self.is_master_bot_running:
+                        mui.TextField(InputProps={"readOnly": True},
+                                      label="Attach to Master Configs instance",
+                                      value="docker attach hummingbot-master_bot_conf",
+                                      sx={"width": "100%"})
+
