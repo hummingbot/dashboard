@@ -2,7 +2,7 @@ import os
 import json
 
 import pandas as pd
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
 from utils.data_manipulation import StrategyData
@@ -20,7 +20,7 @@ class OptunaDBManager:
         try:
             with self.session_maker() as session:
                 query = 'SELECT * FROM trials WHERE state = "COMPLETE"'
-                completed_trials = pd.read_sql_query(query, session.connection())
+                completed_trials = pd.read_sql_query(text(query), session.connection())
             if len(completed_trials) > 0:
                 # TODO: improve error handling, think what to do with other cases
                 return "OK"
@@ -37,7 +37,7 @@ class OptunaDBManager:
         try:
             with self.session_maker() as session:
                 query = "SELECT name FROM sqlite_master WHERE type='table';"
-                tables = pd.read_sql_query(query, session.connection())
+                tables = pd.read_sql_query(text(query), session.connection())
             return tables["name"].tolist()
         except Exception as e:
             return f"Error: {str(e)}"
@@ -49,7 +49,7 @@ class OptunaDBManager:
     def _get_trials_table(self):
         try:
             with self.session_maker() as session:
-                df = pd.read_sql_query("SELECT * FROM trials", session.connection())
+                df = pd.read_sql_query(text("SELECT * FROM trials"), session.connection())
             return df
         except Exception as e:
             return f"Error: {str(e)}"
@@ -61,7 +61,7 @@ class OptunaDBManager:
     def _get_studies_table(self):
         try:
             with self.session_maker() as session:
-                df = pd.read_sql_query("SELECT * FROM studies", session.connection())
+                df = pd.read_sql_query(text("SELECT * FROM studies"), session.connection())
             return df
         except Exception as e:
             return f"Error: {str(e)}"
@@ -73,7 +73,7 @@ class OptunaDBManager:
     def _get_trial_params_table(self):
         try:
             with self.session_maker() as session:
-                df = pd.read_sql_query("SELECT * FROM trial_params", session.connection())
+                df = pd.read_sql_query(text("SELECT * FROM trial_params"), session.connection())
             return df
         except Exception as e:
             return f"Error: {str(e)}"
@@ -85,7 +85,7 @@ class OptunaDBManager:
     def _get_trial_values_table(self):
         try:
             with self.session_maker() as session:
-                df = pd.read_sql_query("SELECT * FROM trial_values", session.connection())
+                df = pd.read_sql_query(text("SELECT * FROM trial_values"), session.connection())
             return df
         except Exception as e:
             return f"Error: {str(e)}"
@@ -97,7 +97,7 @@ class OptunaDBManager:
     def _get_trial_system_attributes_table(self):
         try:
             with self.session_maker() as session:
-                df = pd.read_sql_query("SELECT * FROM trial_system_attributes", session.connection())
+                df = pd.read_sql_query(text("SELECT * FROM trial_system_attributes"), session.connection())
             return df
         except Exception as e:
             return f"Error: {str(e)}"
@@ -109,7 +109,7 @@ class OptunaDBManager:
     def _get_trial_system_attributes_table(self):
         try:
             with self.session_maker() as session:
-                df = pd.read_sql_query("SELECT * FROM trial_system_attributes", session.connection())
+                df = pd.read_sql_query(text("SELECT * FROM trial_system_attributes"), session.connection())
             return df
         except Exception as e:
             return f"Error: {str(e)}"
@@ -121,7 +121,7 @@ class OptunaDBManager:
     def _get_version_info_table(self):
         try:
             with self.session_maker() as session:
-                df = pd.read_sql_query("SELECT * FROM version_info", session.connection())
+                df = pd.read_sql_query(text("SELECT * FROM version_info"), session.connection())
             return df
         except Exception as e:
             return f"Error: {str(e)}"
@@ -133,7 +133,7 @@ class OptunaDBManager:
     def _get_study_directions_table(self):
         try:
             with self.session_maker() as session:
-                df = pd.read_sql_query("SELECT * FROM study_directions", session.connection())
+                df = pd.read_sql_query(text("SELECT * FROM study_directions"), session.connection())
             return df
         except Exception as e:
             return f"Error: {str(e)}"
@@ -145,7 +145,7 @@ class OptunaDBManager:
     def _get_study_user_attributes_table(self):
         try:
             with self.session_maker() as session:
-                df = pd.read_sql_query("SELECT * FROM study_user_attributes", session.connection())
+                df = pd.read_sql_query(text("SELECT * FROM study_user_attributes"), session.connection())
             return df
         except Exception as e:
             return f"Error: {str(e)}"
@@ -157,7 +157,7 @@ class OptunaDBManager:
     def _get_study_system_attributes_table(self):
         try:
             with self.session_maker() as session:
-                df = pd.read_sql_query("SELECT * FROM study_system_attributes", session.connection())
+                df = pd.read_sql_query(text("SELECT * FROM study_system_attributes"), session.connection())
             return df
         except Exception as e:
             return f"Error: {str(e)}"
@@ -169,7 +169,7 @@ class OptunaDBManager:
     def _get_trial_user_attributes_table(self):
         try:
             with self.session_maker() as session:
-                df = pd.read_sql_query("SELECT * FROM trial_user_attributes", session.connection())
+                df = pd.read_sql_query(text("SELECT * FROM trial_user_attributes"), session.connection())
             return df
         except Exception as e:
             return f"Error: {str(e)}"
@@ -181,7 +181,7 @@ class OptunaDBManager:
     def _get_trial_intermediate_values_table(self):
         try:
             with self.session_maker() as session:
-                df = pd.read_sql_query("SELECT * FROM trial_intermediate_values", session.connection())
+                df = pd.read_sql_query(text("SELECT * FROM trial_intermediate_values"), session.connection())
             return df
         except Exception as e:
             return f"Error: {str(e)}"
@@ -193,7 +193,7 @@ class OptunaDBManager:
     def _get_trial_heartbeats_table(self):
         try:
             with self.session_maker() as session:
-                df = pd.read_sql_query("SELECT * FROM trial_heartbeats", session.connection())
+                df = pd.read_sql_query(text("SELECT * FROM trial_heartbeats"), session.connection())
             return df
         except Exception as e:
             return f"Error: {str(e)}"
@@ -205,7 +205,7 @@ class OptunaDBManager:
     def _get_alembic_version_table(self):
         try:
             with self.session_maker() as session:
-                df = pd.read_sql_query("SELECT * FROM alembic_version", session.connection())
+                df = pd.read_sql_query(text("SELECT * FROM alembic_version"), session.connection())
             return df
         except Exception as e:
             return f"Error: {str(e)}"
