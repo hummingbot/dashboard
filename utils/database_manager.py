@@ -2,7 +2,7 @@ import os
 import streamlit as st
 
 import pandas as pd
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
 from utils.data_manipulation import StrategyData
@@ -64,13 +64,13 @@ class DatabaseManager:
     def get_config_files(self):
         with self.session_maker() as session:
             query = 'SELECT DISTINCT config_file_path FROM TradeFill'
-            config_files = pd.read_sql_query(query, session.connection())
+            config_files = pd.read_sql_query(text(query), session.connection())
         return config_files['config_file_path'].tolist()
 
     def get_exchanges_trading_pairs_by_config_file(self, config_file_path):
         with self.session_maker() as session:
             query = f"SELECT DISTINCT market, symbol FROM TradeFill WHERE config_file_path = '{config_file_path}'"
-            exchanges_trading_pairs = pd.read_sql_query(query, session.connection())
+            exchanges_trading_pairs = pd.read_sql_query(text(query), session.connection())
             exchanges_trading_pairs["market"] = exchanges_trading_pairs["market"].apply(
                 lambda x: x.lower().replace("_papertrade", ""))
             exchanges_trading_pairs = exchanges_trading_pairs.groupby("market")["symbol"].apply(list).to_dict()
@@ -134,7 +134,7 @@ class DatabaseManager:
     def get_orders(self, config_file_path=None, start_date=None, end_date=None):
         with self.session_maker() as session:
             query = self._get_orders_query(config_file_path, start_date, end_date)
-            orders = pd.read_sql_query(query, session.connection())
+            orders = pd.read_sql_query(text(query), session.connection())
             orders["market"] = orders["market"].apply(lambda x: x.lower().replace("_papertrade", ""))
             orders["amount"] = orders["amount"] / 1e6
             orders["price"] = orders["price"] / 1e6
@@ -147,7 +147,7 @@ class DatabaseManager:
         float_cols = ["amount", "price", "trade_fee_in_quote"]
         with self.session_maker() as session:
             query = self._get_trade_fills_query(config_file_path, start_date, end_date)
-            trade_fills = pd.read_sql_query(query, session.connection())
+            trade_fills = pd.read_sql_query(text(query), session.connection())
             trade_fills[float_cols] = trade_fills[float_cols] / 1e6
             trade_fills["cum_fees_in_quote"] = trade_fills.groupby(groupers)["trade_fee_in_quote"].cumsum()
             trade_fills["net_amount"] = trade_fills['amount'] * trade_fills['trade_type'].apply(lambda x: 1 if x == 'BUY' else -1)
@@ -168,13 +168,13 @@ class DatabaseManager:
     def get_order_status(self, order_ids=None, start_date=None, end_date=None):
         with self.session_maker() as session:
             query = self._get_order_status_query(order_ids, start_date, end_date)
-            order_status = pd.read_sql_query(query, session.connection())
+            order_status = pd.read_sql_query(text(query), session.connection())
         return order_status
 
     def get_market_data(self, start_date=None, end_date=None):
         with self.session_maker() as session:
             query = self._get_market_data_query(start_date, end_date)
-            market_data = pd.read_sql_query(query, session.connection())
+            market_data = pd.read_sql_query(text(query), session.connection())
             market_data["timestamp"] = pd.to_datetime(market_data["timestamp"] / 1e6, unit="ms")
             market_data.set_index("timestamp", inplace=True)
             market_data["mid_price"] = market_data["mid_price"] / 1e6
