@@ -26,5 +26,6 @@ dependencies:
       - streamlit-ace
       - st-pages
       - streamlit-elements==0.1.*
+      - streamlit-authenticator
       - git+https://github.com/hummingbot/hbot-remote-client-py.git
       - git+https://github.com/hummingbot/docker-manager.git
