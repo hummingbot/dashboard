@@ -12,18 +12,18 @@ from hummingbot.smart_components.strategy_frameworks.directional_trading.directi
 )
 
 
-class TrendFollowerConfig(DirectionalTradingControllerConfigBase):
-    strategy_name: str = "trend_follower"
+class TrendFollowerV1Config(DirectionalTradingControllerConfigBase):
+    strategy_name: str = "trend_follower_v1"
     sma_fast: int = Field(default=20, ge=10, le=150)
     sma_slow: int = Field(default=100, ge=50, le=400)
-    bb_length: int = Field(default=100, ge=30, le=200)
-    bb_std: float = Field(default=2.0, ge=1.0, le=3.0)
-    bb_threshold: float = Field(default=0.2, ge=0.7, le=0.3)
+    bb_length: int = Field(default=100, ge=100, le=200)
+    bb_std: float = Field(default=2.0, ge=2.0, le=3.0)
+    bb_threshold: float = Field(default=0.2, ge=0.1, le=0.5)
 
 
-class TrendFollower(DirectionalTradingControllerBase):
+class TrendFollowerV1(DirectionalTradingControllerBase):
 
-    def __init__(self, config: TrendFollowerConfig):
+    def __init__(self, config: TrendFollowerV1Config):
         super().__init__(config)
         self.config = config
 
