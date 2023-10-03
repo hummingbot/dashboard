@@ -1,3 +1,4 @@
+import time
 from typing import Optional
 
 import pandas as pd
@@ -9,18 +10,17 @@ from hummingbot.smart_components.strategy_frameworks.directional_trading import 
 from pydantic import Field
 
 
-class BollingerConf(DirectionalTradingControllerConfigBase):
-    strategy_name = "bollinger"
-    bb_length: int = Field(default=100, ge=2, le=1000)
-    bb_std: float = Field(default=2.0, ge=0.5, le=4.0)
-    bb_long_threshold: float = Field(default=0.0, ge=-3.0, le=0.5)
-    bb_short_threshold: float = Field(default=1.0, ge=0.5, le=3.0)
-    std_span: Optional[int] = Field(default=100, ge=100, le=400)
+class BollingerV1Conf(DirectionalTradingControllerConfigBase):
+    strategy_name = "bollinger_v1"
+    bb_length: int = Field(default=100, ge=100, le=400)
+    bb_std: float = Field(default=2.0, ge=2.0, le=3.0)
+    bb_long_threshold: float = Field(default=0.0, ge=-1.0, le=0.2)
+    bb_short_threshold: float = Field(default=1.0, ge=0.8, le=2.0)
 
 
-class Bollinger(DirectionalTradingControllerBase):
+class BollingerV1(DirectionalTradingControllerBase):
 
-    def __init__(self, config: BollingerConf):
+    def __init__(self, config: BollingerV1Conf):
         super().__init__(config)
         self.config = config
 
@@ -54,8 +54,7 @@ class Bollinger(DirectionalTradingControllerBase):
         df["signal"] = 0
         df.loc[long_condition, "signal"] = 1
         df.loc[short_condition, "signal"] = -1
-
-        # Optional: Generate spread multiplier
-        if self.config.std_span:
-            df["target"] = df["close"].rolling(self.config.std_span).std() / df["close"]
         return df
+
+    def extra_columns_to_show(self):
+        return [f"BBP_{self.config.bb_length}_{self.config.bb_std}"]
