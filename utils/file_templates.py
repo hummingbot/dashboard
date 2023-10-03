@@ -66,7 +66,7 @@ def get_optuna_suggest_str(field_name: str, properties: Dict):
     if field_name == "candles_config":
         return f"""{field_name}=[
                         CandlesConfig(connector=exchange, trading_pair=trading_pair, 
-                                      interval="3m", max_records=1000000)  # Max number of candles for the real-time bot,
+                                      interval="1h", max_records=1000000)
                     ]"""
     if field_name == "strategy_name":
         return f"{field_name}='{properties.get('default', '_')}'"
@@ -111,8 +111,8 @@ from quants_lab.controllers.{strategy_module} import {strategy_cls.__name__}, {s
 def objective(trial):
     try:
         # General configuration for the backtesting
-        exchange = trial.suggest_categorical('exchange', ['binance_perpetual', ])
-        trading_pair = trial.suggest_categorical('trading_pair', ['BTC-USDT', ])
+        exchange = "binance_perpetual"
+        trading_pair = "BTC-USDT"
         start = "2023-01-01"
         end = "2023-08-01"
         initial_portfolio_usd = 1000.0
