@@ -33,6 +33,8 @@ class LaunchBotCard(Dashboard.Item):
             DockerManager().create_hummingbot_instance(instance_name=bot_name,
                                                        base_conf_folder=f"{constants.HUMMINGBOT_TEMPLATES}/{self._base_bot_config}/.",
                                                        target_conf_folder=f"{constants.BOTS_FOLDER}/{bot_name}/.",
+                                                       controllers_folder=constants.CONTROLLERS_PATH,
+                                                       controllers_config_folder=constants.CONTROLLERS_CONFIG_PATH,
                                                        image=self._image_name)
             with st.spinner('Starting Master Configs instance... This process may take a few seconds'):
                 time.sleep(3)
