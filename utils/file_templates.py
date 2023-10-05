@@ -122,7 +122,7 @@ def objective(trial):
         # amounts for going long or short, the cooldown time between orders and the triple barrier configuration
         stop_loss = trial.suggest_float('stop_loss', 0.01, 0.02, step=0.01)
         take_profit = trial.suggest_float('take_profit', 0.01, 0.05, step=0.01)
-        time_limit = trial.suggest_int('time_limit', 60 * 60 * 2, 60 * 60 * 24)
+        time_limit = trial.suggest_int('time_limit', 60 * 60 * 12, 60 * 60 * 24)
 
         triple_barrier_conf = TripleBarrierConf(
             stop_loss=Decimal(stop_loss), take_profit=Decimal(take_profit),
