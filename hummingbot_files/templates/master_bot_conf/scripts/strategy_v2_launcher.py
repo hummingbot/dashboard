@@ -2,7 +2,7 @@ import inspect
 import os
 import importlib.util
 
-from hummingbot.core.data_type.common import OrderType, PositionMode, TradeType
+from hummingbot.core.data_type.common import OrderType, PositionMode, TradeType, PositionSide, PositionAction
 from hummingbot.smart_components.strategy_frameworks.data_types import (
     ExecutorHandlerStatus,
 )
@@ -59,8 +59,36 @@ class StrategyV2Launcher(ScriptStrategyBase):
             self.executor_handlers[controller_config] = DirectionalTradingExecutorHandler(strategy=self, controller=controller)
 
     def on_stop(self):
+        for connector in self.connectors.keys():
+            if self.is_perpetual(connector):
+                self.close_open_positions(connector)
         for executor_handler in self.executor_handlers.values():
             executor_handler.stop()
+
+    @staticmethod
+    def is_perpetual(exchange):
+        """
+        Checks if the exchange is a perpetual market.
+        """
+        return "perpetual" in exchange
+
+    def close_open_positions(self, exchange):
+        connector = self.connectors[exchange]
+        for trading_pair, position in connector.account_positions.items():
+            if position.position_side == PositionSide.LONG:
+                self.sell(connector_name=exchange,
+                          trading_pair=position.trading_pair,
+                          amount=abs(position.amount),
+                          order_type=OrderType.MARKET,
+                          price=connector.get_mid_price(position.trading_pair),
+                          position_action=PositionAction.CLOSE)
+            elif position.position_side == PositionSide.SHORT:
+                self.buy(connector_name=exchange,
+                         trading_pair=position.trading_pair,
+                         amount=abs(position.amount),
+                         order_type=OrderType.MARKET,
+                         price=connector.get_mid_price(position.trading_pair),
+                         position_action=PositionAction.CLOSE)
 
     def on_tick(self):
         """
@@ -76,6 +104,7 @@ class StrategyV2Launcher(ScriptStrategyBase):
             return "Market connectors are not ready."
         lines = []
         for controller_config, executor_handler in self.executor_handlers.items():
+            lines.extend(["\n------------------------------------------------------------------------------------------"])
             lines.extend([f"Strategy: {executor_handler.controller.config.strategy_name} | Config: {controller_config}",
             executor_handler.to_format_status()])
         return "\n".join(lines)
