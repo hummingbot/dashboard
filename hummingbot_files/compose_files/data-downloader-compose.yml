@@ -5,8 +5,8 @@ services:
     image: hummingbot/hummingbot:development
     volumes:
       - "../../data/candles:/home/hummingbot/data"
-      - "../bot_configs/data_downloader/conf:/home/hummingbot/conf"
-      - "../bot_configs/data_downloader/conf/connectors:/home/hummingbot/conf/connectors"
+      - "../bots/data_downloader/conf:/home/hummingbot/conf"
+      - "../bots/data_downloader/conf/connectors:/home/hummingbot/conf/connectors"
     environment:
       - CONFIG_PASSWORD=a
       - CONFIG_FILE_NAME=download_candles.py
