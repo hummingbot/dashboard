@@ -4,6 +4,7 @@ import streamlit as st
 import plotly.graph_objects as go
 import math
 import plotly.express as px
+from utils.os_utils import get_bots_data_paths
 from utils.database_manager import DatabaseManager
 from utils.graphs import CandlesGraph
 from utils.st_utils import initialize_st_page
@@ -28,10 +29,16 @@ intervals = {
 
 
 def get_databases():
-    sqlite_files = [db_name for db_name in os.listdir("data") if db_name.endswith(".sqlite")]
-    databases_list = [DatabaseManager(db) for db in sqlite_files]
-    if len(databases_list) > 0:
-        return {database.db_name: database for database in databases_list}
+    databases = {}
+    bots_data_paths = get_bots_data_paths()
+    for source_name, source_path in bots_data_paths.items():
+        sqlite_files = {}
+        for db_name in os.listdir(source_path):
+            if db_name.endswith(".sqlite"):
+                sqlite_files[db_name] = os.path.join(source_path, db_name)
+        databases[source_name] = sqlite_files
+    if len(databases) > 0:
+        return {key: value for key, value in databases.items() if value}
     else:
         return None
 
@@ -233,6 +240,8 @@ def intraday_performance(df: pd.DataFrame):
             yanchor="bottom"
         ),
     )
+    return fig
+
 
     return fig
 
@@ -282,9 +291,12 @@ with st.expander("⬆️ Upload"):
         selected_db = DatabaseManager(uploaded_db.name)
 dbs = get_databases()
 if dbs is not None:
-    db_names = [x.db_name for x in dbs.values()]
+    bot_source = st.selectbox("Choose your database source:", dbs.keys())
+    db_names = [x for x in dbs[bot_source]]
     selected_db_name = st.selectbox("Select a database to start:", db_names)
-    selected_db = dbs[selected_db_name]
+    executors_path = os.path.dirname(dbs[bot_source][selected_db_name])
+    selected_db = DatabaseManager(db_name=dbs[bot_source][selected_db_name],
+                                  executors_path=executors_path)
 else:
     st.warning("Ups! No databases were founded. Start uploading one")
     selected_db = None
