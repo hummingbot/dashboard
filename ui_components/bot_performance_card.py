@@ -44,7 +44,7 @@ class BotPerformanceCard(Dashboard.Item):
 
     def __call__(self, bot_config: dict):
         bot_name = bot_config["bot_name"]
-        scripts_directory = f"./hummingbot_files/bot_configs/{bot_config['bot_name']}"
+        scripts_directory = f"./hummingbot_files/bots/{bot_config['bot_name']}"
         strategies_directory = f"{scripts_directory}/conf/strategies"
         scripts = [file.split("/")[-1] for file in get_python_files_from_directory(scripts_directory)]
         strategies = [file.split("/")[-1] for file in get_yml_files_from_directory(strategies_directory)]
