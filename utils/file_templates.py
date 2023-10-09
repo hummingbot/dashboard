@@ -114,7 +114,7 @@ def objective(trial):
         exchange = "binance_perpetual"
         trading_pair = "BTC-USDT"
         start = "2023-01-01"
-        end = "2023-08-01"
+        end = "2024-01-01"
         initial_portfolio_usd = 1000.0
         trade_cost = 0.0006
         
