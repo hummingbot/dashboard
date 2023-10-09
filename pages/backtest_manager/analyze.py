@@ -193,7 +193,7 @@ else:
                                                 max_value=999999999.99)
     with col3:
         start = st.text_input("Start", value="2023-01-01")
-        end = st.text_input("End", value="2023-08-01")
+        end = st.text_input("End", value="2024-01-01")
     c1, c2 = st.columns([1, 1])
     with col4:
         add_positions = st.checkbox("Add positions", value=True)
