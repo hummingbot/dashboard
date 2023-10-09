@@ -6,6 +6,8 @@ import os
 from hummingbot.smart_components.strategy_frameworks.directional_trading import DirectionalTradingControllerBase, DirectionalTradingControllerConfigBase
 
 import yaml
+from hummingbot.smart_components.strategy_frameworks.market_making import MarketMakingControllerBase, \
+    MarketMakingControllerConfigBase
 
 
 def remove_files_from_directory(directory: str):
@@ -91,7 +93,13 @@ def load_controllers(path):
             for name, cls in inspect.getmembers(module, inspect.isclass):
                 if issubclass(cls, DirectionalTradingControllerBase) and cls is not DirectionalTradingControllerBase:
                     controllers[module_name]["class"] = cls
+                    controllers[module_name]["type"] = "directional_trading"
                 if issubclass(cls, DirectionalTradingControllerConfigBase) and cls is not DirectionalTradingControllerConfigBase:
+                    controllers[module_name]["config"] = cls
+                if issubclass(cls, MarketMakingControllerBase) and cls is not MarketMakingControllerBase:
+                    controllers[module_name]["class"] = cls
+                    controllers[module_name]["type"] = "market_making"
+                if issubclass(cls, MarketMakingControllerConfigBase) and cls is not MarketMakingControllerConfigBase:
                     controllers[module_name]["config"] = cls
     return controllers
 
