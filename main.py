@@ -34,7 +34,7 @@ if st.session_state["authentication_status"]:
             Page("pages/backtest_manager/create.py", "Create", "⚔️"),
             Page("pages/backtest_manager/optimize.py", "Optimize", "🧪"),
             Page("pages/backtest_manager/analyze.py", "Analyze", "🔬"),
-            Page("pages/backtest_manager/simulate.py", "Simulate", "📈"),
+            # Page("pages/backtest_manager/simulate.py", "Simulate", "📈"),
             Page("pages/launch_bot/app.py", "Deploy", "🙌"),
             Section("Community Pages", "👨‍👩‍👧‍👦"),
             Page("pages/strategy_performance/app.py", "Strategy Performance", "🚀"),
