@@ -4,7 +4,7 @@ import streamlit as st
 from streamlit_elements import elements, mui
 
 from ui_components.dashboard import Dashboard
-from ui_components.directional_strategies_file_explorer import DirectionalStrategiesFileExplorer
+from ui_components.controllers_file_explorer import ControllersFileExplorer
 from ui_components.directional_strategy_creation_card import DirectionalStrategyCreationCard
 from ui_components.editor import Editor
 
@@ -23,7 +23,7 @@ if "ds_board" not in st.session_state:
     ds_board = SimpleNamespace(
         dashboard=board,
         create_strategy_card=DirectionalStrategyCreationCard(board, 0, 0, 12, 1),
-        file_explorer=DirectionalStrategiesFileExplorer(board, 0, 2, 3, 7),
+        file_explorer=ControllersFileExplorer(board, 0, 2, 3, 7),
         editor=Editor(board, 4, 2, 9, 7),
     )
     st.session_state.ds_board = ds_board
