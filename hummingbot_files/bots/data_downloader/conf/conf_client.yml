@@ -133,7 +133,7 @@ command_shortcuts:
   - config bid_spread $1
   - config ask_spread $2
 
-# A source for rate oracle, currently ascend_ex, binance, coin_gecko, kucoin, gate_io
+# A source for rate oracle, currently ascend_ex, binance, coin_gecko, coin_cap, kucoin, gate_io
 rate_oracle_source:
   name: binance
 
