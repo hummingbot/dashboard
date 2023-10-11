@@ -67,7 +67,7 @@ class Editor(Dashboard.Item):
                                 mui.Tab(label=label)
                     with mui.Grid(item=True, xs=2, sx={"display": "flex", "justifyContent": "flex-end"}):
                         mui.Button("Apply", variant="contained", onClick=sync())
-                        mui.IconButton(mui.icon.Save, onClick=self.save_file, sx={"mx": 1})
+                        mui.Button("Save to File", variant="contained", onClick=self.save_file, sx={"mx": 1})
 
             for index, (label, tab) in enumerate(self._tabs.items()):
                 with mui.Box(sx=self._editor_box_style, hidden=(index != self._index)):
