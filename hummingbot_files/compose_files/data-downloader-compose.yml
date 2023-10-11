@@ -7,6 +7,7 @@ services:
       - "../../data/candles:/home/hummingbot/data"
       - "../bots/data_downloader/conf:/home/hummingbot/conf"
       - "../bots/data_downloader/conf/connectors:/home/hummingbot/conf/connectors"
+      - "../bots/data_downloader/scripts:/home/hummingbot/scripts"
     environment:
       - CONFIG_PASSWORD=a
       - CONFIG_FILE_NAME=download_candles.py
