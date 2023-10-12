@@ -66,9 +66,8 @@ class Editor(Dashboard.Item):
                             for label in self._tabs.keys():
                                 mui.Tab(label=label)
                     with mui.Grid(item=True, xs=2, sx={"display": "flex", "justifyContent": "flex-end"}):
-                        mui.IconButton(mui.icon.Save, onClick=self.save_file, sx={"mx": 1})
-
-
+                        mui.Button("Apply Changes", variant="contained", onClick=sync())
+                        mui.Button("Save Changes", variant="contained", onClick=self.save_file, sx={"mx": 1})
 
             for index, (label, tab) in enumerate(self._tabs.items()):
                 with mui.Box(sx=self._editor_box_style, hidden=(index != self._index)):
@@ -86,6 +85,4 @@ class Editor(Dashboard.Item):
                     )
 
             with mui.Stack(direction="row", spacing=2, alignItems="center", sx={"padding": "10px"}):
-                mui.Button("Apply", variant="contained", onClick=sync())
                 event.Hotkey("ctrl+s", sync(), bindInputs=True, overrideDefault=True)
-                mui.Typography("Or press ctrl+s", sx={"flex": 1})
