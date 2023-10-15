@@ -20,8 +20,8 @@ if st.session_state["authentication_status"]:
     config["credentials"] = st.session_state.authenticator.credentials
     dump_dict_to_yaml(config, "credentials.yml")
     with st.sidebar:
+        st.write(f'Welcome {st.session_state["name"]}!')
         st.session_state.authenticator.logout('Logout', 'sidebar')
-        st.write(f'Welcome *{st.session_state["name"]}*')
     show_pages(
         [
             Page("main.py", "Hummingbot Dashboard", "📊"),
@@ -43,14 +43,69 @@ if st.session_state["authentication_status"]:
             Page("pages/tvl_vs_mcap/app.py", "TVL vs Market Cap", "🦉"),
         ]
     )
-    # initialize_st_page(title="Hummingbot Dashboard", icon="📊", initial_sidebar_state="expanded")
-    st.write("Watch this video to understand how the dashboard works! 🦅")
-    c1, c2, c3 = st.columns([1, 6, 1])
+
+    # Readme Section
+    readme_container = st.container()
+    with readme_container:
+        st.markdown("# 📊 Hummingbot Dashboard")
+        st.markdown("""
+        Hummingbot Dashboard is an open source application that helps you create, backtest, and optimize various 
+        types of algo trading strategies. Afterwards, you can deploy them as [Hummingbot](http://hummingbot.org) 
+        instances in either paper or live trading mode.""")
+
     st.write("---")
-    with c2:
-        st.video("https://youtu.be/2q9HSyIPuf4")
+
+    st.header("Getting Started")
+
+    st.write("Watch the [Hummingbot Dashboard Tutorial playlist](https://www.youtube.com/watch?v=a-kenMqRB00) to get started!")
+
+    # Container for the videos
+    container = st.container()
+
+    video_titles = [
+        "1 - Introduction to Dashboard",
+        "2 - Setting up the Environment",
+        "3 - Managing Credentials",
+        "4 - Using the Master Bot Profile",
+        "5 - Deploying Bots and Running Strategies",
+        "7 - Controllers, Backtesting, and Optimization",
+        "8 - Deploying Best Strategies from Backtests",
+        "9 - Conclusions and Next Steps"
+    ]
+    # List of YouTube video links
+    video_links = [
+        "https://www.youtube.com/embed/a-kenMqRB00",
+        "https://www.youtube.com/embed/AbezIhb6iJg",
+        "https://www.youtube.com/embed/VmlD_WQVe4M",
+        "https://www.youtube.com/embed/MPQTnlDXPno",
+        "https://www.youtube.com/embed/915E-C2LWdg",
+        "https://www.youtube.com/embed/bAi2ok7_boo",
+        "https://www.youtube.com/embed/BJf3ml-9JIQ",
+        "https://www.youtube.com/embed/ug_SSZb2HYE",
+    ]
+
+    # Ensure the lists have the same length
+    assert len(video_titles) == len(video_links), "Mismatch between titles and links."
+
+    # Create a carousel-like feature
+    video_selection = st.selectbox("Choose a video:", options=video_titles)
+
+    # Get the index of the selected video title
+    selected_index = video_titles.index(video_selection)
+
+    # Display the selected video
+    st.video(video_links[selected_index])
+
+    st.write("---")
+
+    st.header("Feedback and Issues")
+
     st.write(
         "Please give us feedback in the **#dashboard** channel of the [Hummingbot Discord](https://discord.gg/hummingbot)! 🙏")
+
+    st.write(
+        "If you encounter any bugs or have suggestions for improvement, please create an issue in the [Hummingbot Dashboard Github](https://github.com/hummingbot/dashboard).")
+
 else:
     show_pages([
         Page("main.py", "Hummingbot Dashboard", "📊"),
