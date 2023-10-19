@@ -19,7 +19,6 @@ def main_page():
             Page("pages/backtest_create/create.py", "Create", "⚔️"),
             Page("pages/backtest_optimize/optimize.py", "Optimize", "🧪"),
             Page("pages/backtest_analyze/analyze.py", "Analyze", "🔬"),
-            # Page("pages/backtest_manager/simulate.py", "Simulate", "📈"),
             Page("pages/launch_bot/app.py", "Deploy", "🙌"),
             Section("Community Pages", "👨‍👩‍👧‍👦"),
             Page("pages/strategy_performance/app.py", "Strategy Performance", "🚀"),
