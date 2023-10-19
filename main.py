@@ -2,26 +2,11 @@ import streamlit as st
 from st_pages import Page, Section, show_pages
 from streamlit_authenticator import Authenticate
 
+from CONFIG import AUTH_SYSTEM_ENABLED
 from utils.os_utils import read_yaml_file, dump_dict_to_yaml
 
 
-config = read_yaml_file("credentials.yml")
-
-if "authenticator" not in st.session_state:
-    st.session_state.authenticator = Authenticate(
-        config['credentials'],
-        config['cookie']['name'],
-        config['cookie']['key'],
-        config['cookie']['expiry_days'],
-        config['preauthorized']
-    )
-
-if st.session_state["authentication_status"]:
-    config["credentials"] = st.session_state.authenticator.credentials
-    dump_dict_to_yaml(config, "credentials.yml")
-    with st.sidebar:
-        st.write(f'Welcome {st.session_state["name"]}!')
-        st.session_state.authenticator.logout('Logout', 'sidebar')
+def main_page():
     show_pages(
         [
             Page("main.py", "Hummingbot Dashboard", "📊"),
@@ -49,15 +34,16 @@ if st.session_state["authentication_status"]:
     with readme_container:
         st.markdown("# 📊 Hummingbot Dashboard")
         st.markdown("""
-        Hummingbot Dashboard is an open source application that helps you create, backtest, and optimize various 
-        types of algo trading strategies. Afterwards, you can deploy them as [Hummingbot](http://hummingbot.org) 
-        instances in either paper or live trading mode.""")
+            Hummingbot Dashboard is an open source application that helps you create, backtest, and optimize various 
+            types of algo trading strategies. Afterwards, you can deploy them as [Hummingbot](http://hummingbot.org) 
+            instances in either paper or live trading mode.""")
 
     st.write("---")
 
     st.header("Getting Started")
 
-    st.write("Watch the [Hummingbot Dashboard Tutorial playlist](https://www.youtube.com/watch?v=a-kenMqRB00) to get started!")
+    st.write(
+        "Watch the [Hummingbot Dashboard Tutorial playlist](https://www.youtube.com/watch?v=a-kenMqRB00) to get started!")
 
     # Container for the videos
     container = st.container()
@@ -106,6 +92,27 @@ if st.session_state["authentication_status"]:
     st.write(
         "If you encounter any bugs or have suggestions for improvement, please create an issue in the [Hummingbot Dashboard Github](https://github.com/hummingbot/dashboard).")
 
+
+config = read_yaml_file("credentials.yml")
+
+if "authenticator" not in st.session_state:
+    st.session_state.authenticator = Authenticate(
+        config['credentials'],
+        config['cookie']['name'],
+        config['cookie']['key'],
+        config['cookie']['expiry_days'],
+        config['preauthorized']
+    )
+
+if not AUTH_SYSTEM_ENABLED:
+    main_page()
+elif st.session_state["authentication_status"]:
+    config["credentials"] = st.session_state.authenticator.credentials
+    dump_dict_to_yaml(config, "credentials.yml")
+    with st.sidebar:
+        st.write(f'Welcome {st.session_state["name"]}!')
+    st.session_state.authenticator.logout('Logout', 'sidebar')
+    main_page()
 else:
     show_pages([
         Page("main.py", "Hummingbot Dashboard", "📊"),
@@ -118,4 +125,3 @@ else:
     st.write("---")
     st.write("If you are pre-authorized, you can login with your pre-authorized mail!")
     st.session_state.authenticator.register_user('Register', 'main')
-
