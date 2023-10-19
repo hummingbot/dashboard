@@ -11,4 +11,4 @@ DEFAULT_MINER_COINS = ["Avalanche"]
 CERTIFIED_EXCHANGES = ["ascendex", "binance", "bybit", "gate.io", "hitbtc", "huobi", "kucoin", "okx", "gateway"]
 CERTIFIED_STRATEGIES = ["xemm", "cross exchange market making", "pmm", "pure market making"]
 
-AUTH_SYSTEM_ENABLED = True
+AUTH_SYSTEM_ENABLED = False
