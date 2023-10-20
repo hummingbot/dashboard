@@ -10,17 +10,16 @@ if len(new_email) == 0:
     print("\nNo email added, please try again!\n")
     exit()
 
-
 # load the YAML file 
 yaml_file = "../credentials.yml" 
 with open(yaml_file, "r") as file:
     data = yaml.safe_load(file)
 
-# update the admin password on credentials.yml
+# append the email address to credentials.yml
 data["preauthorized"]["emails"].append(new_email)
 
 # write the updated data back to the file
 with open(yaml_file, "w") as file:
     yaml.dump(data, file, Dumper=yaml.RoundTripDumper)
 
-print("Email has been added")
+print("Email has been successfully added!")
