@@ -52,15 +52,15 @@ try:
     active_containers = docker_manager.get_active_containers()
     c1, c2 = st.columns([0.9, 0.1])
     with c1:
-        if "candles_downloader" in active_containers:
+        if "backtest_get_data" in active_containers:
             st.success("Hummingbot Candles Downloader is running")
         st.write("Exited Containers:")
         st.warning(docker_manager.get_exited_containers())
     with c2:
-        if "candles_downloader" in active_containers:
+        if "backtest_get_data" in active_containers:
             stop_containers_button = st.button("Stop Candles Downloader")
             if stop_containers_button:
-                docker_manager.stop_container("candles_downloader")
+                docker_manager.stop_container("backtest_get_data")
         clean_exited_containers_button = st.button("Clean Containers")
         if clean_exited_containers_button:
             docker_manager.clean_exited_containers()
