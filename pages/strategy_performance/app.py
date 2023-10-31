@@ -274,7 +274,7 @@ def candles_graph(candles: pd.DataFrame, strat_data, show_volume=False, extra_ro
     cg = CandlesGraph(candles, show_volume=show_volume, extra_rows=extra_rows)
     cg.add_buy_trades(strat_data.buys)
     cg.add_sell_trades(strat_data.sells)
-    cg.add_pnl(strategy_data, row=2)
+    cg.add_pnl(strat_data, row=2)
     cg.add_quote_inventory_change(strat_data, row=3)
     return cg.figure()
 
