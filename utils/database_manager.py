@@ -12,7 +12,7 @@ class DatabaseManager:
     def __init__(self, db_name: str, executors_path: str = "data"):
         self.db_name = db_name
         # TODO: Create db path for all types of db
-        self.db_path = f'sqlite:///{os.path.join("data", db_name)}'
+        self.db_path = f'sqlite:///{os.path.join(db_name)}'
         self.executors_path = executors_path
         self.engine = create_engine(self.db_path, connect_args={'check_same_thread': False})
         self.session_maker = sessionmaker(bind=self.engine)

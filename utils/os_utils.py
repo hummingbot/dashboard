@@ -105,23 +105,20 @@ def load_controllers(path):
 
 
 def get_bots_data_paths():
-    root_directory = os.getcwd()
-    bots_data_paths = {}
-
+    root_directory = "hummingbot_files/bots"
+    bots_data_paths = {"General / Uploaded data": "data"}
+    reserved_word = "hummingbot-"
     # Walk through the directory tree
     for dirpath, dirnames, filenames in os.walk(root_directory):
         for dirname in dirnames:
-            # Check if the directory is named "data"
             if dirname == "data":
                 parent_folder = os.path.basename(dirpath)
-                # Append the full path of the "data" directory to the list
-                bots_data_paths[parent_folder] = os.path.join(dirpath, dirname)
+                if parent_folder.startswith(reserved_word):
+                    bots_data_paths[parent_folder] = os.path.join(dirpath, dirname)
             if "dashboard" in bots_data_paths:
-                # Create a new key "base folder" with the value of the old key
-                bots_data_paths["base folder"] = bots_data_paths["dashboard"]
-                # Delete the old key "dashboard"
                 del bots_data_paths["dashboard"]
-    return {key: value for key, value in bots_data_paths.items() if value is not None}
+    data_sources = {key: value for key, value in bots_data_paths.items() if value is not None}
+    return data_sources
 
 
 def get_function_from_file(file_path: str, function_name: str):
