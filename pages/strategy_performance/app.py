@@ -346,8 +346,8 @@ if selected_db is not None:
                             st.metric(label="Profit Factor",
                                       value=round(strategy_data_filtered.profit_factor, 2))
                         with col5:
-                            st.metric(label='Duration (Hours)',
-                                      value=round(strategy_data_filtered.duration_seconds / 3600, 2))
+                            st.metric(label='Duration (Days)',
+                                      value=round(strategy_data_filtered.duration_seconds / (60 * 60 * 24)))
                         with col6:
                             st.metric(label='Price change',
                                       value=f"{round(strategy_data_filtered.price_change * 100, 2)} %")
