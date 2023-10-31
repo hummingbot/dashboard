@@ -24,7 +24,6 @@ class StrategyData:
 
         strategy_data = self.trade_fill.copy()
         strategy_data["volume"] = strategy_data["amount"] * strategy_data["price"]
-        strategy_data["margin_volume"] = strategy_data["amount"] * strategy_data["price"] / strategy_data["leverage"]
         strategy_summary = strategy_data.groupby(["strategy", "market", "symbol"]).agg({"order_id": "count",
                                                                                         "volume": "sum",
                                                                                         "margin_volume": "sum",
