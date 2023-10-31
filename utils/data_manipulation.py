@@ -246,8 +246,8 @@ class SingleMarketStrategyData:
 
     @property
     def accuracy(self):
-        total_wins = len(self.trade_fill["net_realized_pnl"] >= 0)
-        total_losses = len(self.trade_fill["net_realized_pnl"] < 0)
+        total_wins = (self.trade_fill["net_realized_pnl"] >= 0).sum()
+        total_losses = (self.trade_fill["net_realized_pnl"] < 0).sum()
         return total_wins / (total_wins + total_losses)
 
     @property
