@@ -243,9 +243,6 @@ def intraday_performance(df: pd.DataFrame):
     return fig
 
 
-    return fig
-
-
 def returns_histogram(df: pd.DataFrame):
     fig = go.Figure()
     fig.add_trace(go.Histogram(name="Losses",
