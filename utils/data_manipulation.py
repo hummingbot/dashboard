@@ -26,7 +26,6 @@ class StrategyData:
         strategy_data["volume"] = strategy_data["amount"] * strategy_data["price"]
         strategy_summary = strategy_data.groupby(["strategy", "market", "symbol"]).agg({"order_id": "count",
                                                                                         "volume": "sum",
-                                                                                        "margin_volume": "sum",
                                                                                         "net_realized_pnl": [full_series,
                                                                                                              "last"]}).reset_index()
         strategy_summary.columns = [f"{col[0]}_{col[1]}" if isinstance(col, tuple) and col[1] is not None else col for col in strategy_summary.columns]
@@ -35,7 +34,6 @@ class StrategyData:
                                          "symbol_": "Trading Pair",
                                          "order_id_count": "# Trades",
                                          "volume_sum": "Volume",
-                                         "margin_volume_sum": "Margin volume",
                                          "net_realized_pnl_full_series": "PnL Over Time",
                                          "net_realized_pnl_last": "Realized PnL"}, inplace=True)
         strategy_summary.sort_values(["Realized PnL"], ascending=True, inplace=True)
