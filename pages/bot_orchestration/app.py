@@ -50,7 +50,7 @@ def update_containers_info(docker_manager):
             active_hbot_containers = [container for container in active_containers if
                                       "hummingbot-" in container and "broker" not in container
                                       and "master_bot_conf" not in container]
-            previous_active_bots = st.session_state.active_bots.keys()
+            previous_active_bots = list(st.session_state.active_bots)
 
             # Remove bots that are no longer active
             for bot in previous_active_bots:
@@ -67,7 +67,7 @@ def update_containers_info(docker_manager):
                     }
 
             # Update bot info
-            for bot in st.session_state.active_bots.keys():
+            for bot in list(st.session_state.active_bots):
                 try:
                     broker_client = st.session_state.active_bots[bot]["broker_client"]
                     status = broker_client.status()
