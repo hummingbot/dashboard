@@ -81,7 +81,7 @@ def update_containers_info(docker_manager):
                     st.error(f"RPCClientTimeoutError: Could not connect to {bot}. Please review the connection.")
                     del st.session_state.active_bots[bot]
         except RuntimeError:
-            st.experimental_rerun()
+            st.rerun()
         st.session_state.active_bots = dict(
             sorted(st.session_state.active_bots.items(), key=lambda x: x[1]['is_running'], reverse=True))
     else:
