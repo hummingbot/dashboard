@@ -31,8 +31,6 @@ def candles_graph(candles: pd.DataFrame, strat_data, show_volume=False, extra_ro
 initialize_st_page(title="Strategy Performance", icon="🚀")
 style_metric_cards()
 
-BULLISH_COLOR = "rgba(97, 199, 102, 0.9)"
-BEARISH_COLOR = "rgba(255, 102, 90, 0.9)"
 UPLOAD_FOLDER = "data"
 
 # Start content here
