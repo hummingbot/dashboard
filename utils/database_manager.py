@@ -13,7 +13,6 @@ class DatabaseManager:
         self.db_name = db_name
         # TODO: Create db path for all types of db
         self.db_path = f'sqlite:///{os.path.join(db_name)}'
-        self.executors_path = executors_path
         self.engine = create_engine(self.db_path, connect_args={'check_same_thread': False})
         self.session_maker = sessionmaker(bind=self.engine)
 
@@ -131,6 +130,18 @@ class DatabaseManager:
             query += f" WHERE {' AND '.join(conditions)}"
         return query
 
+    @staticmethod
+    def _get_position_executor_query(start_date=None, end_date=None):
+        query = "SELECT * FROM PositionExecutors"
+        conditions = []
+        if start_date:
+            conditions.append(f"timestamp >= '{start_date}'")
+        if end_date:
+            conditions.append(f"timestamp <= '{end_date}'")
+        if conditions:
+            query += f" WHERE {' AND '.join(conditions)}"
+        return query
+
     def get_orders(self, config_file_path=None, start_date=None, end_date=None):
         with self.session_maker() as session:
             query = self._get_orders_query(config_file_path, start_date, end_date)
@@ -183,16 +194,9 @@ class DatabaseManager:
         return market_data
 
     def get_position_executor_data(self, start_date=None, end_date=None) -> pd.DataFrame:
-        df = pd.DataFrame()
-        files = [file for file in os.listdir(self.executors_path) if ".csv" in file and file != "trades_market_making_.csv"]
-        for file in files:
-            df0 = pd.read_csv(f"{self.executors_path}/{file}")
-            df = pd.concat([df, df0])
-        df["datetime"] = pd.to_datetime(df["timestamp"], unit="s")
-        if start_date:
-            df = df[df["datetime"] >= start_date]
-        if end_date:
-            df = df[df["datetime"] <= end_date]
-        return df
-
-
+        with self.session_maker() as session:
+            query = self._get_position_executor_query(start_date, end_date)
+            position_executor = pd.read_sql_query(text(query), session.connection())
+            position_executor.set_index("timestamp", inplace=True)
+            position_executor["datetime"] = pd.to_datetime(position_executor.index, unit="ms")
+        return position_executor

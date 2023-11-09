@@ -152,7 +152,7 @@ st.plotly_chart(time_filtered_performance_charts.pnl_over_time(), use_container_
 # Market activity section
 st.subheader("💱 Market activity")
 if "Error" in selected_db.status["market_data"] or time_filtered_strategy_data.market_data.empty:
-    st.warning("Market data is not available so the candles graph is not going to be rendered. "
+    st.warning("Market data is not available so the candles graph is not going to be rendered."
                "Make sure that you are using the latest version of Hummingbot and market data recorder activated.")
 else:
     col1, col2, col3, col4 = st.columns(4)
@@ -200,9 +200,18 @@ else:
     else:
         st.plotly_chart(candles_graph(candles_df, page_filtered_strategy_data), use_container_width=True)
 
+# Position executor section
+st.divider()
+st.subheader("🤖 Position executor")
+if "Error" in selected_db.status["position_executor"] or strategy_data.position_executor.empty:
+    st.warning("Position executor data is not available so position executor graphs are not going to be rendered."
+               "Make sure that you are using the latest version of Hummingbot.")
+else:
+    st.dataframe(strategy_data.position_executor, use_container_width=True)
+
 # Community metrics section
 st.divider()
-st.subheader("📈 Metrics")
+st.subheader("👥 Community Metrics")
 with st.container():
     col1, col2, col3, col4, col5 = st.columns(5)
     with col1:
