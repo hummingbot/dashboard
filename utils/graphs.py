@@ -1,7 +1,9 @@
 import pandas as pd
 from plotly.subplots import make_subplots
+import plotly.express as px
 import pandas_ta as ta  # noqa: F401
 import streamlit as st
+from typing import Union
 
 from utils.data_manipulation import StrategyData, SingleMarketStrategyData
 from quants_lab.strategy.strategy_analysis import StrategyAnalysis
@@ -10,6 +12,7 @@ import plotly.graph_objs as go
 BULLISH_COLOR = "rgba(97, 199, 102, 0.9)"
 BEARISH_COLOR = "rgba(255, 102, 90, 0.9)"
 FEE_COLOR = "rgba(51, 0, 51, 0.9)"
+
 
 class CandlesGraph:
     def __init__(self, candles_df: pd.DataFrame, show_volume=True, extra_rows=1):
@@ -326,3 +329,154 @@ class BacktestingGraphs:
             strategy_analysis.create_base_figure(volume=add_volume, positions=add_positions, trade_pnl=add_pnl)
             st.plotly_chart(strategy_analysis.figure(), use_container_width=True)
         return metrics_container
+
+
+class PerformanceGraphs:
+    BULLISH_COLOR = "rgba(97, 199, 102, 0.9)"
+    BEARISH_COLOR = "rgba(255, 102, 90, 0.9)"
+    FEE_COLOR = "rgba(51, 0, 51, 0.9)"
+
+    def __init__(self, strategy_data: Union[StrategyData, SingleMarketStrategyData]):
+        self.strategy_data = strategy_data
+
+    @property
+    def has_summary_table(self):
+        return self.strategy_data.strategy_summary is not None
+
+    def strategy_summary_table(self):
+        summary = st.data_editor(self.strategy_data.strategy_summary,
+                                 column_config={"PnL Over Time": st.column_config.LineChartColumn("PnL Over Time",
+                                                                                                  y_min=0,
+                                                                                                  y_max=5000),
+                                                "Explore": st.column_config.CheckboxColumn(required=True)
+                                                },
+                                 use_container_width=True,
+                                 hide_index=True
+                                 )
+        selected_rows = summary[summary.Explore]
+        if len(selected_rows) > 0:
+            return selected_rows
+        else:
+            return None
+
+    def summary_chart(self):
+        fig = px.bar(self.strategy_data.strategy_summary, x="Trading Pair", y="Realized PnL", color="Exchange")
+        fig.update_traces(width=min(1.0, 0.1 * len(self.strategy_data.strategy_summary)))
+        return fig
+
+    def pnl_over_time(self):
+        df = self.strategy_data.trade_fill.copy()
+        df.reset_index(drop=True, inplace=True)
+        df_above = df[df['net_realized_pnl'] >= 0]
+        df_below = df[df['net_realized_pnl'] < 0]
+
+        fig = go.Figure()
+        fig.add_trace(go.Bar(name="Cum Realized PnL",
+                             x=df_above.index,
+                             y=df_above["net_realized_pnl"],
+                             marker_color=BULLISH_COLOR,
+                             # hoverdq
+                             showlegend=False))
+        fig.add_trace(go.Bar(name="Cum Realized PnL",
+                             x=df_below.index,
+                             y=df_below["net_realized_pnl"],
+                             marker_color=BEARISH_COLOR,
+                             showlegend=False))
+        fig.update_layout(title=dict(
+            text='Cummulative PnL',  # Your title text
+            x=0.43,
+            y=0.95,
+        ),
+            plot_bgcolor='rgba(0,0,0,0)',
+            paper_bgcolor='rgba(0,0,0,0)')
+        return fig
+
+    def intraday_performance(self):
+        df = self.strategy_data.trade_fill.copy()
+
+        def hr2angle(hr):
+            return (hr * 15) % 360
+
+        def hr_str(hr):
+            # Normalize hr to be between 1 and 12
+            hr_string = str(((hr - 1) % 12) + 1)
+            suffix = ' AM' if (hr % 24) < 12 else ' PM'
+            return hr_string + suffix
+
+        df["hour"] = df["timestamp"].dt.hour
+        realized_pnl_per_hour = df.groupby("hour")[["realized_pnl", "quote_volume"]].sum().reset_index()
+        fig = go.Figure()
+        fig.add_trace(go.Barpolar(
+            name="Profits",
+            r=realized_pnl_per_hour["quote_volume"],
+            theta=realized_pnl_per_hour["hour"] * 15,
+            marker=dict(
+                color=realized_pnl_per_hour["realized_pnl"],
+                colorscale="RdYlGn",
+                cmin=-(abs(realized_pnl_per_hour["realized_pnl"]).max()),
+                cmid=0.0,
+                cmax=(abs(realized_pnl_per_hour["realized_pnl"]).max()),
+                colorbar=dict(
+                    title='Realized PnL',
+                    x=0,
+                    y=-0.5,
+                    xanchor='left',
+                    yanchor='bottom',
+                    orientation='h'
+                )
+            )))
+        fig.update_layout(
+            polar=dict(
+                radialaxis=dict(
+                    visible=True,
+                    showline=False,
+                ),
+                angularaxis=dict(
+                    rotation=90,
+                    direction="clockwise",
+                    tickvals=[hr2angle(hr) for hr in range(24)],
+                    ticktext=[hr_str(hr) for hr in range(24)],
+                ),
+                bgcolor='rgba(255, 255, 255, 0)',
+
+            ),
+            legend=dict(
+                orientation="h",
+                x=0.5,
+                y=1.08,
+                xanchor="center",
+                yanchor="bottom"
+            ),
+            title=dict(
+                text='Intraday Performance',
+                x=0.5,
+                y=0.93,
+                xanchor="center",
+                yanchor="bottom"
+            ),
+        )
+        return fig
+
+    def returns_histogram(self):
+        df = self.strategy_data.trade_fill.copy()
+        fig = go.Figure()
+        fig.add_trace(go.Histogram(name="Losses",
+                                   x=df.loc[df["realized_pnl"] < 0, "realized_pnl"],
+                                   marker_color=BEARISH_COLOR))
+        fig.add_trace(go.Histogram(name="Profits",
+                                   x=df.loc[df["realized_pnl"] > 0, "realized_pnl"],
+                                   marker_color=BULLISH_COLOR))
+        fig.update_layout(
+            title=dict(
+                                text='Returns Distribution',
+                                x=0.5,
+                                xanchor="center",
+                            ),
+            legend=dict(
+                orientation="h",
+                yanchor="bottom",
+                y=1.02,
+                xanchor="center",
+                x=.48
+            ))
+        return fig
