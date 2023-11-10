@@ -250,3 +250,7 @@ if not strategy_data.market_data.empty:
     with st.expander("💱 Market Data"):
         st.write(strategy_data.market_data)
         download_csv_button(strategy_data.market_data, "market_data", "download-market-data")
+if strategy_data.position_executor is not None and not strategy_data.position_executor.empty:
+    with st.expander("🤖 Position executor"):
+        st.write(strategy_data.position_executor)
+        download_csv_button(strategy_data.position_executor, "position_executor", "download-position-executor")
