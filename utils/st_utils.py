@@ -27,7 +27,7 @@ def initialize_st_page(title: str, icon: str, layout="wide", initial_sidebar_sta
 def download_csv_button(df: pd.DataFrame, filename: str, key: str):
     csv = df.to_csv(index=False).encode('utf-8')
     return st.download_button(
-                label="Press to Download",
+                label="Download CSV",
                 data=csv,
                 file_name=f"{filename}.csv",
                 mime="text/csv",
