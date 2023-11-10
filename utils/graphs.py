@@ -341,7 +341,10 @@ class PerformanceGraphs:
 
     @property
     def has_summary_table(self):
-        return self.strategy_data.strategy_summary is not None
+        if isinstance(self.strategy_data, StrategyData):
+            return self.strategy_data.strategy_summary is not None
+        else:
+            return False
 
     def strategy_summary_table(self):
         summary = st.data_editor(self.strategy_data.strategy_summary,
