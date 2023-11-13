@@ -4,28 +4,8 @@ import streamlit as st
 import math
 from utils.os_utils import get_databases
 from utils.database_manager import DatabaseManager
-from utils.graphs import CandlesGraph, PerformanceGraphs
-from utils.st_utils import initialize_st_page, download_csv_button, style_metric_cards
-
-
-def db_error_message(db: DatabaseManager, error_message: str):
-    container = st.container()
-    with container:
-        st.warning(error_message)
-        with st.expander("DB Status"):
-            status_df = pd.DataFrame([db.status]).transpose().reset_index()
-            status_df.columns = ["Attribute", "Value"]
-            st.table(status_df)
-    return container
-
-
-def candles_graph(candles: pd.DataFrame, strat_data, show_volume=False, extra_rows=2):
-    cg = CandlesGraph(candles, show_volume=show_volume, extra_rows=extra_rows)
-    cg.add_buy_trades(strat_data.buys)
-    cg.add_sell_trades(strat_data.sells)
-    cg.add_pnl(strat_data, row=2)
-    cg.add_quote_inventory_change(strat_data, row=3)
-    return cg.figure()
+from utils.graphs import PerformanceGraphs
+from utils.st_utils import initialize_st_page, download_csv_button, style_metric_cards, db_error_message
 
 
 initialize_st_page(title="Strategy Performance", icon="🚀")
@@ -45,7 +25,7 @@ intervals = {
     "1d": 60 * 60 * 24,
 }
 
-
+# Data source section
 st.subheader("🔫 Data source")
 
 # Upload database
@@ -180,12 +160,12 @@ else:
     # Filter strategy data by page
     page_filtered_strategy_data = single_market_strategy_data.get_filtered_strategy_data(start_time_page, end_time_page)
     page_performance_charts = PerformanceGraphs(page_filtered_strategy_data)
+    candles_chart = page_performance_charts.candles_graph(candles_df)
 
     # Panel Metrics
     if show_panel_metrics:
         col1, col2 = st.columns([2, 1])
         with col1:
-            candles_chart = candles_graph(candles_df, page_filtered_strategy_data)
             st.plotly_chart(candles_chart, use_container_width=True)
         with col2:
             chart_tab, table_tab = st.tabs(["Chart", "Table"])
@@ -198,16 +178,7 @@ else:
                              hide_index=True,
                              height=(min(len(page_filtered_strategy_data.trade_fill) * 39, candles_chart.layout.height - 180)))
     else:
-        st.plotly_chart(candles_graph(candles_df, page_filtered_strategy_data), use_container_width=True)
-
-# Position executor section
-st.divider()
-st.subheader("🤖 Position executor")
-if "Error" in selected_db.status["position_executor"] or strategy_data.position_executor.empty:
-    st.warning("Position executor data is not available so position executor graphs are not going to be rendered."
-               "Make sure that you are using the latest version of Hummingbot.")
-else:
-    st.dataframe(strategy_data.position_executor, use_container_width=True)
+        st.plotly_chart(candles_chart, use_container_width=True)
 
 # Community metrics section
 st.divider()

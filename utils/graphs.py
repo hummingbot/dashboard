@@ -346,6 +346,13 @@ class PerformanceGraphs:
         else:
             return False
 
+    @property
+    def has_position_executor_summary(self):
+        if isinstance(self.strategy_data, StrategyData):
+            return self.strategy_data.position_executor is not None
+        else:
+            return False
+
     def strategy_summary_table(self):
         summary = st.data_editor(self.strategy_data.strategy_summary,
                                  column_config={"PnL Over Time": st.column_config.LineChartColumn("PnL Over Time",
@@ -483,3 +490,38 @@ class PerformanceGraphs:
                 x=.48
             ))
         return fig
+
+    def position_executor_summary_sunburst(self):
+        df = self.strategy_data.position_executor.copy()
+        grouped_df = df.groupby(["trading_pair", "side", "close_type"]).size().reset_index(name="count")
+
+        fig = px.sunburst(grouped_df,
+                          path=['trading_pair', 'side', 'close_type'],
+                          values="count",
+                          color_continuous_scale='RdBu',
+                          color_continuous_midpoint=0)
+
+        fig.update_layout(
+            title=dict(
+                text='Position Executor Summary',
+                x=0.5,
+                xanchor="center",
+            ),
+            legend=dict(
+                orientation="h",
+                yanchor="bottom",
+                y=1.02,
+                xanchor="center",
+                x=.48
+            )
+        )
+
+        return fig
+
+    def candles_graph(self, candles: pd.DataFrame, show_volume=False, extra_rows=2):
+        cg = CandlesGraph(candles, show_volume=show_volume, extra_rows=extra_rows)
+        cg.add_buy_trades(self.strategy_data.buys)
+        cg.add_sell_trades(self.strategy_data.sells)
+        cg.add_pnl(self.strategy_data, row=2)
+        cg.add_quote_inventory_change(self.strategy_data, row=3)
+        return cg.figure()

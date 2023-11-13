@@ -6,6 +6,7 @@ import inspect
 import streamlit as st
 from st_pages import add_page_title
 
+from utils.database_manager import DatabaseManager
 
 def initialize_st_page(title: str, icon: str, layout="wide", initial_sidebar_state="collapsed"):
     st.set_page_config(
@@ -64,3 +65,14 @@ def style_metric_cards(
         """,
         unsafe_allow_html=True,
     )
+
+
+def db_error_message(db: DatabaseManager, error_message: str):
+    container = st.container()
+    with container:
+        st.warning(error_message)
+        with st.expander("DB Status"):
+            status_df = pd.DataFrame([db.status]).transpose().reset_index()
+            status_df.columns = ["Attribute", "Value"]
+            st.table(status_df)
+    return container
