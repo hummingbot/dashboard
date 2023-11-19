@@ -62,10 +62,10 @@ if not main_performance_charts.has_summary_table:
                      error_message="Inaccesible summary table. Please try uploading a new database.")
     st.stop()
 else:
-    table_tab, chart_tab = st.tabs(["Table", "Chart"])
+    main_tab, chart_tab = st.tabs(["Main", "Chart"])
     with chart_tab:
         st.plotly_chart(main_performance_charts.summary_chart(), use_container_width=True)
-    with table_tab:
+    with main_tab:
         selection = main_performance_charts.strategy_summary_table()
         if selection is None:
             st.info("💡 Choose a trading pair and start analyzing!")
