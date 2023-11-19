@@ -209,6 +209,17 @@ class CandlesGraph:
                                    )
         self.base_figure.update_yaxes(title_text='PNL', row=row, col=1)
 
+    def add_positions(self, position_executor_data: pd.DataFrame, row=1):
+        position_executor_data["close_datetime"] = pd.to_datetime(position_executor_data["close_timestamp"], unit="s")
+        for index, rown in position_executor_data.iterrows():
+            self.base_figure.add_trace(go.Scatter(name=f"Position {index}",
+                                                  x=[rown.datetime, rown.close_datetime],
+                                                  y=[rown.entry_price, rown.close_price],
+                                                  mode="lines",
+                                                  line=dict(color="lightgreen" if rown.net_pnl_quote > 0 else "red"),
+                                                  showlegend=False),
+                                        row=row, col=1)
+
     def update_layout(self):
         self.base_figure.update_layout(
             title={
@@ -524,4 +535,6 @@ class PerformanceGraphs:
         cg.add_sell_trades(self.strategy_data.sells)
         cg.add_pnl(self.strategy_data, row=2)
         cg.add_quote_inventory_change(self.strategy_data, row=3)
+        if self.strategy_data.position_executor is not None:
+            cg.add_positions(self.strategy_data.position_executor, row=1)
         return cg.figure()
