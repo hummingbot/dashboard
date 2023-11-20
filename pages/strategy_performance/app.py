@@ -181,7 +181,11 @@ else:
                          height=(min(len(time_filtered_strategy_data.trade_fill) * 39, 600)))
             download_csv_button(raw_returns_data, "raw_returns_data", "download-raw-returns")
         with positions_tab:
-            st.plotly_chart(page_performance_charts.position_executor_summary_sunburst(), use_container_width=True)
+            positions_sunburst = page_performance_charts.position_executor_summary_sunburst()
+            if positions_sunburst:
+                st.plotly_chart(page_performance_charts.position_executor_summary_sunburst(), use_container_width=True)
+            else:
+                st.info("No position executor data found.")
         with other_metrics_tab:
             col3, col4 = st.columns(2)
             with col3:

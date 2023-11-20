@@ -503,31 +503,33 @@ class PerformanceGraphs:
         return fig
 
     def position_executor_summary_sunburst(self):
-        df = self.strategy_data.position_executor.copy()
-        grouped_df = df.groupby(["trading_pair", "side", "close_type"]).size().reset_index(name="count")
+        if self.strategy_data.position_executor is not None:
+            df = self.strategy_data.position_executor.copy()
+            grouped_df = df.groupby(["trading_pair", "side", "close_type"]).size().reset_index(name="count")
 
-        fig = px.sunburst(grouped_df,
-                          path=['trading_pair', 'side', 'close_type'],
-                          values="count",
-                          color_continuous_scale='RdBu',
-                          color_continuous_midpoint=0)
+            fig = px.sunburst(grouped_df,
+                              path=['trading_pair', 'side', 'close_type'],
+                              values="count",
+                              color_continuous_scale='RdBu',
+                              color_continuous_midpoint=0)
 
-        fig.update_layout(
-            title=dict(
-                text='Position Executor Summary',
-                x=0.5,
-                xanchor="center",
-            ),
-            legend=dict(
-                orientation="h",
-                yanchor="bottom",
-                y=1.02,
-                xanchor="center",
-                x=.48
+            fig.update_layout(
+                title=dict(
+                    text='Position Executor Summary',
+                    x=0.5,
+                    xanchor="center",
+                ),
+                legend=dict(
+                    orientation="h",
+                    yanchor="bottom",
+                    y=1.02,
+                    xanchor="center",
+                    x=.48
+                )
             )
-        )
-
-        return fig
+            return fig
+        else:
+            return None
 
     def candles_graph(self, candles: pd.DataFrame, show_volume=False, extra_rows=2):
         cg = CandlesGraph(candles, show_volume=show_volume, extra_rows=extra_rows)
