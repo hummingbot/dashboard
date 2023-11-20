@@ -135,20 +135,17 @@ if "Error" in selected_db.status["market_data"] or time_filtered_strategy_data.m
     st.warning("Market data is not available so the candles graph is not going to be rendered."
                "Make sure that you are using the latest version of Hummingbot and market data recorder activated.")
 else:
-    col1, col2, col3, col4 = st.columns(4)
-    with col1:
-        interval = st.selectbox("Candles Interval:", intervals.keys(), index=2)
+    col1, col2 = st.columns([3, 1])
     with col2:
+        # Set custom configs
+        interval = st.selectbox("Candles Interval:", intervals.keys(), index=2)
         rows_per_page = st.number_input("Candles per Page", value=1500, min_value=1, max_value=5000)
-    with col3:
-        st.markdown("##")
-        show_panel_metrics = st.checkbox("Show panel metrics", value=True)
-    with col4:
+
+        # Add pagination
         total_rows = len(time_filtered_strategy_data.get_market_data_resampled(interval=f"{intervals[interval]}S"))
         total_pages = math.ceil(total_rows / rows_per_page)
         if total_pages > 1:
-            selected_page = st.select_slider("Select page", list(range(total_pages)), total_pages - 1,
-                                             key="page_slider")
+            selected_page = st.select_slider("Select page", list(range(total_pages)), total_pages - 1, key="page_slider")
         else:
             selected_page = 0
         start_idx = selected_page * rows_per_page
@@ -157,27 +154,27 @@ else:
         start_time_page = candles_df.index.min()
         end_time_page = candles_df.index.max()
 
-    # Filter strategy data by page
-    page_filtered_strategy_data = single_market_strategy_data.get_filtered_strategy_data(start_time_page, end_time_page)
-    page_performance_charts = PerformanceGraphs(page_filtered_strategy_data)
-    candles_chart = page_performance_charts.candles_graph(candles_df)
+        # Get Page Filtered Strategy Data
+        page_filtered_strategy_data = single_market_strategy_data.get_filtered_strategy_data(start_time_page, end_time_page)
+        page_performance_charts = PerformanceGraphs(page_filtered_strategy_data)
+        candles_chart = page_performance_charts.candles_graph(candles_df)
 
-    # Panel Metrics
-    if show_panel_metrics:
-        col1, col2 = st.columns([2, 1])
-        with col1:
-            st.plotly_chart(candles_chart, use_container_width=True)
-        with col2:
-            chart_tab, table_tab = st.tabs(["Chart", "Table"])
-            with chart_tab:
-                st.plotly_chart(page_performance_charts.intraday_performance(), use_container_width=True)
-                st.plotly_chart(page_performance_charts.returns_histogram(), use_container_width=True)
-            with table_tab:
-                st.dataframe(page_filtered_strategy_data.trade_fill[["timestamp", "gross_pnl", "trade_fee", "realized_pnl"]].dropna(subset="realized_pnl"),
-                             use_container_width=True,
-                             hide_index=True,
-                             height=(min(len(page_filtered_strategy_data.trade_fill) * 39, candles_chart.layout.height - 180)))
-    else:
+        # Show auxiliary charts
+        intraday_tab, returns_tab, raw_tab, positions_tab = st.tabs(["Intraday", "Returns", "Raw", "Positions"])
+        with intraday_tab:
+            st.plotly_chart(time_filtered_performance_charts.intraday_performance(), use_container_width=True)
+        with returns_tab:
+            st.plotly_chart(time_filtered_performance_charts.returns_histogram(), use_container_width=True)
+        with raw_tab:
+            raw_returns_data = time_filtered_strategy_data.trade_fill[["timestamp", "gross_pnl", "trade_fee", "realized_pnl"]].dropna(subset="realized_pnl")
+            st.dataframe(raw_returns_data,
+                         use_container_width=True,
+                         hide_index=True,
+                         height=(min(len(time_filtered_strategy_data.trade_fill) * 39, 600)))
+            download_csv_button(raw_returns_data, "raw_returns_data", "download-raw-returns")
+        with positions_tab:
+            st.plotly_chart(page_performance_charts.position_executor_summary_sunburst(), use_container_width=True)
+    with col1:
         st.plotly_chart(candles_chart, use_container_width=True)
 
 # Community metrics section
