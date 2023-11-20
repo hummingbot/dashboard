@@ -12,12 +12,14 @@ import plotly.graph_objs as go
 BULLISH_COLOR = "rgba(97, 199, 102, 0.9)"
 BEARISH_COLOR = "rgba(255, 102, 90, 0.9)"
 FEE_COLOR = "rgba(51, 0, 51, 0.9)"
+MIN_INTERVAL_RESOLUTION = "1m"
 
 
 class CandlesGraph:
-    def __init__(self, candles_df: pd.DataFrame, show_volume=True, extra_rows=1):
+    def __init__(self, candles_df: pd.DataFrame, line_mode=False, show_volume=True, extra_rows=1):
         self.candles_df = candles_df
         self.show_volume = show_volume
+        self.line_mode = line_mode
         rows, heights = self.get_n_rows_and_heights(extra_rows)
         self.rows = rows
         specs = [[{"secondary_y": True}]] * rows
@@ -42,17 +44,27 @@ class CandlesGraph:
         return self.base_figure
 
     def add_candles_graph(self):
-        self.base_figure.add_trace(
-            go.Candlestick(
-                x=self.candles_df.index,
-                open=self.candles_df['open'],
-                high=self.candles_df['high'],
-                low=self.candles_df['low'],
-                close=self.candles_df['close'],
-                name="OHLC"
-            ),
-            row=1, col=1,
-        )
+        if self.line_mode:
+            self.base_figure.add_trace(
+                go.Scatter(x=self.candles_df.index,
+                           y=self.candles_df['close'],
+                           name="Close",
+                           mode='lines',
+                           line=dict(color='blue')),
+                row=1, col=1,
+            )
+        else:
+            self.base_figure.add_trace(
+                go.Candlestick(
+                    x=self.candles_df.index,
+                    open=self.candles_df['open'],
+                    high=self.candles_df['high'],
+                    low=self.candles_df['low'],
+                    close=self.candles_df['close'],
+                    name="OHLC"
+                ),
+                row=1, col=1,
+            )
 
     def add_buy_trades(self, orders_data: pd.DataFrame):
         self.base_figure.add_trace(
@@ -531,8 +543,9 @@ class PerformanceGraphs:
         else:
             return None
 
-    def candles_graph(self, candles: pd.DataFrame, show_volume=False, extra_rows=2):
-        cg = CandlesGraph(candles, show_volume=show_volume, extra_rows=extra_rows)
+    def candles_graph(self, candles: pd.DataFrame, interval="5m", show_volume=False, extra_rows=2):
+        line_mode = interval == MIN_INTERVAL_RESOLUTION
+        cg = CandlesGraph(candles, show_volume=show_volume, line_mode=line_mode, extra_rows=extra_rows)
         cg.add_buy_trades(self.strategy_data.buys)
         cg.add_sell_trades(self.strategy_data.sells)
         cg.add_pnl(self.strategy_data, row=2)

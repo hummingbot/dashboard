@@ -165,7 +165,7 @@ else:
         # Get Page Filtered Strategy Data
         page_filtered_strategy_data = single_market_strategy_data.get_filtered_strategy_data(start_time_page, end_time_page)
         page_performance_charts = PerformanceGraphs(page_filtered_strategy_data)
-        candles_chart = page_performance_charts.candles_graph(candles_df)
+        candles_chart = page_performance_charts.candles_graph(candles_df, interval=interval)
 
         # Show auxiliary charts
         intraday_tab, returns_tab, returns_data_tab, positions_tab, other_metrics_tab = st.tabs(["Intraday", "Returns", "Returns Data", "Positions", "Other Metrics"])
