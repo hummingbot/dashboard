@@ -100,31 +100,39 @@ time_filtered_performance_charts = PerformanceGraphs(time_filtered_strategy_data
 col1, col2, col3, col4, col5, col6, col7, col8 = st.columns(8)
 with col1:
     st.metric(label=f'Net PNL {time_filtered_strategy_data.quote_asset}',
-              value=round(time_filtered_strategy_data.net_pnl_quote, 2))
+              value=round(time_filtered_strategy_data.net_pnl_quote, 2),
+              help="The overall profit or loss achieved in quote asset.")
 with col2:
-    st.metric(label='Total Trades', value=time_filtered_strategy_data.total_orders)
+    st.metric(label='Total Trades', value=time_filtered_strategy_data.total_orders,
+              help="The total number of closed trades, winning and losing.")
 with col3:
     st.metric(label='Accuracy',
-              value=f"{100 * time_filtered_strategy_data.accuracy:.2f} %")
+              value=f"{100 * time_filtered_strategy_data.accuracy:.2f} %",
+              help="The percentage of winning trades, the number of winning trades divided by the total number of closed trades.")
 with col4:
     st.metric(label="Profit Factor",
-              value=round(time_filtered_strategy_data.profit_factor, 2))
+              value=round(time_filtered_strategy_data.profit_factor, 2),
+              help="The amount of money the strategy made for every unit of money it lost, net profits divided by gross losses.")
 with col5:
     st.metric(label='Duration (Days)',
-              value=round(time_filtered_strategy_data.duration_seconds / (60 * 60 * 24), 2))
+              value=round(time_filtered_strategy_data.duration_seconds / (60 * 60 * 24), 2),
+              help="The number of days the strategy was running.")
 with col6:
     st.metric(label='Price change',
-              value=f"{round(time_filtered_strategy_data.price_change * 100, 2)} %")
+              value=f"{round(time_filtered_strategy_data.price_change * 100, 2)} %",
+              help="The percentage change in price from the start to the end of the strategy.")
 with col7:
     buy_trades_amount = round(time_filtered_strategy_data.total_buy_amount, 2)
     avg_buy_price = round(time_filtered_strategy_data.average_buy_price, 4)
     st.metric(label="Total Buy Volume",
-              value=round(buy_trades_amount * avg_buy_price, 2))
+              value=round(buy_trades_amount * avg_buy_price, 2),
+              help="The total amount of quote asset bought.")
 with col8:
     sell_trades_amount = round(time_filtered_strategy_data.total_sell_amount, 2)
     avg_sell_price = round(time_filtered_strategy_data.average_sell_price, 4)
     st.metric(label="Total Sell Volume",
-              value=round(sell_trades_amount * avg_sell_price, 2))
+              value=round(sell_trades_amount * avg_sell_price, 2),
+              help="The total amount of quote asset sold.")
 
 # Cummulative pnl chart
 st.plotly_chart(time_filtered_performance_charts.pnl_over_time(), use_container_width=True)
@@ -160,12 +168,12 @@ else:
         candles_chart = page_performance_charts.candles_graph(candles_df)
 
         # Show auxiliary charts
-        intraday_tab, returns_tab, raw_tab, positions_tab = st.tabs(["Intraday", "Returns", "Raw", "Positions"])
+        intraday_tab, returns_tab, returns_data_tab, positions_tab, other_metrics_tab = st.tabs(["Intraday", "Returns", "Returns Data", "Positions", "Other Metrics"])
         with intraday_tab:
             st.plotly_chart(time_filtered_performance_charts.intraday_performance(), use_container_width=True)
         with returns_tab:
             st.plotly_chart(time_filtered_performance_charts.returns_histogram(), use_container_width=True)
-        with raw_tab:
+        with returns_data_tab:
             raw_returns_data = time_filtered_strategy_data.trade_fill[["timestamp", "gross_pnl", "trade_fee", "realized_pnl"]].dropna(subset="realized_pnl")
             st.dataframe(raw_returns_data,
                          use_container_width=True,
@@ -174,33 +182,33 @@ else:
             download_csv_button(raw_returns_data, "raw_returns_data", "download-raw-returns")
         with positions_tab:
             st.plotly_chart(page_performance_charts.position_executor_summary_sunburst(), use_container_width=True)
+        with other_metrics_tab:
+            col3, col4 = st.columns(2)
+            with col3:
+                st.metric(label=f'Trade PNL {time_filtered_strategy_data.quote_asset}',
+                          value=round(time_filtered_strategy_data.trade_pnl_quote, 2),
+                          help="The overall profit or loss achieved in quote asset, without fees.")
+                st.metric(label='Total Buy Trades', value=time_filtered_strategy_data.total_buy_trades,
+                          help="The total number of buy trades.")
+                st.metric(label='Total Buy Trades Amount',
+                          value=round(time_filtered_strategy_data.total_buy_amount, 2),
+                          help="The total amount of base asset bought.")
+                st.metric(label='Average Buy Price', value=round(time_filtered_strategy_data.average_buy_price, 4),
+                          help="The average price of the base asset bought.")
+
+            with col4:
+                st.metric(label=f'Fees {time_filtered_strategy_data.quote_asset}',
+                          value=round(time_filtered_strategy_data.cum_fees_in_quote, 2),
+                          help="The overall fees paid in quote asset.")
+                st.metric(label='Total Sell Trades', value=time_filtered_strategy_data.total_sell_trades,
+                          help="The total number of sell trades.")
+                st.metric(label='Total Sell Trades Amount',
+                          value=round(time_filtered_strategy_data.total_sell_amount, 2),
+                          help="The total amount of base asset sold.")
+                st.metric(label='Average Sell Price', value=round(time_filtered_strategy_data.average_sell_price, 4),
+                          help="The average price of the base asset sold.")
     with col1:
         st.plotly_chart(candles_chart, use_container_width=True)
-
-# Community metrics section
-st.divider()
-st.subheader("👥 Community Metrics")
-with st.container():
-    col1, col2, col3, col4, col5 = st.columns(5)
-    with col1:
-        st.metric(label=f'Trade PNL {time_filtered_strategy_data.quote_asset}',
-                  value=round(time_filtered_strategy_data.trade_pnl_quote, 2))
-        st.metric(label=f'Fees {time_filtered_strategy_data.quote_asset}',
-                  value=round(time_filtered_strategy_data.cum_fees_in_quote, 2))
-    with col2:
-        st.metric(label='Total Buy Trades', value=time_filtered_strategy_data.total_buy_trades)
-        st.metric(label='Total Sell Trades', value=time_filtered_strategy_data.total_sell_trades)
-    with col3:
-        st.metric(label='Total Buy Trades Amount',
-                  value=round(time_filtered_strategy_data.total_buy_amount, 2))
-        st.metric(label='Total Sell Trades Amount',
-                  value=round(time_filtered_strategy_data.total_sell_amount, 2))
-    with col4:
-        st.metric(label='Average Buy Price', value=round(time_filtered_strategy_data.average_buy_price, 4))
-        st.metric(label='Average Sell Price', value=round(time_filtered_strategy_data.average_sell_price, 4))
-    with col5:
-        st.metric(label='Inventory change in Base asset',
-                  value=round(time_filtered_strategy_data.inventory_change_base_asset, 4))
 
 # Tables section
 st.divider()
