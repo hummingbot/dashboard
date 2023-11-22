@@ -4,7 +4,7 @@ from typing import Dict
 from hummingbot.connector.connector_base import ConnectorBase
 from hummingbot.core.data_type.common import OrderType, PositionAction, PositionSide
 from hummingbot.data_feed.candles_feed.candles_factory import CandlesConfig
-from hummingbot.smart_components.controllers.dman_v2 import DManV2, DManV2Config
+from hummingbot.smart_components.controllers.dman_v1 import DManV1, DManV1Config
 from hummingbot.smart_components.strategy_frameworks.data_types import ExecutorHandlerStatus, TripleBarrierConf
 from hummingbot.smart_components.strategy_frameworks.market_making.market_making_executor_handler import (
     MarketMakingExecutorHandler,
@@ -14,7 +14,7 @@ from hummingbot.smart_components.utils.order_level_builder import OrderLevelBuil
 from hummingbot.strategy.script_strategy_base import ScriptStrategyBase
 
 
-class DManV2MultiplePairs(ScriptStrategyBase):
+class DManV1MultiplePairs(ScriptStrategyBase):
     # Account configuration
     exchange = "binance_perpetual"
     trading_pairs = ["ETH-USDT"]
@@ -41,9 +41,6 @@ class DManV2MultiplePairs(ScriptStrategyBase):
     trailing_stop_trailing_delta = Decimal(str(step_between_orders / 3))
 
     # Advanced configurations
-    macd_fast = 12
-    macd_slow = 26
-    macd_signal = 9
     natr_length = 100
 
     # Applying the configuration
@@ -63,7 +60,7 @@ class DManV2MultiplePairs(ScriptStrategyBase):
     executor_handlers = {}
 
     for trading_pair in trading_pairs:
-        config = DManV2Config(
+        config = DManV1Config(
             exchange=exchange,
             trading_pair=trading_pair,
             order_levels=order_levels,
@@ -72,12 +69,9 @@ class DManV2MultiplePairs(ScriptStrategyBase):
                               interval=candles_interval, max_records=candles_max_records),
             ],
             leverage=leverage,
-            macd_fast=macd_fast,
-            macd_slow=macd_slow,
-            macd_signal=macd_signal,
             natr_length=natr_length,
         )
-        controller = DManV2(config=config)
+        controller = DManV1(config=config)
         markets = controller.update_strategy_markets_dict(markets)
         controllers[trading_pair] = controller
 
