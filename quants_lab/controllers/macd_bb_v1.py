@@ -24,6 +24,9 @@ class MACDBBV1Config(DirectionalTradingControllerConfigBase):
 
 
 class MACDBBV1(DirectionalTradingControllerBase):
+    """
+    Directional Market Making Strategy making use of NATR indicator to make spreads dynamic.
+    """
 
     def __init__(self, config: MACDBBV1Config):
         super().__init__(config)
