@@ -54,6 +54,14 @@ class CandlesGraph:
                 row=1, col=1,
             )
         else:
+            hover_text = []
+            for i in range(len(self.candles_df)):
+                hover_text.append(
+                    f"Open: {self.candles_df['open'][i]} <br>"
+                    f"High: {self.candles_df['high'][i]} <br>"
+                    f"Low: {self.candles_df['low'][i]} <br>"
+                    f"Close: {self.candles_df['close'][i]} <br>"
+                )
             self.base_figure.add_trace(
                 go.Candlestick(
                     x=self.candles_df.index,
@@ -61,7 +69,9 @@ class CandlesGraph:
                     high=self.candles_df['high'],
                     low=self.candles_df['low'],
                     close=self.candles_df['close'],
-                    name="OHLC"
+                    name="OHLC",
+                    hoverinfo="text",
+                    hovertext=hover_text
                 ),
                 row=1, col=1,
             )
@@ -79,7 +89,9 @@ class CandlesGraph:
                     size=12,
                     line=dict(color='black', width=1),
                     opacity=0.7,
-                )),
+                ),
+                hoverinfo="text",
+                hovertext=orders_data["price"].apply(lambda x: f"Buy Order: {x} <br>")),
             row=1, col=1,
         )
 
@@ -94,7 +106,9 @@ class CandlesGraph:
                             color='red',
                             size=12,
                             line=dict(color='black', width=1),
-                            opacity=0.7, )),
+                            opacity=0.7,),
+                hoverinfo="text",
+                hovertext=orders_data["price"].apply(lambda x: f"Sell Order: {x} <br>")),
             row=1, col=1,
         )
 
@@ -223,12 +237,28 @@ class CandlesGraph:
 
     def add_positions(self, position_executor_data: pd.DataFrame, row=1):
         position_executor_data["close_datetime"] = pd.to_datetime(position_executor_data["close_timestamp"], unit="s")
+        i = 1
         for index, rown in position_executor_data.iterrows():
+            i += 1
             self.base_figure.add_trace(go.Scatter(name=f"Position {index}",
                                                   x=[rown.datetime, rown.close_datetime],
                                                   y=[rown.entry_price, rown.close_price],
                                                   mode="lines",
                                                   line=dict(color="lightgreen" if rown.net_pnl_quote > 0 else "red"),
+                                                  hoverinfo="text",
+                                                  hovertext=f"Position N°: {i} <br>"
+                                                            f"Datetime: {rown.datetime} <br>"
+                                                            f"Close datetime: {rown.close_datetime} <br>"
+                                                            f"Side: {rown.side} <br>"
+                                                            f"Entry price: {rown.entry_price} <br>"
+                                                            f"Close price: {rown.close_price} <br>"
+                                                            f"Close type: {rown.close_type} <br>"
+                                                            f"Stop Loss: {100 * rown.sl:.2f}% <br>"
+                                                            f"Take Profit: {100 * rown.tp:.2f}% <br>"
+                                                            f"Time Limit: {100 * rown.tl:.2f} <br>"
+                                                            f"Open Order Type: {rown.open_order_type} <br>"
+                                                            f"Leverage: {rown.leverage} <br>"
+                                                            f"Controller name: {rown.controller_name} <br>",
                                                   showlegend=False),
                                         row=row, col=1)
 
