@@ -1,6 +1,7 @@
 import datetime
 from dataclasses import dataclass
 import pandas as pd
+import numpy as np
 
 
 @dataclass
@@ -19,28 +20,59 @@ class StrategyData:
             return None
 
     def get_strategy_summary(self):
+        columns_dict = {"strategy": "Strategy",
+                        "market": "Exchange",
+                        "symbol": "Trading Pair",
+                        "order_id_count": "# Trades",
+                        "total_positions": "# Positions",
+                        "volume_sum": "Volume",
+                        "TAKE_PROFIT": "# TP",
+                        "STOP_LOSS": "# SL",
+                        "TRAILING_STOP": "# TSL",
+                        "TIME_LIMIT": "# TL",
+                        "net_realized_pnl_full_series": "PnL Over Time",
+                        "net_realized_pnl_last": "Realized PnL"}
+
         def full_series(series):
             return list(series)
 
-        strategy_data = self.trade_fill.copy()
-        strategy_data["volume"] = strategy_data["amount"] * strategy_data["price"]
-        strategy_summary = strategy_data.groupby(["strategy", "market", "symbol"]).agg({"order_id": "count",
-                                                                                        "volume": "sum",
-                                                                                        "net_realized_pnl": [full_series,
-                                                                                                             "last"]}).reset_index()
-        strategy_summary.columns = [f"{col[0]}_{col[1]}" if isinstance(col, tuple) and col[1] is not None else col for col in strategy_summary.columns]
-        strategy_summary.rename(columns={"strategy_": "Strategy",
-                                         "market_": "Exchange",
-                                         "symbol_": "Trading Pair",
-                                         "order_id_count": "# Trades",
-                                         "volume_sum": "Volume",
-                                         "net_realized_pnl_full_series": "PnL Over Time",
-                                         "net_realized_pnl_last": "Realized PnL"}, inplace=True)
+        # Get trade fill data
+        trade_fill_data = self.trade_fill.copy()
+        trade_fill_data["volume"] = trade_fill_data["amount"] * trade_fill_data["price"]
+        grouped_trade_fill = trade_fill_data.groupby(["strategy", "market", "symbol"]
+                                                     ).agg({"order_id": "count",
+                                                            "volume": "sum",
+                                                            "net_realized_pnl": [full_series,
+                                                                                 "last"]}).reset_index()
+        grouped_trade_fill.columns = [f"{col[0]}_{col[1]}" if len(col[1]) > 0 else col[0] for col in grouped_trade_fill.columns]
+
+        # Get position executor data
+        if self.position_executor is not None:
+            position_executor_data = self.position_executor.copy()
+            grouped_executors = position_executor_data.groupby(["exchange", "trading_pair", "controller_name", "close_type"]).agg(metric_count=("close_type", "count")).reset_index()
+            index_cols = ["exchange", "trading_pair", "controller_name"]
+            pivot_executors = pd.pivot_table(grouped_executors, values="metric_count", index=index_cols, columns="close_type").reset_index()
+            result_cols = ["TAKE_PROFIT", "STOP_LOSS", "TRAILING_STOP", "TIME_LIMIT"]
+            pivot_executors = pivot_executors.reindex(columns=index_cols + result_cols, fill_value=0)
+            pivot_executors["total_positions"] = pivot_executors[result_cols].sum(axis=1)
+            strategy_summary = grouped_trade_fill.merge(pivot_executors, left_on=["market", "symbol"],
+                                                        right_on=["exchange", "trading_pair"],
+                                                        how="left")
+            strategy_summary.drop(columns=["exchange", "trading_pair"], inplace=True)
+        else:
+            strategy_summary = grouped_trade_fill.copy()
+            strategy_summary["TAKE_PROFIT"] = np.nan
+            strategy_summary["STOP_LOSS"] = np.nan
+            strategy_summary["TRAILING_STOP"] = np.nan
+            strategy_summary["TIME_LIMIT"] = np.nan
+            strategy_summary["total_positions"] = np.nan
+
+        strategy_summary.rename(columns=columns_dict, inplace=True)
         strategy_summary.sort_values(["Realized PnL"], ascending=True, inplace=True)
         strategy_summary["Explore"] = False
-        column_names = list(strategy_summary.columns)
-        column_names.insert(0, column_names.pop())
-        strategy_summary = strategy_summary[column_names]
+        sorted_cols = ["Explore", "Strategy", "Exchange", "Trading Pair", "# Trades", "Volume", "# Positions",
+                       "# TP", "# SL", "# TSL", "# TL", "PnL Over Time", "Realized PnL"]
+        strategy_summary = strategy_summary.reindex(columns=sorted_cols, fill_value=0)
         return strategy_summary
 
     def get_single_market_strategy_data(self, exchange: str, trading_pair: str):

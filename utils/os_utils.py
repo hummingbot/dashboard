@@ -121,6 +121,21 @@ def get_bots_data_paths():
     return data_sources
 
 
+def get_databases():
+    databases = {}
+    bots_data_paths = get_bots_data_paths()
+    for source_name, source_path in bots_data_paths.items():
+        sqlite_files = {}
+        for db_name in os.listdir(source_path):
+            if db_name.endswith(".sqlite"):
+                sqlite_files[db_name] = os.path.join(source_path, db_name)
+        databases[source_name] = sqlite_files
+    if len(databases) > 0:
+        return {key: value for key, value in databases.items() if value}
+    else:
+        return None
+
+
 def get_function_from_file(file_path: str, function_name: str):
     # Create a module specification from the file path and load it
     spec = importlib.util.spec_from_file_location("module.name", file_path)
