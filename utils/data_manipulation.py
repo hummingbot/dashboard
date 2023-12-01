@@ -242,13 +242,19 @@ class SingleMarketStrategyData:
 
     @property
     def average_buy_price(self):
-        average_price = (self.buys["price"] * self.buys["amount"]).sum() / self.total_buy_amount
-        return average_price
+        if self.total_buy_amount != 0:
+            average_price = (self.buys["price"] * self.buys["amount"]).sum() / self.total_buy_amount
+            return np.nan_to_num(average_price, nan=0)
+        else:
+            return 0
 
     @property
     def average_sell_price(self):
-        average_price = (self.sells["price"] * self.sells["amount"]).sum() / self.total_sell_amount
-        return average_price
+        if self.total_sell_amount != 0:
+            average_price = (self.sells["price"] * self.sells["amount"]).sum() / self.total_sell_amount
+            return np.nan_to_num(average_price, nan=0)
+        else:
+            return 0
 
     @property
     def price_change(self):

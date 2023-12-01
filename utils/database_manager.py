@@ -146,7 +146,7 @@ class DatabaseManager:
         with self.session_maker() as session:
             query = self._get_orders_query(config_file_path, start_date, end_date)
             orders = pd.read_sql_query(text(query), session.connection())
-            orders["market"] = orders["market"].apply(lambda x: x.lower().replace("_papertrade", ""))
+            orders["market"] = orders["market"]
             orders["amount"] = orders["amount"] / 1e6
             orders["price"] = orders["price"] / 1e6
             orders['creation_timestamp'] = pd.to_datetime(orders['creation_timestamp'], unit="ms")
@@ -172,7 +172,7 @@ class DatabaseManager:
             trade_fills["gross_pnl"] = trade_fills.groupby(groupers)["realized_trade_pnl"].diff()
             trade_fills["trade_fee"] = trade_fills.groupby(groupers)["cum_fees_in_quote"].diff()
             trade_fills["timestamp"] = pd.to_datetime(trade_fills["timestamp"], unit="ms")
-            trade_fills["market"] = trade_fills["market"].apply(lambda x: x.lower().replace("_papertrade", ""))
+            trade_fills["market"] = trade_fills["market"]
             trade_fills["quote_volume"] = trade_fills["price"] * trade_fills["amount"]
         return trade_fills
 
