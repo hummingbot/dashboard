@@ -8,7 +8,7 @@ from hummingbot.smart_components.strategy_frameworks.data_types import (
 )
 from hummingbot.smart_components.strategy_frameworks.directional_trading import DirectionalTradingControllerBase, \
     DirectionalTradingControllerConfigBase, DirectionalTradingExecutorHandler
-from hummingbot.smart_components.utils import ConfigEncoderDecoder
+from hummingbot.smart_components.utils.config_encoder_decoder import ConfigEncoderDecoder
 from hummingbot.strategy.script_strategy_base import ScriptStrategyBase
 
 

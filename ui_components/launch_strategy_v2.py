@@ -5,7 +5,7 @@ import time
 from docker_manager import DockerManager
 import streamlit as st
 from hummingbot.core.data_type.common import PositionMode, OrderType, TradeType
-from hummingbot.smart_components.utils import ConfigEncoderDecoder
+from hummingbot.smart_components.utils.config_encoder_decoder import ConfigEncoderDecoder
 from streamlit_elements import mui, lazy
 
 import constants
