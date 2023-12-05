@@ -2,7 +2,7 @@ from hummingbot.core.data_type.common import PositionMode, TradeType, OrderType
 from hummingbot.data_feed.candles_feed.candles_factory import CandlesConfig
 from hummingbot.smart_components.strategy_frameworks.data_types import OrderLevel, TripleBarrierConf
 from hummingbot.smart_components.strategy_frameworks.directional_trading import DirectionalTradingBacktestingEngine
-from hummingbot.smart_components.utils import ConfigEncoderDecoder
+from hummingbot.smart_components.utils.config_encoder_decoder import ConfigEncoderDecoder
 
 import constants
 import os
