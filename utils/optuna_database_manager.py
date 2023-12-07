@@ -1,5 +1,6 @@
 import os
 import json
+from typing import Optional
 
 import pandas as pd
 from sqlalchemy import create_engine, text
@@ -9,9 +10,10 @@ from utils.data_manipulation import StrategyData
 
 
 class OptunaDBManager:
-    def __init__(self, db_name):
+    def __init__(self, db_name, db_root_path: Optional[str]):
+        db_root_path = db_root_path or "data/backtesting"
         self.db_name = db_name
-        self.db_path = f'sqlite:///{os.path.join("data/backtesting", db_name)}'
+        self.db_path = f'sqlite:///{os.path.join(db_root_path, db_name)}'
         self.engine = create_engine(self.db_path, connect_args={'check_same_thread': False})
         self.session_maker = sessionmaker(bind=self.engine)
 
