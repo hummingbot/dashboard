@@ -3,6 +3,8 @@ import subprocess
 import importlib.util
 import inspect
 import os
+
+import pandas as pd
 from hummingbot.smart_components.strategy_frameworks.directional_trading import DirectionalTradingControllerBase, DirectionalTradingControllerConfigBase
 
 import yaml
@@ -151,3 +153,12 @@ def execute_bash_command(command: str, shell: bool = True, wait: bool = False):
     process = subprocess.Popen(command, shell=shell)
     if wait:
         process.wait()
+
+
+def safe_read_csv(path):
+    try:
+        df = pd.read_csv(path)
+    except pd.errors.ParserError as e:
+        print("Error occurred while reading CSV:", str(e))
+        df = pd.DataFrame()
+    return df
