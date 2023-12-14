@@ -33,6 +33,14 @@ conda activate dashboard
 ```bash
 streamlit run main.py
 ```
+## Enable Authentication
+
+1 - Locate the `config.py` file in the /dashboard folder
+
+2 - Open the file using a text editor
+
+3 - Modify the `AUTH_SYSTEM_ENABLED` variable and set this to `True` to enable. By default this is set to `False`
+
 ## Configure Credentials for Authentication
 
 ### Method 1: Using hasher_generate
