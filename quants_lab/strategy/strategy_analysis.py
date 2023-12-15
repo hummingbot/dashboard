@@ -23,7 +23,7 @@ class StrategyAnalysis:
         self.base_figure = make_subplots(rows=rows, cols=1, shared_xaxes=True, vertical_spacing=0.01,
                                          row_heights=heights, specs=specs)
         if candlestick:
-            self.add_candles_graph()
+            self.add_candles_graph(row=1, col=1)
         if volume:
             self.add_volume()
         if positions:
@@ -81,17 +81,17 @@ class StrategyAnalysis:
     def figure(self):
         return self.base_figure
 
-    def add_candles_graph(self):
+    def add_candles_graph(self, row, col, name_suffix='', timeframe_suffix=''):
         self.base_figure.add_trace(
             go.Candlestick(
-                x=self.candles_df["timestamp"],
-                open=self.candles_df["open"],
-                high=self.candles_df["high"],
-                low=self.candles_df["low"],
-                close=self.candles_df["close"],
-                name="OHLC"
+                x=self.candles_df[f"timestamp{timeframe_suffix}"],
+                open=self.candles_df[f"open{timeframe_suffix}"],
+                high=self.candles_df[f"high{timeframe_suffix}"],
+                low=self.candles_df[f"low{timeframe_suffix}"],
+                close=self.candles_df[f"close{timeframe_suffix}"],
+                name=f"OHLC_{name_suffix}"
             ),
-            row=1, col=1,
+            row=row, col=col,
         )
 
     def add_volume(self):
@@ -185,7 +185,7 @@ class StrategyAnalysis:
         return returns.mean() / returns.std()
 
     def profit_factor(self):
-        total_won = self.win_signals().loc[:,  "net_pnl_quote"].sum()
+        total_won = self.win_signals().loc[:, "net_pnl_quote"].sum()
         total_loss = - self.loss_signals().loc[:, "net_pnl_quote"].sum()
         return total_won / total_loss
 
