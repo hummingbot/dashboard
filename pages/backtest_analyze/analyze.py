@@ -19,11 +19,13 @@ from utils.st_utils import initialize_st_page
 
 initialize_st_page(title="Analyze", icon="🔬", initial_sidebar_state="collapsed")
 
+BASE_DATA_DIR = "data/backtesting"
+
 
 @st.cache_resource
 def get_databases():
-    sqlite_files = [db_name for db_name in os.listdir("data/backtesting") if db_name.endswith(".db")]
-    databases_list = [OptunaDBManager(db) for db in sqlite_files]
+    sqlite_files = [db_name for db_name in os.listdir(BASE_DATA_DIR) if db_name.endswith(".db")]
+    databases_list = [OptunaDBManager(db, db_root_path=BASE_DATA_DIR) for db in sqlite_files]
     databases_dict = {database.db_name: database for database in databases_list}
     return [x.db_name for x in databases_dict.values() if x.status == 'OK']
 
@@ -45,7 +47,7 @@ else:
     # Select database from selectbox
     selected_db = st.selectbox("Select your database:", dbs)
     # Instantiate database manager
-    opt_db = OptunaDBManager(selected_db)
+    opt_db = OptunaDBManager(selected_db, db_root_path=BASE_DATA_DIR)
     # Load studies
     studies = opt_db.load_studies()
     # Choose study
