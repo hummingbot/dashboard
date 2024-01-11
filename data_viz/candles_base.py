@@ -5,7 +5,7 @@ from abc import ABC
 
 from utils.data_manipulation import StrategyData, SingleMarketStrategyData
 from data_viz.tracers import PandasTAPlotlyTracer
-from data_viz.tracers import PositionsPlotlyTracer
+from data_viz.tracers import PerformancePlotlyTracer
 from data_viz.dtypes import IndicatorsConfigBase
 import plotly.graph_objs as go
 
@@ -21,7 +21,7 @@ class CandlesBase(ABC):
         self.indicators_config = indicators_config
         self.indicators_tracer = PandasTAPlotlyTracer(candles_df,
                                                       indicators_config)
-        self.tracer = PositionsPlotlyTracer()
+        self.tracer = PerformancePlotlyTracer()
         self.show_volume = show_volume
         self.line_mode = line_mode
         rows, heights = self.get_n_rows_and_heights(extra_rows)

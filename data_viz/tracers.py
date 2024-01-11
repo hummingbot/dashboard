@@ -93,7 +93,7 @@ class PandasTAPlotlyTracer:
             return rsi_trace
 
 
-class PositionsPlotlyTracer:
+class PerformancePlotlyTracer:
     def __init__(self,
                  positions_visual_config: PositionsVisualConfig = PositionsVisualConfig()):
         self.positions_visual_config = positions_visual_config
