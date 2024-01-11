@@ -220,10 +220,7 @@ else:
                 positions=backtesting_results["executors_df"],
                 candles_df=backtesting_results["processed_data"],
             )
-            metrics_container = BacktestingGraphs(backtesting_results["processed_data"]).get_trial_metrics(
-                strategy_analysis,
-                add_positions=add_positions,
-                add_volume=add_volume)
+            metrics_container = BacktestingGraphs(strategy_analysis).get_trial_metrics()
 
         except FileNotFoundError:
             st.warning(f"The requested candles could not be found.")

@@ -6,6 +6,7 @@ import streamlit as st
 from typing import Union
 
 from utils.data_manipulation import StrategyData, SingleMarketStrategyData
+from data_viz.backtesting.backtesting_candles_base import BacktestingCandlesBase
 from quants_lab.strategy.strategy_analysis import StrategyAnalysis
 import plotly.graph_objs as go
 
@@ -291,8 +292,8 @@ class CandlesGraph:
 
 
 class BacktestingGraphs:
-    def __init__(self, study_df: pd.DataFrame):
-        self.study_df = study_df
+    def __init__(self, strategy_analysis: StrategyAnalysis = None):
+        self.strategy_analysis = strategy_analysis
 
     def pnl_vs_maxdrawdown(self, merged_df: pd.DataFrame):
         fig = go.Figure()
@@ -311,11 +312,36 @@ class BacktestingGraphs:
         fig.data[0].text = []
         return fig
 
-    @staticmethod
-    def get_trial_metrics(strategy_analysis: StrategyAnalysis,
-                          add_volume: bool = True,
-                          add_positions: bool = True,
-                          add_pnl: bool = True):
+    def pnl_over_time(self):
+        df = self.strategy_analysis.positions.copy()
+        df.sort_values(by="close_time", inplace=True)
+        df.reset_index(drop=True, inplace=True)
+        df["net_pnl_quote_cum"] = df["net_pnl_quote"].cumsum()
+        df_above = df[df['net_pnl_quote'] >= 0]
+        df_below = df[df['net_pnl_quote'] < 0]
+
+        fig = go.Figure()
+        fig.add_trace(go.Bar(name="Cum Realized PnL",
+                             x=df_above.index,
+                             y=df_above["net_pnl_quote_cum"],
+                             marker_color=BULLISH_COLOR,
+                             # hoverdq
+                             showlegend=False))
+        fig.add_trace(go.Bar(name="Cum Realized PnL",
+                             x=df_below.index,
+                             y=df_below["net_pnl_quote_cum"],
+                             marker_color=BEARISH_COLOR,
+                             showlegend=False))
+        fig.update_layout(title=dict(
+            text='Cummulative PnL',  # Your title text
+            x=0.43,
+            y=0.95,
+        ),
+            plot_bgcolor='rgba(0,0,0,0)',
+            paper_bgcolor='rgba(0,0,0,0)')
+        return fig
+
+    def get_trial_metrics(self):
         """Isolated method because it needs to be called from analyze and simulate pages"""
         metrics_container = st.container()
         with metrics_container:
@@ -330,57 +356,56 @@ class BacktestingGraphs:
             with col2:
                 st.metric("Trading Pair", st.session_state["strategy_params"]["trading_pair"])
             with col3:
-                st.metric("Start date", strategy_analysis.start_date().strftime("%Y-%m-%d %H:%M"))
-                st.metric("End date", strategy_analysis.end_date().strftime("%Y-%m-%d %H:%M"))
+                st.metric("Start date", self.strategy_analysis.start_date().strftime("%Y-%m-%d %H:%M"))
+                st.metric("End date", self.strategy_analysis.end_date().strftime("%Y-%m-%d %H:%M"))
             with col4:
-                st.metric("Duration (hours)", f"{strategy_analysis.duration_in_minutes() / 60:.2f}")
+                st.metric("Duration (hours)", f"{self.strategy_analysis.duration_in_minutes() / 60:.2f}")
                 st.metric("Price change", st.session_state["strategy_params"]["trading_pair"])
             st.subheader("📈 Performance")
             col1, col2, col3, col4, col5, col6, col7, col8 = st.columns(8)
             with col1:
                 st.metric("Net PnL USD",
-                          f"{strategy_analysis.net_profit_usd():.2f}",
-                          delta=f"{100 * strategy_analysis.net_profit_pct():.2f}%",
+                          f"{self.strategy_analysis.net_profit_usd():.2f}",
+                          delta=f"{100 * self.strategy_analysis.net_profit_pct():.2f}%",
                           help="The overall profit or loss achieved.")
             with col2:
                 st.metric("Total positions",
-                          f"{strategy_analysis.total_positions()}",
+                          f"{self.strategy_analysis.total_positions()}",
                           help="The total number of closed trades, winning and losing.")
             with col3:
                 st.metric("Accuracy",
-                          f"{100 * (len(strategy_analysis.win_signals()) / strategy_analysis.total_positions()):.2f} %",
+                          f"{100 * (len(self.strategy_analysis.win_signals()) / self.strategy_analysis.total_positions()):.2f} %",
                           help="The percentage of winning trades, the number of winning trades divided by the"
                                " total number of closed trades")
             with col4:
                 st.metric("Profit factor",
-                          f"{strategy_analysis.profit_factor():.2f}",
+                          f"{self.strategy_analysis.profit_factor():.2f}",
                           help="The amount of money the strategy made for every unit of money it lost, "
                                "gross profits divided by gross losses.")
             with col5:
                 st.metric("Max Drawdown",
-                          f"{strategy_analysis.max_drawdown_usd():.2f}",
-                          delta=f"{100 * strategy_analysis.max_drawdown_pct():.2f}%",
+                          f"{self.strategy_analysis.max_drawdown_usd():.2f}",
+                          delta=f"{100 * self.strategy_analysis.max_drawdown_pct():.2f}%",
                           help="The greatest loss drawdown, i.e., the greatest possible loss the strategy had compared "
                                "to its highest profits")
             with col6:
                 st.metric("Avg Profit",
-                          f"{strategy_analysis.avg_profit():.2f}",
+                          f"{self.strategy_analysis.avg_profit():.2f}",
                           help="The sum of money gained or lost by the average trade, Net Profit divided by "
                                "the overall number of closed trades.")
             with col7:
                 st.metric("Avg Minutes",
-                          f"{strategy_analysis.avg_trading_time_in_minutes():.2f}",
+                          f"{self.strategy_analysis.avg_trading_time_in_minutes():.2f}",
                           help="The average number of minutes that elapsed during trades for all closed trades.")
             with col8:
                 st.metric("Sharpe Ratio",
-                          f"{strategy_analysis.sharpe_ratio():.2f}",
+                          f"{self.strategy_analysis.sharpe_ratio():.2f}",
                           help="The Sharpe ratio is a measure that quantifies the risk-adjusted return of an investment"
                                " or portfolio. It compares the excess return earned above a risk-free rate per unit of"
                                " risk taken.")
 
-            st.plotly_chart(strategy_analysis.pnl_over_time(), use_container_width=True)
-            strategy_analysis.create_base_figure(volume=add_volume, positions=add_positions, trade_pnl=add_pnl)
-            st.plotly_chart(strategy_analysis.figure(), use_container_width=True)
+            st.plotly_chart(self.pnl_over_time(), use_container_width=True)
+            st.plotly_chart(BacktestingCandlesBase(self.strategy_analysis, extra_rows=4).figure(), use_container_width=True)
         return metrics_container
 
 
