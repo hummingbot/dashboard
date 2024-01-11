@@ -5,6 +5,11 @@ from data_viz.dtypes import PositionsVisualConfig
 from datetime import datetime
 
 
+BULLISH_COLOR = "rgba(97, 199, 102, 0.9)"
+BEARISH_COLOR = "rgba(255, 102, 90, 0.9)"
+FEE_COLOR = "rgba(51, 0, 51, 0.9)"
+
+
 class PandasTAPlotlyTracer:
     def __init__(self, candles_df: pd.DataFrame, indicators_config: IndicatorsConfigBase):
         """
