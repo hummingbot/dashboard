@@ -11,7 +11,7 @@ class PlotlyIndicatorsConfigBase(IndicatorsConfigBase):
     rsi: IndicatorConfig = IndicatorConfig(visible=True, title="RSI", row=3, col=1, color="green", length=14)
 
 
-class BacktestingCandlesBase(CandlesBase):
+class BacktestingCandles(CandlesBase):
     def __init__(self,
                  strategy_analysis: StrategyAnalysis,
                  line_mode: bool = False,
@@ -24,8 +24,8 @@ class BacktestingCandlesBase(CandlesBase):
                          show_volume=show_volume,
                          extra_rows=extra_rows)
         self.positions = strategy_analysis.positions
-        self.add_buy_trades(data=self.buys(), dimension_name="timestamp", value_name="price")
-        self.add_sell_trades(data=self.sells(), dimension_name="timestamp", value_name="price")
+        self.add_buy_trades(data=self.buys(), time_column="timestamp", price_column="price")
+        self.add_sell_trades(data=self.sells(), time_column="timestamp", price_column="price")
         self.add_positions()
 
     def force_datetime_format(self):
@@ -39,37 +39,33 @@ class BacktestingCandlesBase(CandlesBase):
         df["timestamp"] = df.apply(lambda row: row["timestamp"] if row["side"] == 1 else row["close_time"], axis=1)
         return df[["timestamp", "price"]]
 
-    def add_buy_trades(self, data: pd.DataFrame, dimension_name: str, value_name: str):
-        self.base_figure.add_trace(self.tracer.get_buy_traces(data=data,
-                                                              time_column=dimension_name,
-                                                              price_column=value_name),
-                                   row=1, col=1)
+    def add_buy_trades(self, data: pd.DataFrame, time_column: str, price_column: str):
+        self.base_figure.add_trace(
+            self.tracer.get_buys_traces(data=data, time_column=time_column, price_column=price_column),
+            row=1, col=1)
 
     def sells(self):
         df = self.positions[["timestamp", "close", "close_price", "side"]].copy()
         df["price"] = df.apply(lambda row: row["close"] if row["side"] == -1 else row["close_price"], axis=1)
         return df[["timestamp", "price"]]
 
-    def add_sell_trades(self, data: pd.DataFrame, dimension_name: str, value_name: str):
-        self.base_figure.add_trace(self.tracer.get_sell_traces(data=data,
-                                                               time_column=dimension_name,
-                                                               price_column=value_name),
-                                   row=1, col=1)
+    def add_sell_trades(self, data: pd.DataFrame, time_column: str, price_column: str):
+        self.base_figure.add_trace(
+            self.tracer.get_sells_traces(data=data, time_column=time_column, price_column=price_column),
+            row=1, col=1)
 
     def add_positions(self):
         i = 1
         for index, rown in self.positions.iterrows():
             i += 1
-            self.base_figure.add_trace(self.tracer.get_position_trace(position_number=i,
-                                                                      open_time=rown["timestamp"],
-                                                                      close_time=rown["close_time"],
-                                                                      open_price=rown["close"],
-                                                                      close_price=rown["close_price"],
-                                                                      side=rown["side"],
-                                                                      close_type=rown["close_type"],
-                                                                      stop_loss=rown["sl"],
-                                                                      take_profit=rown["tp"],
-                                                                      time_limit=rown["tl"],
-                                                                      net_pnl_quote=rown["net_pnl_quote"]),
+            self.base_figure.add_trace(self.tracer.get_positions_traces(position_number=i, open_time=rown["timestamp"],
+                                                                        close_time=rown["close_time"],
+                                                                        open_price=rown["close"],
+                                                                        close_price=rown["close_price"],
+                                                                        side=rown["side"],
+                                                                        close_type=rown["close_type"],
+                                                                        stop_loss=rown["sl"], take_profit=rown["tp"],
+                                                                        time_limit=rown["tl"],
+                                                                        net_pnl_quote=rown["net_pnl_quote"]),
                                        row=1, col=1)
 

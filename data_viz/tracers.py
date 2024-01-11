@@ -104,7 +104,7 @@ class PerformancePlotlyTracer:
         self.positions_visual_config = positions_visual_config
 
     @staticmethod
-    def get_buy_traces(data: pd.DataFrame(), time_column: str, price_column: str):
+    def get_buys_traces(data: pd.DataFrame(), time_column: str, price_column: str):
         buy_trades_trace = go.Scatter(
             x=data[time_column],
             y=data[price_column],
@@ -123,7 +123,7 @@ class PerformancePlotlyTracer:
         return buy_trades_trace
 
     @staticmethod
-    def get_sell_traces(data: pd.DataFrame(), time_column: str, price_column: str):
+    def get_sells_traces(data: pd.DataFrame(), time_column: str, price_column: str):
         sell_trades_trace = go.Scatter(
             x=data[time_column],
             y=data[price_column],
@@ -142,17 +142,20 @@ class PerformancePlotlyTracer:
         return sell_trades_trace
 
     @staticmethod
-    def get_position_trace(position_number: int,
-                           open_time: datetime,
-                           close_time: datetime,
-                           open_price: float,
-                           close_price: float,
-                           side: int,
-                           close_type: str,
-                           stop_loss: float,
-                           take_profit: float,
-                           time_limit: float,
-                           net_pnl_quote: float):
+    def get_positions_traces(position_number: int,
+                             open_time: datetime,
+                             close_time: datetime,
+                             open_price: float,
+                             close_price: float,
+                             side: int,
+                             close_type: str,
+                             stop_loss: float,
+                             take_profit: float,
+                             time_limit: float,
+                             net_pnl_quote: float):
+        """
+        Draws a line between the open and close price of a position
+        """
         positions_trace = go.Scatter(name=f"Position {position_number}",
                                      x=[open_time, close_time],
                                      y=[open_price, close_price],
