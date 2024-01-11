@@ -174,3 +174,31 @@ class PerformancePlotlyTracer:
                                                f"Time Limit: {time_limit} <br>",
                                      showlegend=False)
         return positions_trace
+
+    @staticmethod
+    def get_realized_pnl_over_trading_pair_traces(data: pd.DataFrame(), trading_pair: str, realized_pnl: str, exchange: str):
+        realized_pnl_over_trading_pair_traces = go.Bar(x=data[trading_pair],
+                                                       y=data[realized_pnl],
+                                                       name=exchange,
+                                                       showlegend=True)
+        return realized_pnl_over_trading_pair_traces
+
+    @staticmethod
+    def get_realized_pnl_over_time_traces(data: pd.DataFrame(), cum_realized_pnl_column: str):
+        realized_pnl_over_time_traces = go.Bar(name="Cum Realized PnL",
+                                               x=[x + 1 for x in range(len(data))],
+                                               y=data[cum_realized_pnl_column],
+                                               marker_color=data[cum_realized_pnl_column].apply(lambda x: BULLISH_COLOR if x > 0 else BEARISH_COLOR),
+                                               showlegend=False)
+        return realized_pnl_over_time_traces
+
+    @staticmethod
+    def get_pnl_vs_max_drawdown_traces(data: pd.DataFrame(), max_drawdown_pct_column: str, net_pnl_pct_column: str,
+                                       hovertext_column: str):
+        pnl_vs_max_drawdown_traces = go.Scatter(name="Pnl vs Max Drawdown",
+                                                x=-100 * data[max_drawdown_pct_column],
+                                                y=100 * data[net_pnl_pct_column],
+                                                mode="markers",
+                                                text=None,
+                                                hovertext=data[hovertext_column])
+        return pnl_vs_max_drawdown_traces
