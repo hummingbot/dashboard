@@ -173,7 +173,7 @@ else:
         # Show auxiliary charts
         intraday_tab, returns_tab, returns_data_tab, positions_tab, other_metrics_tab = st.tabs(["Intraday", "Returns", "Returns Data", "Positions", "Other Metrics"])
         with intraday_tab:
-            st.plotly_chart(time_filtered_performance_charts.intraday_performance(), use_container_width=True)
+            st.plotly_chart(time_performance_charts.intraday_performance_fig, use_container_width=True)
         with returns_tab:
             st.plotly_chart(time_filtered_performance_charts.returns_histogram(), use_container_width=True)
         with returns_data_tab:

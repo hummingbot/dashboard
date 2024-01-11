@@ -52,8 +52,54 @@ class ChartsBase(ABC):
     def candlestick(self):
         pass
 
-    def intraday_performance(self):
-        pass
+    def intraday_performance(self, data: pd.DataFrame(), quote_volume_column: str, datetime_column: str, realized_pnl_column: str):
+        def hr2angle(hr):
+            return (hr * 15) % 360
+
+        def hr_str(hr):
+            # Normalize hr to be between 1 and 12
+            hr_string = str(((hr - 1) % 12) + 1)
+            suffix = ' AM' if (hr % 24) < 12 else ' PM'
+            return hr_string + suffix
+
+        data["hour"] = data[datetime_column].dt.hour
+        realized_pnl_per_hour = data.groupby("hour")[[realized_pnl_column, quote_volume_column]].sum().reset_index()
+        fig = go.Figure()
+        fig.add_trace(self.tracer.get_intraday_performance_traces(data=realized_pnl_per_hour,
+                                                                  quote_volume_column=quote_volume_column,
+                                                                  hour_column="hour",
+                                                                  realized_pnl_column=realized_pnl_column))
+        fig.update_layout(
+            polar=dict(
+                radialaxis=dict(
+                    visible=True,
+                    showline=False,
+                ),
+                angularaxis=dict(
+                    rotation=90,
+                    direction="clockwise",
+                    tickvals=[hr2angle(hr) for hr in range(24)],
+                    ticktext=[hr_str(hr) for hr in range(24)],
+                ),
+                bgcolor='rgba(255, 255, 255, 0)',
+
+            ),
+            legend=dict(
+                orientation="h",
+                x=0.5,
+                y=1.08,
+                xanchor="center",
+                yanchor="bottom"
+            ),
+            title=dict(
+                text='Intraday Performance',
+                x=0.5,
+                y=0.93,
+                xanchor="center",
+                yanchor="bottom"
+            ),
+        )
+        return fig
 
     def returns_distribution(self):
         pass

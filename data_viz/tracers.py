@@ -202,3 +202,25 @@ class PerformancePlotlyTracer:
                                                 text=None,
                                                 hovertext=data[hovertext_column])
         return pnl_vs_max_drawdown_traces
+
+    @staticmethod
+    def get_intraday_performance_traces(data: pd.DataFrame, quote_volume_column: str, hour_column: str, realized_pnl_column: str):
+        intraday_performance_traces = go.Barpolar(
+            name="Profits",
+            r=data[quote_volume_column],
+            theta=data[hour_column] * 15,
+            marker=dict(
+                color=data[realized_pnl_column],
+                colorscale="RdYlGn",
+                cmin=-(abs(data[realized_pnl_column]).max()),
+                cmid=0.0,
+                cmax=(abs(data[realized_pnl_column]).max()),
+                colorbar=dict(
+                    title='Realized PnL',
+                    x=0,
+                    y=-0.5,
+                    xanchor='left',
+                    yanchor='bottom',
+                    orientation='h'
+                )))
+        return intraday_performance_traces

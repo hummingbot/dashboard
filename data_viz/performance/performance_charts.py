@@ -29,4 +29,10 @@ class PerformanceCharts(ChartsBase):
         return self.realized_pnl_over_time(data=data,
                                            cum_realized_pnl_column="net_realized_pnl")
 
-
+    @property
+    def intraday_performance_fig(self):
+        data = self.source.trade_fill.copy()
+        return self.intraday_performance(data=data,
+                                         quote_volume_column="quote_volume",
+                                         datetime_column="timestamp",
+                                         realized_pnl_column="realized_pnl")
