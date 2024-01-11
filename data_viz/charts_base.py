@@ -98,8 +98,27 @@ class ChartsBase(ABC):
         )
         return fig
 
-    def returns_distribution(self):
-        pass
+    def returns_distribution(self, data: pd.DataFrame(), realized_pnl_column: str):
+        fig = go.Figure()
+        traces = self.tracer.get_returns_distribution_traces(data=data,
+                                                             realized_pnl_column=realized_pnl_column)
+        for trace in traces:
+            fig.add_trace(trace)
+        # TODO: eventually, move this to the streamlit app
+        fig.update_layout(
+            title=dict(
+                text='Returns Distribution',
+                x=0.5,
+                xanchor="center",
+            ),
+            legend=dict(
+                orientation="h",
+                yanchor="bottom",
+                y=1.02,
+                xanchor="center",
+                x=.48
+            ))
+        return fig
 
     def positions_sunburst(self):
         pass

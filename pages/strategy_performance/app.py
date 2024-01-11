@@ -175,7 +175,7 @@ else:
         with intraday_tab:
             st.plotly_chart(time_performance_charts.intraday_performance_fig, use_container_width=True)
         with returns_tab:
-            st.plotly_chart(time_filtered_performance_charts.returns_histogram(), use_container_width=True)
+            st.plotly_chart(time_performance_charts.returns_distribution_fig, use_container_width=True)
         with returns_data_tab:
             raw_returns_data = time_filtered_strategy_data.trade_fill[["timestamp", "gross_pnl", "trade_fee", "realized_pnl"]].dropna(subset="realized_pnl")
             st.dataframe(raw_returns_data,

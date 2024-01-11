@@ -224,3 +224,11 @@ class PerformancePlotlyTracer:
                     orientation='h'
                 )))
         return intraday_performance_traces
+
+    @staticmethod
+    def get_returns_distribution_traces(data: pd.DataFrame(), realized_pnl_column: str):
+        losses = data.loc[data[realized_pnl_column] < 0, realized_pnl_column]
+        profits = data.loc[data[realized_pnl_column] > 0, realized_pnl_column]
+        returns_distribution_traces = [go.Histogram(name="Losses", x=losses, marker_color=BEARISH_COLOR),
+                                       go.Histogram(name="Profits", x=profits, marker_color=BULLISH_COLOR)]
+        return returns_distribution_traces

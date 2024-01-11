@@ -35,3 +35,9 @@ class PerformanceCharts(ChartsBase):
                                          quote_volume_column="quote_volume",
                                          datetime_column="timestamp",
                                          realized_pnl_column="realized_pnl")
+
+    @property
+    def returns_distribution_fig(self):
+        data = self.source.trade_fill.copy()
+        return self.returns_distribution(data=data,
+                                         realized_pnl_column="realized_pnl")
