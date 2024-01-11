@@ -11,18 +11,18 @@ class ChartsBase(ABC):
                  tracer: PerformancePlotlyTracer = PerformancePlotlyTracer()):
         self.tracer = tracer
 
-    def realized_pnl_over_trading_pair(self, data: pd.DataFrame(), trading_pair: str, realized_pnl: str, exchange: str):
+    def realized_pnl_over_trading_pair(self, data: pd.DataFrame(), trading_pair_column: str, realized_pnl_column: str, exchange: str):
         """
         :param data: strategy dataframe with timestamp as index
-        :param trading_pair: column name of trading pair
-        :param realized_pnl: column name of realized pnl
+        :param trading_pair_column: column name of trading pair
+        :param realized_pnl_column: column name of realized pnl
         :param exchange: column name of exchange
         """
         fig = go.Figure()
         for exchange in data[exchange].unique():
             fig.add_trace(self.tracer.get_realized_pnl_over_trading_pair_traces(data=data,
-                                                                                trading_pair=trading_pair,
-                                                                                realized_pnl=realized_pnl,
+                                                                                trading_pair=trading_pair_column,
+                                                                                realized_pnl=realized_pnl_column,
                                                                                 exchange=exchange))
         fig.update_traces(width=min(1.0, 0.1 * len(data)))
         fig.update_layout(barmode='stack')
@@ -48,9 +48,6 @@ class ChartsBase(ABC):
                           yaxis_title="Net Profit [%]",
                           height=800)
         return fig
-
-    def candlestick(self):
-        pass
 
     def intraday_performance(self, data: pd.DataFrame(), quote_volume_column: str, datetime_column: str, realized_pnl_column: str):
         def hr2angle(hr):

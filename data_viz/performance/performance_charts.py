@@ -18,9 +18,8 @@ class PerformanceCharts(ChartsBase):
     @property
     def realized_pnl_over_trading_pair_fig(self):
         return self.realized_pnl_over_trading_pair(data=self.source.strategy_summary,
-                                                   trading_pair="Trading Pair",
-                                                   realized_pnl="Realized PnL",
-                                                   exchange="Exchange")
+                                                   trading_pair_column="Trading Pair",
+                                                   realized_pnl_column="Realized PnL", exchange="Exchange")
 
     @property
     def realized_pnl_over_time_fig(self):
