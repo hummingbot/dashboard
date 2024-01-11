@@ -6,8 +6,6 @@ import streamlit as st
 from typing import Union
 
 from utils.data_manipulation import StrategyData, SingleMarketStrategyData
-from data_viz.backtesting.backtesting_candles_base import BacktestingCandlesBase
-from quants_lab.strategy.strategy_analysis import StrategyAnalysis
 import plotly.graph_objs as go
 
 BULLISH_COLOR = "rgba(97, 199, 102, 0.9)"
