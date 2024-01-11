@@ -68,9 +68,9 @@ else:
         max_drawdown_filter = (merged_df["max_drawdown_pct"] >= max_drawdown[0]) & (merged_df["max_drawdown_pct"] <= max_drawdown[1])
         total_positions_filter = (merged_df["total_positions"] >= total_positions[0]) & (merged_df["total_positions"] <= total_positions[1])
     with scatter_column:
-        bt_graphs = BacktestingGraphs(merged_df[net_profit_filter & accuracy_filter & max_drawdown_filter & total_positions_filter])
+        bt_graphs = BacktestingGraphs()
         # Show and compare all of the study trials
-        st.plotly_chart(bt_graphs.pnl_vs_maxdrawdown(), use_container_width=True)
+        st.plotly_chart(bt_graphs.pnl_vs_maxdrawdown(merged_df[net_profit_filter & accuracy_filter & max_drawdown_filter & total_positions_filter]), use_container_width=True)
     # Get study trials
     trials = studies[study_selected]
     # Choose trial

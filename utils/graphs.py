@@ -294,14 +294,14 @@ class BacktestingGraphs:
     def __init__(self, study_df: pd.DataFrame):
         self.study_df = study_df
 
-    def pnl_vs_maxdrawdown(self):
+    def pnl_vs_maxdrawdown(self, merged_df: pd.DataFrame):
         fig = go.Figure()
         fig.add_trace(go.Scatter(name="Pnl vs Max Drawdown",
-                                 x=-100 * self.study_df["max_drawdown_pct"],
-                                 y=100 * self.study_df["net_pnl_pct"],
+                                 x=-100 * merged_df["max_drawdown_pct"],
+                                 y=100 * merged_df["net_pnl_pct"],
                                  mode="markers",
                                  text=None,
-                                 hovertext=self.study_df["hover_text"]))
+                                 hovertext=merged_df["hover_text"]))
         fig.update_layout(
             title="PnL vs Max Drawdown",
             xaxis_title="Max Drawdown [%]",
