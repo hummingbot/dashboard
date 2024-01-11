@@ -5,6 +5,7 @@ import math
 from utils.os_utils import get_databases
 from utils.database_manager import DatabaseManager
 from utils.graphs import PerformanceGraphs
+from data_viz.performance.performance_charts import PerformanceCharts
 from utils.st_utils import initialize_st_page, download_csv_button, style_metric_cards, db_error_message
 
 
@@ -53,6 +54,7 @@ else:
 # Load strategy data
 strategy_data = selected_db.get_strategy_data()
 main_performance_charts = PerformanceGraphs(strategy_data)
+performance_charts = PerformanceCharts(strategy_data)
 
 # Strategy summary section
 st.divider()
@@ -64,7 +66,7 @@ if not main_performance_charts.has_summary_table:
 else:
     main_tab, chart_tab = st.tabs(["Main", "Chart"])
     with chart_tab:
-        st.plotly_chart(main_performance_charts.summary_chart(), use_container_width=True)
+        st.plotly_chart(performance_charts.realized_pnl_over_trading_pair_fig, use_container_width=True)
     with main_tab:
         selection = main_performance_charts.strategy_summary_table()
         if selection is None:
@@ -95,6 +97,7 @@ start_time, end_time = st.select_slider("Select a time range to analyze",
 single_market_strategy_data = strategy_data.get_single_market_strategy_data(selected_exchange, selected_trading_pair)
 time_filtered_strategy_data = single_market_strategy_data.get_filtered_strategy_data(start_time, end_time)
 time_filtered_performance_charts = PerformanceGraphs(time_filtered_strategy_data)
+time_performance_charts = PerformanceCharts(time_filtered_strategy_data)
 
 # Header metrics
 col1, col2, col3, col4, col5, col6, col7, col8 = st.columns(8)
@@ -135,7 +138,7 @@ with col8:
               help="The total amount of quote asset sold.")
 
 # Cummulative pnl chart
-st.plotly_chart(time_filtered_performance_charts.pnl_over_time(), use_container_width=True)
+st.plotly_chart(time_performance_charts.realized_pnl_over_time_fig, use_container_width=True)
 
 # Market activity section
 st.subheader("💱 Market activity")
