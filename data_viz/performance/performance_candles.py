@@ -24,6 +24,8 @@ class PerformanceCandles(CandlesBase):
         self.add_positions()
         self.add_pnl(data=source.trade_fill, realized_pnl_column="realized_trade_pnl", fees_column="cum_fees_in_quote",
                      net_realized_pnl_column="net_realized_pnl", row_number=2)
+        self.add_quote_inventory_change(data=source.trade_fill, quote_inventory_change_column="inventory_cost",
+                                        row_number=3)
         self.update_layout()
 
     @property

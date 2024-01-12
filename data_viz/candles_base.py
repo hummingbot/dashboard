@@ -109,18 +109,11 @@ class CandlesBase(ABC):
         self.base_figure.add_trace(self.tracer.get_sells_traces(data=data),
                                    row=1, col=1)
 
-    def add_quote_inventory_change(self, strategy_data: StrategyData, row=3):
-        self.base_figure.add_trace(
-            go.Scatter(
-                x=strategy_data.trade_fill.timestamp,
-                y=strategy_data.trade_fill.inventory_cost,
-                name="Quote Inventory",
-                mode="lines",
-                line=dict(shape="hv"),
-            ),
-            row=row, col=1
-        )
-        self.base_figure.update_yaxes(title_text='Quote Inventory Change', row=row, col=1)
+    def add_quote_inventory_change(self, data: pd.DataFrame, quote_inventory_change_column: str, row_number: int = 3):
+        self.base_figure.add_trace(self.tracer.get_quote_inventory_change(data=data,
+                                                                          quote_inventory_change_column=quote_inventory_change_column),
+                                   row=row_number, col=1)
+        self.base_figure.update_yaxes(title_text='Quote Inventory Change', row=row_number, col=1)
 
     def add_pnl(self, data: pd.DataFrame, realized_pnl_column: str, fees_column: str, net_realized_pnl_column: str,
                 row_number: int = 2):

@@ -242,6 +242,15 @@ class PerformancePlotlyTracer:
         return composed_pnl_traces
 
     @staticmethod
+    def get_quote_inventory_change(data: pd.DataFrame, quote_inventory_change_column: str):
+        quote_inventory_change_trace = go.Scatter(name="Quote Inventory",
+                                                  x=data.timestamp,
+                                                  y=data[quote_inventory_change_column],
+                                                  mode="lines",
+                                                  line=dict(shape="hv"))
+        return quote_inventory_change_trace
+
+    @staticmethod
     def get_intraday_performance_traces(data: pd.DataFrame, quote_volume_column: str, hour_column: str, realized_pnl_column: str):
         intraday_performance_traces = go.Barpolar(
             name="Profits",
