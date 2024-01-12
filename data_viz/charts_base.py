@@ -5,7 +5,7 @@ import plotly.express as px
 from data_viz.tracers import PerformancePlotlyTracer
 
 
-class ChartsBase(ABC):
+class ChartsBase:
     def __init__(self,
                  tracer: PerformancePlotlyTracer = PerformancePlotlyTracer()):
         self.tracer = tracer
