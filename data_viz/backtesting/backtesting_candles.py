@@ -24,8 +24,8 @@ class BacktestingCandles(CandlesBase):
                          show_volume=show_volume,
                          extra_rows=extra_rows)
         self.positions = strategy_analysis.positions
-        self.add_buy_trades(data=self.buys(), time_column="timestamp", price_column="price")
-        self.add_sell_trades(data=self.sells(), time_column="timestamp", price_column="price")
+        self.add_buy_trades(data=self.buys)
+        self.add_sell_trades(data=self.sells)
         self.add_positions()
 
     def force_datetime_format(self):
@@ -33,25 +33,27 @@ class BacktestingCandles(CandlesBase):
         for col in datetime_columns:
             self.positions[col] = pd.to_datetime(self.positions[col], unit="ms")
 
+    @property
     def buys(self):
         df = self.positions[["timestamp", "close", "close_price", "close_time", "side"]].copy()
         df["price"] = df.apply(lambda row: row["close"] if row["side"] == 1 else row["close_price"], axis=1)
         df["timestamp"] = df.apply(lambda row: row["timestamp"] if row["side"] == 1 else row["close_time"], axis=1)
         return df[["timestamp", "price"]]
 
-    def add_buy_trades(self, data: pd.DataFrame, time_column: str, price_column: str):
+    def add_buy_trades(self, data: pd.Series):
         self.base_figure.add_trace(
-            self.tracer.get_buys_traces(data=data, time_column=time_column, price_column=price_column),
+            self.tracer.get_buys_traces(data=data),
             row=1, col=1)
 
+    @property
     def sells(self):
         df = self.positions[["timestamp", "close", "close_price", "side"]].copy()
         df["price"] = df.apply(lambda row: row["close"] if row["side"] == -1 else row["close_price"], axis=1)
-        return df[["timestamp", "price"]]
+        return df["price"]
 
-    def add_sell_trades(self, data: pd.DataFrame, time_column: str, price_column: str):
+    def add_sell_trades(self, data: pd.Series):
         self.base_figure.add_trace(
-            self.tracer.get_sells_traces(data=data, time_column=time_column, price_column=price_column),
+            self.tracer.get_sells_traces(data=data),
             row=1, col=1)
 
     def add_positions(self):

@@ -104,10 +104,10 @@ class PerformancePlotlyTracer:
         self.positions_visual_config = positions_visual_config
 
     @staticmethod
-    def get_buys_traces(data: pd.DataFrame(), time_column: str, price_column: str):
+    def get_buys_traces(data: pd.Series):
         buy_trades_trace = go.Scatter(
-            x=data[time_column],
-            y=data[price_column],
+            x=data.index,
+            y=data.values,
             name="Buy Orders",
             mode="markers",
             marker=dict(
@@ -118,15 +118,15 @@ class PerformancePlotlyTracer:
                 opacity=0.7,
             ),
             hoverinfo="text",
-            hovertext=data[price_column].apply(lambda x: f"Buy Order: {x} <br>")
+            hovertext=data.apply(lambda x: f"Buy Order: {x} <br>")
         )
         return buy_trades_trace
 
     @staticmethod
-    def get_sells_traces(data: pd.DataFrame(), time_column: str, price_column: str):
+    def get_sells_traces(data: pd.Series):
         sell_trades_trace = go.Scatter(
-            x=data[time_column],
-            y=data[price_column],
+            x=data.index,
+            y=data.values,
             name="Sell Orders",
             mode="markers",
             marker=dict(
@@ -137,7 +137,7 @@ class PerformancePlotlyTracer:
                 opacity=0.7,
             ),
             hoverinfo="text",
-            hovertext=data[price_column].apply(lambda x: f"Sell Order: {x} <br>")
+            hovertext=data.apply(lambda x: f"Sell Order: {x} <br>")
         )
         return sell_trades_trace
 

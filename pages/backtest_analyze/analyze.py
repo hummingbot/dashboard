@@ -223,8 +223,10 @@ else:
             )
 
             backtesting_charts = BacktestingCharts(strategy_analysis)
-            backtesting_candles = BacktestingCandles(strategy_analysis, extra_rows=4,
-                                                     show_volume=add_volume, line_mode=True)
+            backtesting_candles = BacktestingCandles(strategy_analysis,
+                                                     line_mode=False,
+                                                     extra_rows=4,
+                                                     show_volume=add_volume)
 
             col1, col2 = st.columns(2)
             with col1:

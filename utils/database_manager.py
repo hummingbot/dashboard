@@ -199,5 +199,6 @@ class DatabaseManager:
             position_executor = pd.read_sql_query(text(query), session.connection())
             position_executor.set_index("timestamp", inplace=True)
             position_executor["datetime"] = pd.to_datetime(position_executor.index, unit="s")
+            position_executor["close_datetime"] = pd.to_datetime(position_executor["close_timestamp"], unit="s")
             position_executor["level"] = position_executor["order_level"].apply(lambda x: x.split("_")[1])
         return position_executor

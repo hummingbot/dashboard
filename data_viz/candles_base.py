@@ -101,25 +101,21 @@ class CandlesBase(ABC):
             row=2, col=1,
         )
 
-    def add_buy_trades(self, data: pd.DataFrame, time_column: str, price_column: str):
+    def add_buy_trades(self, data: pd.Series):
         """
         Depending on whether the data source is backtesting or performance, dimension or value columns might be
         different.
 
         :param data: strategy trades or positions dataframe
-        :param time_column: column name of time
-        :param price_column: column name of price
         """
         pass
 
-    def add_sell_trades(self, data: pd.DataFrame, time_column: str, price_column: str):
+    def add_sell_trades(self, data: pd.Series):
         """
         Depending on whether the data source is backtesting or performance, dimension or value columns might be
         different.
 
         :param data: strategy trades or positions dataframe
-        :param time_column: column name of time
-        :param price_column: column name of price
         """
         pass
 

@@ -1,6 +1,4 @@
 from typing import Union
-import pandas as pd
-import plotly.graph_objects as go
 
 from data_viz.charts_base import ChartsBase
 from data_viz.tracers import PerformancePlotlyTracer
