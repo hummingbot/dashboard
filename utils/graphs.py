@@ -327,59 +327,6 @@ class PerformanceGraphs:
         else:
             return None
 
-    def returns_histogram(self):
-        df = self.strategy_data.trade_fill.copy()
-        fig = go.Figure()
-        fig.add_trace(go.Histogram(name="Losses",
-                                   x=df.loc[df["realized_pnl"] < 0, "realized_pnl"],
-                                   marker_color=BEARISH_COLOR))
-        fig.add_trace(go.Histogram(name="Profits",
-                                   x=df.loc[df["realized_pnl"] > 0, "realized_pnl"],
-                                   marker_color=BULLISH_COLOR))
-        fig.update_layout(
-            title=dict(
-                                text='Returns Distribution',
-                                x=0.5,
-                                xanchor="center",
-                            ),
-            legend=dict(
-                orientation="h",
-                yanchor="bottom",
-                y=1.02,
-                xanchor="center",
-                x=.48
-            ))
-        return fig
-
-    def position_executor_summary_sunburst(self):
-        if self.strategy_data.position_executor is not None:
-            df = self.strategy_data.position_executor.copy()
-            grouped_df = df.groupby(["trading_pair", "side", "close_type"]).size().reset_index(name="count")
-
-            fig = px.sunburst(grouped_df,
-                              path=['trading_pair', 'side', 'close_type'],
-                              values="count",
-                              color_continuous_scale='RdBu',
-                              color_continuous_midpoint=0)
-
-            fig.update_layout(
-                title=dict(
-                    text='Position Executor Summary',
-                    x=0.5,
-                    xanchor="center",
-                ),
-                legend=dict(
-                    orientation="h",
-                    yanchor="bottom",
-                    y=1.02,
-                    xanchor="center",
-                    x=.48
-                )
-            )
-            return fig
-        else:
-            return None
-
     def candles_graph(self, candles: pd.DataFrame, interval="5m", show_volume=False, extra_rows=2):
         line_mode = interval == MIN_INTERVAL_RESOLUTION
         cg = CandlesGraph(candles, show_volume=show_volume, line_mode=line_mode, extra_rows=extra_rows)

@@ -168,14 +168,15 @@ else:
         # Get Page Filtered Strategy Data
         page_filtered_strategy_data = single_market_strategy_data.get_filtered_strategy_data(start_time_page, end_time_page)
         page_performance_charts = PerformanceGraphs(page_filtered_strategy_data)
+        page_charts = PerformanceCharts(page_filtered_strategy_data)
         candles_chart = page_performance_charts.candles_graph(candles_df, interval=interval)
 
         # Show auxiliary charts
         intraday_tab, returns_tab, returns_data_tab, positions_tab, other_metrics_tab = st.tabs(["Intraday", "Returns", "Returns Data", "Positions", "Other Metrics"])
         with intraday_tab:
-            st.plotly_chart(time_performance_charts.intraday_performance_fig, use_container_width=True)
+            st.plotly_chart(page_charts.intraday_performance_fig, use_container_width=True)
         with returns_tab:
-            st.plotly_chart(time_performance_charts.returns_distribution_fig, use_container_width=True)
+            st.plotly_chart(page_charts.returns_distribution_fig, use_container_width=True)
         with returns_data_tab:
             raw_returns_data = time_filtered_strategy_data.trade_fill[["timestamp", "gross_pnl", "trade_fee", "realized_pnl"]].dropna(subset="realized_pnl")
             st.dataframe(raw_returns_data,
@@ -184,9 +185,8 @@ else:
                          height=(min(len(time_filtered_strategy_data.trade_fill) * 39, 600)))
             download_csv_button(raw_returns_data, "raw_returns_data", "download-raw-returns")
         with positions_tab:
-            positions_sunburst = page_performance_charts.position_executor_summary_sunburst()
-            if positions_sunburst:
-                st.plotly_chart(page_performance_charts.position_executor_summary_sunburst(), use_container_width=True)
+            if page_charts.positions_summary_sunburst_fig is not None:
+                st.plotly_chart(page_charts.positions_summary_sunburst_fig, use_container_width=True)
             else:
                 st.info("No position executor data found.")
         with other_metrics_tab:

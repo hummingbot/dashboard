@@ -41,3 +41,16 @@ class PerformanceCharts(ChartsBase):
         data = self.source.trade_fill.copy()
         return self.returns_distribution(data=data,
                                          realized_pnl_column="realized_pnl")
+
+    @property
+    def positions_summary_sunburst_fig(self):
+        if self.source.position_executor is not None:
+            df = self.source.position_executor.copy()
+            data = df.groupby(["trading_pair", "side", "close_type"]).size().reset_index(name="count")
+            return self.positions_summary_sunburst(data=data,
+                                                   trading_pair_column="trading_pair",
+                                                   side_column="side",
+                                                   close_type_column="close_type",
+                                                   values_column="count")
+        else:
+            return None

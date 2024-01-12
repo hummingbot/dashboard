@@ -1,7 +1,6 @@
-from abc import ABC, abstractmethod
-from typing import Union
 import pandas as pd
 import plotly.graph_objs as go
+import plotly.express as px
 
 from data_viz.tracers import PerformancePlotlyTracer
 
@@ -120,5 +119,25 @@ class ChartsBase(ABC):
             ))
         return fig
 
-    def positions_sunburst(self):
-        pass
+    @staticmethod
+    def positions_summary_sunburst(data: pd.DataFrame(), trading_pair_column: str, side_column: str, close_type_column: str, values_column: str):
+        fig = px.sunburst(data,
+                          path=[trading_pair_column, side_column, close_type_column],
+                          values="count",
+                          color_continuous_scale='RdBu',
+                          color_continuous_midpoint=0)
+        fig.update_layout(
+            title=dict(
+                text='Position Executor Summary',
+                x=0.5,
+                xanchor="center",
+            ),
+            legend=dict(
+                orientation="h",
+                yanchor="bottom",
+                y=1.02,
+                xanchor="center",
+                x=.48
+            )
+        )
+        return fig
