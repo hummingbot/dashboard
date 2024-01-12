@@ -11,7 +11,7 @@ class PerformanceCandles(CandlesBase):
                  candles_df: pd.DataFrame = None,
                  line_mode: bool = False,
                  show_volume: bool = False,
-                 extra_rows: int = 0):
+                 extra_rows: int = 2):
         self.candles_df = candles_df
         super().__init__(candles_df=self.candles_df,
                          indicators_config=None,
@@ -28,23 +28,16 @@ class PerformanceCandles(CandlesBase):
         df = self.positions[["datetime", "entry_price", "close_price", "close_datetime", "side"]].copy()
         df["price"] = df.apply(lambda row: row["entry_price"] if row["side"] == 1 else row["close_price"], axis=1)
         df["timestamp"] = df.apply(lambda row: row["datetime"] if row["side"] == 1 else row["close_datetime"], axis=1)
+        df.set_index("timestamp", inplace=True)
         return df["price"]
-
-    def add_buy_trades(self, data: pd.Series):
-        self.base_figure.add_trace(
-            self.tracer.get_buys_traces(data=data),
-            row=1, col=1)
 
     @property
     def sells(self):
         df = self.positions[["datetime", "entry_price", "close_price", "close_datetime", "side"]].copy()
         df["price"] = df.apply(lambda row: row["entry_price"] if row["side"] == -1 else row["close_price"], axis=1)
+        df["timestamp"] = df.apply(lambda row: row["datetime"] if row["side"] == -1 else row["close_datetime"], axis=1)
+        df.set_index("timestamp", inplace=True)
         return df["price"]
-
-    def add_sell_trades(self, data: pd.Series):
-        self.base_figure.add_trace(
-            self.tracer.get_sells_traces(data=data),
-            row=1, col=1)
 
     def add_positions(self):
         for index, rown in self.positions.iterrows():

@@ -102,22 +102,12 @@ class CandlesBase(ABC):
         )
 
     def add_buy_trades(self, data: pd.Series):
-        """
-        Depending on whether the data source is backtesting or performance, dimension or value columns might be
-        different.
-
-        :param data: strategy trades or positions dataframe
-        """
-        pass
+        self.base_figure.add_trace(self.tracer.get_buys_traces(data=data),
+                                   row=1, col=1)
 
     def add_sell_trades(self, data: pd.Series):
-        """
-        Depending on whether the data source is backtesting or performance, dimension or value columns might be
-        different.
-
-        :param data: strategy trades or positions dataframe
-        """
-        pass
+        self.base_figure.add_trace(self.tracer.get_sells_traces(data=data),
+                                   row=1, col=1)
 
     def add_quote_inventory_change(self, strategy_data: StrategyData, row=3):
         self.base_figure.add_trace(

@@ -38,23 +38,16 @@ class BacktestingCandles(CandlesBase):
         df = self.positions[["timestamp", "close", "close_price", "close_time", "side"]].copy()
         df["price"] = df.apply(lambda row: row["close"] if row["side"] == 1 else row["close_price"], axis=1)
         df["timestamp"] = df.apply(lambda row: row["timestamp"] if row["side"] == 1 else row["close_time"], axis=1)
-        return df[["timestamp", "price"]]
-
-    def add_buy_trades(self, data: pd.Series):
-        self.base_figure.add_trace(
-            self.tracer.get_buys_traces(data=data),
-            row=1, col=1)
+        df.set_index("timestamp", inplace=True)
+        return df["price"]
 
     @property
     def sells(self):
-        df = self.positions[["timestamp", "close", "close_price", "side"]].copy()
+        df = self.positions[["timestamp", "close", "close_price", "close_time", "side"]].copy()
         df["price"] = df.apply(lambda row: row["close"] if row["side"] == -1 else row["close_price"], axis=1)
+        df["timestamp"] = df.apply(lambda row: row["timestamp"] if row["side"] == -1 else row["close_time"], axis=1)
+        df.set_index("timestamp", inplace=True)
         return df["price"]
-
-    def add_sell_trades(self, data: pd.Series):
-        self.base_figure.add_trace(
-            self.tracer.get_sells_traces(data=data),
-            row=1, col=1)
 
     def add_positions(self):
         i = 1
