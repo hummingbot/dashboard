@@ -122,52 +122,14 @@ class CandlesBase(ABC):
         )
         self.base_figure.update_yaxes(title_text='Quote Inventory Change', row=row, col=1)
 
-    def add_pnl(self, strategy_data: SingleMarketStrategyData, row=4):
-        self.base_figure.add_trace(
-            go.Scatter(
-                x=strategy_data.trade_fill.timestamp,
-                y=[max(0, realized_pnl) for realized_pnl in strategy_data.trade_fill["realized_trade_pnl"].apply(lambda x: round(x, 4))],
-                name="Cum Profit",
-                mode='lines',
-                line=dict(shape="hv", color="rgba(1, 1, 1, 0.5)", dash="dash", width=0.1),
-                fill="tozeroy",  # Fill to the line below (trade pnl)
-                fillcolor="rgba(0, 255, 0, 0.5)"
-            ),
-            row=row, col=1
-        )
-        self.base_figure.add_trace(
-            go.Scatter(
-                x=strategy_data.trade_fill.timestamp,
-                y=[min(0, realized_pnl) for realized_pnl in strategy_data.trade_fill["realized_trade_pnl"].apply(lambda x: round(x, 4))],
-                name="Cum Loss",
-                mode='lines',
-                line=dict(shape="hv", color="rgba(1, 1, 1, 0.5)", dash="dash", width=0.3),
-                # marker=dict(symbol="arrow"),
-                fill="tozeroy",  # Fill to the line below (trade pnl)
-                fillcolor="rgba(255, 0, 0, 0.5)",
-            ),
-            row=row, col=1
-        )
-        self.base_figure.add_trace(
-            go.Scatter(
-                x=strategy_data.trade_fill.timestamp,
-                y=strategy_data.trade_fill["cum_fees_in_quote"].apply(lambda x: round(x, 4)),
-                name="Cum Fees",
-                mode='lines',
-                line=dict(shape="hv", color="rgba(1, 1, 1, 0.1)", dash="dash", width=0.1),
-                fill="tozeroy",  # Fill to the line below (trade pnl)
-                fillcolor="rgba(51, 0, 51, 0.5)"
-            ),
-            row=row, col=1
-        )
-        self.base_figure.add_trace(go.Scatter(name="Net Realized Profit",
-                                              x=strategy_data.trade_fill.timestamp,
-                                              y=strategy_data.trade_fill["net_realized_pnl"],
-                                              mode="lines",
-                                              line=dict(shape="hv")),
-                                   row=row, col=1
-                                   )
-        self.base_figure.update_yaxes(title_text='PNL', row=row, col=1)
+    def add_pnl(self, data: pd.DataFrame, realized_pnl_column: str, fees_column: str, net_realized_pnl_column: str,
+                row_number: int = 2):
+        for trace in self.tracer.get_composed_pnl_traces(data=data,
+                                                         realized_pnl_column=realized_pnl_column,
+                                                         fees_column=fees_column,
+                                                         net_realized_pnl_column=net_realized_pnl_column):
+            self.base_figure.add_trace(trace, row=row_number, col=1)
+        self.base_figure.update_yaxes(title_text='PNL', row=row_number, col=1)
 
     def add_positions(self):
         """

@@ -6,6 +6,7 @@ from utils.os_utils import get_databases
 from utils.database_manager import DatabaseManager
 from utils.graphs import PerformanceGraphs
 from data_viz.performance.performance_charts import PerformanceCharts
+from data_viz.performance.performance_candles import PerformanceCandles
 from utils.st_utils import initialize_st_page, download_csv_button, style_metric_cards, db_error_message
 
 
@@ -169,8 +170,10 @@ else:
         page_filtered_strategy_data = single_market_strategy_data.get_filtered_strategy_data(start_time_page, end_time_page)
         page_performance_charts = PerformanceGraphs(page_filtered_strategy_data)
         page_charts = PerformanceCharts(page_filtered_strategy_data)
-        candles_chart = page_performance_charts.candles_graph(candles_df, interval=interval)
-
+        page_candles = PerformanceCandles(source=page_filtered_strategy_data,
+                                          candles_df=candles_df,
+                                          extra_rows=2)
+        # candles_chart = page_performance_charts.candles_graph(candles_df, interval=interval)
         # Show auxiliary charts
         intraday_tab, returns_tab, returns_data_tab, positions_tab, other_metrics_tab = st.tabs(["Intraday", "Returns", "Returns Data", "Positions", "Other Metrics"])
         with intraday_tab:
@@ -215,7 +218,7 @@ else:
                 st.metric(label='Average Sell Price', value=round(time_filtered_strategy_data.average_sell_price, 4),
                           help="The average price of the base asset sold.")
     with col1:
-        st.plotly_chart(candles_chart, use_container_width=True)
+        st.plotly_chart(page_candles.figure(), use_container_width=True)
 
 # Tables section
 st.divider()

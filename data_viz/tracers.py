@@ -204,6 +204,44 @@ class PerformancePlotlyTracer:
         return pnl_vs_max_drawdown_traces
 
     @staticmethod
+    def get_composed_pnl_traces(data: pd.DataFrame(), realized_pnl_column: str, fees_column: str,
+                                net_realized_pnl_column: str):
+        cum_profit_trace = go.Scatter(
+                x=data.timestamp,
+                y=[max(0, realized_pnl) for realized_pnl in data[realized_pnl_column].apply(lambda x: round(x, 4))],
+                name="Cum Profit",
+                mode='lines',
+                line=dict(shape="hv", color="rgba(1, 1, 1, 0.5)", dash="dash", width=0.1),
+                fill="tozeroy",
+                fillcolor="rgba(0, 255, 0, 0.5)"
+            )
+        cum_loss_trace = go.Scatter(
+                x=data.timestamp,
+                y=[min(0, realized_pnl) for realized_pnl in data[realized_pnl_column].apply(lambda x: round(x, 4))],
+                name="Cum Loss",
+                mode='lines',
+                line=dict(shape="hv", color="rgba(1, 1, 1, 0.5)", dash="dash", width=0.3),
+                fill="tozeroy",
+                fillcolor="rgba(255, 0, 0, 0.5)",
+            )
+        cum_fees_trace = go.Scatter(
+                x=data.timestamp,
+                y=data[fees_column].apply(lambda x: round(x, 4)),
+                name="Cum Fees",
+                mode='lines',
+                line=dict(shape="hv", color="rgba(1, 1, 1, 0.1)", dash="dash", width=0.1),
+                fill="tozeroy",
+                fillcolor="rgba(51, 0, 51, 0.5)"
+            )
+        net_realized_profit_trace = go.Scatter(name="Net Realized Profit",
+                                               x=data.timestamp,
+                                               y=data[net_realized_pnl_column],
+                                               mode="lines",
+                                               line=dict(shape="hv"))
+        composed_pnl_traces = [cum_profit_trace, cum_loss_trace, cum_fees_trace, net_realized_profit_trace]
+        return composed_pnl_traces
+
+    @staticmethod
     def get_intraday_performance_traces(data: pd.DataFrame, quote_volume_column: str, hour_column: str, realized_pnl_column: str):
         intraday_performance_traces = go.Barpolar(
             name="Profits",
