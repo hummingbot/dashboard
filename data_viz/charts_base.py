@@ -123,7 +123,7 @@ class ChartsBase:
     def positions_summary_sunburst(data: pd.DataFrame(), trading_pair_column: str, side_column: str, close_type_column: str, values_column: str):
         fig = px.sunburst(data,
                           path=[trading_pair_column, side_column, close_type_column],
-                          values="count",
+                          values=values_column,
                           color_continuous_scale='RdBu',
                           color_continuous_midpoint=0)
         fig.update_layout(
