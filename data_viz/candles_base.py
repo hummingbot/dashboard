@@ -33,10 +33,10 @@ class CandlesBase(ABC):
                                          vertical_spacing=0.005,
                                          row_heights=heights,
                                          specs=specs)
-        if 'timestamp' not in candles_df.columns:
-            candles_df.reset_index(inplace=True)
-        self.min_time = candles_df.timestamp.min()
-        self.max_time = candles_df.timestamp.max()
+        if 'timestamp' in candles_df.columns:
+            candles_df.set_index("timestamp", inplace=True)
+        self.min_time = candles_df.index.min()
+        self.max_time = candles_df.index.max()
         self.add_candles_graph()
         if self.show_volume:
             self.add_volume()

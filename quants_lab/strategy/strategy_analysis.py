@@ -72,10 +72,10 @@ class StrategyAnalysis:
         return time_diff_minutes.mean()
 
     def start_date(self):
-        return pd.to_datetime(self.candles_df.timestamp.min(), unit="ms")
+        return pd.to_datetime(self.candles_df.index.min(), unit="ms")
 
     def end_date(self):
-        return pd.to_datetime(self.candles_df.timestamp.max(), unit="ms")
+        return pd.to_datetime(self.candles_df.index.max(), unit="ms")
 
     def avg_profit(self):
         return self.positions.net_pnl_quote.mean()
