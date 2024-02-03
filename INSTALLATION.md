@@ -55,7 +55,7 @@ streamlit run main.py
 
     ```
     import streamlit_authenticator as st_auth
-    hashed_password = st_auth.Hasher("YOUR_PLAIN_TEXT_PASSWORD").generate()[0]
+    hashed_password = st_auth.Hasher(["YOUR_PLAIN_TEXT_PASSWORD"]).generate()[0]
     print(hashed_password)
     ```
 
