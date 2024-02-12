@@ -1,0 +1,1 @@
+This page shows the performance of different accounts by collecting read-only apis
