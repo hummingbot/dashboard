@@ -4,7 +4,7 @@
 .PHONY: conda_create
 
 run:
-	streamlit run main.py
+	streamlit run main.py --server.headless true
 
 env_remove:
 	conda env remove -n dashboard
