@@ -2,7 +2,7 @@ from typing import Union
 import pandas as pd
 import plotly.graph_objects as go
 
-from data_viz.charts_base import ChartsBase
+from data_viz.charts import ChartsBase
 from data_viz.tracers import PerformancePlotlyTracer
 from quants_lab.strategy.strategy_analysis import StrategyAnalysis
 

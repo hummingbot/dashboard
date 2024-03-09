@@ -1,6 +1,6 @@
 import plotly.graph_objs as go
 import pandas as pd
-from data_viz.dtypes import IndicatorsConfigBase
+from data_viz.dtypes import IndicatorConfig
 from data_viz.dtypes import PositionsVisualConfig
 from datetime import datetime
 
@@ -11,59 +11,58 @@ FEE_COLOR = "rgba(51, 0, 51, 0.9)"
 
 
 class PandasTAPlotlyTracer:
-    def __init__(self, candles_df: pd.DataFrame, indicators_config: IndicatorsConfigBase):
+    def __init__(self, candles_df: pd.DataFrame):
         """
         :param candles_df: candles dataframe with timestamp as index
         """
         self.candles_df = candles_df
-        self.indicators_config = indicators_config
 
     @staticmethod
     def raise_error_if_not_enough_data(indicator_title: str):
         print(f"Not enough data to calculate {indicator_title}")
 
-    def get_bollinger_bands_traces(self):
-        config = self.indicators_config.bollinger_bands.copy()
-        self.candles_df.ta.bbands(length=config.length, std=config.std, append=True)
-        if len(self.candles_df) < config.length:
-            self.raise_error_if_not_enough_data(config.title)
+    def get_bollinger_bands_traces(self, indicator_config: IndicatorConfig):
+        self.candles_df.ta.bbands(length=indicator_config.length, std=indicator_config.std, append=True)
+        if len(self.candles_df) < indicator_config.length:
+            self.raise_error_if_not_enough_data(indicator_config.title)
             return
         else:
             bbu_trace = go.Scatter(x=self.candles_df.index,
-                                   y=self.candles_df[f'BBU_{config.length}_{config.std}'],
-                                   name=f'BBU_{config.length}_{config.std}',
+                                   y=self.candles_df[f'BBU_{indicator_config.length}_{indicator_config.std}'],
+                                   name=f'BBU_{indicator_config.length}_{indicator_config.std}',
                                    mode='lines',
-                                   line=dict(color=config.color, width=1))
+                                   line=dict(color=indicator_config.color, width=1))
             bbm_trace = go.Scatter(x=self.candles_df.index,
-                                   y=self.candles_df[f'BBM_{config.length}_{config.std}'],
-                                   name=f'BBM_{config.length}_{config.std}',
+                                   y=self.candles_df[f'BBM_{indicator_config.length}_{indicator_config.std}'],
+                                   name=f'BBM_{indicator_config.length}_{indicator_config.std}',
                                    mode='lines',
-                                   line=dict(color=config.color, width=1))
+                                   line=dict(color=indicator_config.color, width=1))
             bbl_trace = go.Scatter(x=self.candles_df.index,
-                                   y=self.candles_df[f'BBL_{config.length}_{config.std}'],
-                                   name=f'BBL_{config.length}_{config.std}',
+                                   y=self.candles_df[f'BBL_{indicator_config.length}_{indicator_config.std}'],
+                                   name=f'BBL_{indicator_config.length}_{indicator_config.std}',
                                    mode='lines',
-                                   line=dict(color=config.color, width=1))
+                                   line=dict(color=indicator_config.color, width=1))
             return bbu_trace, bbm_trace, bbl_trace
 
-    def get_ema_traces(self):
-        config = self.indicators_config.ema.copy()
-        if len(self.candles_df) < config.length:
-            self.raise_error_if_not_enough_data(config.title)
+    def get_ema_traces(self, indicator_config: IndicatorConfig):
+        if len(self.candles_df) < indicator_config.length:
+            self.raise_error_if_not_enough_data(indicator_config.title)
             return
         else:
-            self.candles_df.ta.ema(length=config.length, append=True)
+            self.candles_df.ta.ema(length=indicator_config.length, append=True)
             ema_trace = go.Scatter(x=self.candles_df.index,
-                                   y=self.candles_df[f'EMA_{config.length}'],
-                                   name=f'EMA_{config.length}',
+                                   y=self.candles_df[f'EMA_{indicator_config.length}'],
+                                   name=f'EMA_{indicator_config.length}',
                                    mode='lines',
-                                   line=dict(color=config.color, width=1))
+                                   line=dict(color=indicator_config.color, width=1))
             return ema_trace
 
-    def get_macd_traces(self, fast=12, slow=26, signal=9):
-        config = self.indicators_config.macd.copy()
-        if len(self.candles_df) < any([config.fast, config.slow, config.signal]):
-            self.raise_error_if_not_enough_data(config.title)
+    def get_macd_traces(self, indicator_config):
+        fast = indicator_config.fast
+        slow = indicator_config.slow
+        signal = indicator_config.signal
+        if len(self.candles_df) < any([fast, slow, signal]):
+            self.raise_error_if_not_enough_data(indicator_config.title)
             return
         else:
             self.candles_df.ta.macd(fast=fast, slow=slow, signal=signal, append=True)
@@ -71,22 +70,22 @@ class PandasTAPlotlyTracer:
                                     y=self.candles_df[f'MACD_{fast}_{slow}_{signal}'],
                                     name=f'MACD_{fast}_{slow}_{signal}',
                                     mode='lines',
-                                    line=dict(color=config.color, width=1))
+                                    line=dict(color=indicator_config.color, width=1))
             macd_signal_trace = go.Scatter(x=self.candles_df.index,
                                            y=self.candles_df[f'MACDs_{fast}_{slow}_{signal}'],
                                            name=f'MACDs_{fast}_{slow}_{signal}',
                                            mode='lines',
-                                           line=dict(color=config.color, width=1))
+                                           line=dict(color=indicator_config.color, width=1))
             macd_hist_trace = go.Bar(x=self.candles_df.index,
                                      y=self.candles_df[f'MACDh_{fast}_{slow}_{signal}'],
                                      name=f'MACDh_{fast}_{slow}_{signal}',
-                                     marker=dict(color=config.color))
+                                     marker=dict(color=indicator_config.color))
             return macd_trace, macd_signal_trace, macd_hist_trace
 
-    def get_rsi_traces(self, length=14):
-        config = self.indicators_config.rsi.copy()
-        if len(self.candles_df) < config.length:
-            self.raise_error_if_not_enough_data(config.title)
+    def get_rsi_traces(self, indicator_config: IndicatorConfig):
+        length = indicator_config.length
+        if len(self.candles_df) < length:
+            self.raise_error_if_not_enough_data(indicator_config.title)
             return
         else:
             self.candles_df.ta.rsi(length=length, append=True)
@@ -94,7 +93,7 @@ class PandasTAPlotlyTracer:
                                    y=self.candles_df[f'RSI_{length}'],
                                    name=f'RSI_{length}',
                                    mode='lines',
-                                   line=dict(color=config.color, width=1))
+                                   line=dict(color=indicator_config.color, width=1))
             return rsi_trace
 
 

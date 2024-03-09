@@ -1,7 +1,7 @@
 import pandas as pd
 from typing import Union
 
-from data_viz.candles_base import CandlesBase
+from data_viz.candles import CandlesBase
 from utils.data_manipulation import StrategyData, SingleMarketStrategyData
 
 
@@ -14,6 +14,7 @@ class PerformanceCandles(CandlesBase):
                  extra_rows: int = 2):
         self.candles_df = candles_df
         super().__init__(candles_df=self.candles_df,
+                         # TODO: Add indicators_config
                          indicators_config=None,
                          line_mode=line_mode,
                          show_volume=show_volume,

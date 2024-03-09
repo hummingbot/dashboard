@@ -1,25 +1,22 @@
-from data_viz.candles_base import CandlesBase
+from data_viz.candles import CandlesBase
 import pandas as pd
-from data_viz.dtypes import IndicatorsConfigBase, IndicatorConfig
+from typing import List
+from data_viz.dtypes import IndicatorConfig
 from quants_lab.strategy.strategy_analysis import StrategyAnalysis
-
-
-class PlotlyIndicatorsConfigBase(IndicatorsConfigBase):
-    bollinger_bands: IndicatorConfig = IndicatorConfig(visible=True, title="Bollinger Bands", row=1, col=1, color="blue", length=20, std=2.0)
-    ema: IndicatorConfig = IndicatorConfig(visible=False, title="EMA", row=1, col=1, color="yellow", length=20)
-    macd: IndicatorConfig = IndicatorConfig(visible=True, title="MACD", row=2, col=1, color="red", fast=12, slow=26, signal=9)
-    rsi: IndicatorConfig = IndicatorConfig(visible=True, title="RSI", row=3, col=1, color="green", length=14)
 
 
 class BacktestingCandles(CandlesBase):
     def __init__(self,
                  strategy_analysis: StrategyAnalysis,
+                 indicators_config: List[IndicatorConfig] = None,
                  line_mode: bool = False,
-                 show_volume: bool = False,
-                 extra_rows: int = 0):
+                 show_volume: bool = False):
         self.candles_df = strategy_analysis.candles_df
+        extra_rows = 0
+        if bool(indicators_config):
+            extra_rows = max([indicator.row for indicator in indicators_config])
         super().__init__(candles_df=self.candles_df,
-                         indicators_config=PlotlyIndicatorsConfigBase(),
+                         indicators_config=indicators_config,
                          line_mode=line_mode,
                          show_volume=show_volume,
                          extra_rows=extra_rows)

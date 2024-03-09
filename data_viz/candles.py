@@ -1,26 +1,23 @@
 import pandas as pd
 from plotly.subplots import make_subplots
 import pandas_ta as ta  # noqa: F401
-from abc import ABC
-
-from utils.data_manipulation import StrategyData, SingleMarketStrategyData
+from typing import List
 from data_viz.tracers import PandasTAPlotlyTracer
 from data_viz.tracers import PerformancePlotlyTracer
-from data_viz.dtypes import IndicatorsConfigBase
+from data_viz.dtypes import IndicatorConfig
 import plotly.graph_objs as go
 
 
-class CandlesBase(ABC):
+class CandlesBase:
     def __init__(self,
                  candles_df: pd.DataFrame,
-                 indicators_config: IndicatorsConfigBase = None,
+                 indicators_config: List[IndicatorConfig] = None,
                  line_mode=False,
                  show_volume=False,
                  extra_rows=5):
         self.candles_df = candles_df
         self.indicators_config = indicators_config
-        self.indicators_tracer = PandasTAPlotlyTracer(candles_df,
-                                                      indicators_config)
+        self.indicators_tracer = PandasTAPlotlyTracer(candles_df)
         self.tracer = PerformancePlotlyTracer()
         self.show_volume = show_volume
         self.line_mode = line_mode
@@ -162,58 +159,63 @@ class CandlesBase(ABC):
     # INDICATORS METHODS
     # ----------------------------
 
-    def add_bollinger_bands(self):
-        if self.indicators_config.bollinger_bands.visible:
-            bbu_trace, bbm_trace, bbl_trace = self.indicators_tracer.get_bollinger_bands_traces()
+    def add_bollinger_bands(self, indicator_config: IndicatorConfig):
+        if indicator_config.visible:
+            bbu_trace, bbm_trace, bbl_trace = self.indicators_tracer.get_bollinger_bands_traces(indicator_config)
             self.base_figure.add_trace(trace=bbu_trace,
-                                       row=self.indicators_config.bollinger_bands.row,
-                                       col=self.indicators_config.bollinger_bands.col)
+                                       row=indicator_config.row,
+                                       col=indicator_config.col)
             self.base_figure.add_trace(trace=bbm_trace,
-                                       row=self.indicators_config.bollinger_bands.row,
-                                       col=self.indicators_config.bollinger_bands.col)
+                                       row=indicator_config.row,
+                                       col=indicator_config.col)
             self.base_figure.add_trace(trace=bbl_trace,
-                                       row=self.indicators_config.bollinger_bands.row,
-                                       col=self.indicators_config.bollinger_bands.col)
+                                       row=indicator_config.row,
+                                       col=indicator_config.col)
         else:
             return
 
-    def add_ema(self):
-        if self.indicators_config.ema.visible:
-            ema_trace = self.indicators_tracer.get_ema_traces()
+    def add_ema(self, indicator_config: IndicatorConfig):
+        if indicator_config.visible:
+            ema_trace = self.indicators_tracer.get_ema_traces(indicator_config)
             self.base_figure.add_trace(trace=ema_trace,
-                                       row=self.indicators_config.ema.row,
-                                       col=self.indicators_config.ema.col)
+                                       row=indicator_config.row,
+                                       col=indicator_config.col)
         else:
             return
 
-    def add_macd(self):
-        if self.indicators_config.macd.visible:
-            macd_trace, macd_signal_trace, macd_hist_trace = self.indicators_tracer.get_macd_traces()
-            print(self.indicators_config.macd.row)
-            print(self.indicators_config.macd.col)
+    def add_macd(self, indicator_config: IndicatorConfig):
+        if indicator_config.visible:
+            macd_trace, macd_signal_trace, macd_hist_trace = self.indicators_tracer.get_macd_traces(indicator_config)
             self.base_figure.add_trace(trace=macd_trace,
-                                       row=self.indicators_config.macd.row,
-                                       col=self.indicators_config.macd.col)
+                                       row=indicator_config.row,
+                                       col=indicator_config.col)
             self.base_figure.add_trace(trace=macd_signal_trace,
-                                       row=self.indicators_config.macd.row,
-                                       col=self.indicators_config.macd.col)
+                                       row=indicator_config.row,
+                                       col=indicator_config.col)
             self.base_figure.add_trace(trace=macd_hist_trace,
-                                       row=self.indicators_config.macd.row,
-                                       col=self.indicators_config.macd.col)
+                                       row=indicator_config.row,
+                                       col=indicator_config.col)
         else:
             return
 
-    def add_rsi(self):
-        if self.indicators_config.rsi.visible:
-            rsi_trace = self.indicators_tracer.get_rsi_traces()
+    def add_rsi(self, indicator_config: IndicatorConfig):
+        if indicator_config.visible:
+            rsi_trace = self.indicators_tracer.get_rsi_traces(indicator_config)
             self.base_figure.add_trace(trace=rsi_trace,
-                                       row=self.indicators_config.rsi.row,
-                                       col=self.indicators_config.rsi.col)
+                                       row=indicator_config.row,
+                                       col=indicator_config.col)
         else:
             return
 
     def add_indicators(self):
-        self.add_bollinger_bands()
-        self.add_ema()
-        self.add_macd()
-        self.add_rsi()
+        for indicator in self.indicators_config:
+            if indicator.title == "bbands":
+                self.add_bollinger_bands(indicator)
+            elif indicator.title == "ema":
+                self.add_ema(indicator)
+            elif indicator.title == "macd":
+                self.add_macd(indicator)
+            elif indicator.title == "rsi":
+                self.add_rsi(indicator)
+            else:
+                raise ValueError(f"{indicator.title} is not a valid indicator. Choose from bbands, ema, macd, rsi")

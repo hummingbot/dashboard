@@ -13,12 +13,12 @@ class IndicatorConfig(BaseModel):
     slow: int = None
     signal: int = None
 
-
-class IndicatorsConfigBase(BaseModel):
-    bollinger_bands: IndicatorConfig = None
-    ema: IndicatorConfig = None
-    macd: IndicatorConfig = None
-    rsi: IndicatorConfig = None
+    # TODO: throw error if indicator is not available
+    # @validator("title")
+    # def indicator_is_available(cls, value):
+    #     if value not in ["bbands, ema, macd, rsi"]:
+    #         raise ValueError(f"{value} is not a valid indicator. Choose from bbands, ema, macd, rsi")
+    #     return value
 
 
 class PositionsVisualConfig(BaseModel):

@@ -1,6 +1,6 @@
 from typing import Union
 
-from data_viz.charts_base import ChartsBase
+from data_viz.charts import ChartsBase
 from data_viz.tracers import PerformancePlotlyTracer
 from utils.data_manipulation import StrategyData, SingleMarketStrategyData
 
