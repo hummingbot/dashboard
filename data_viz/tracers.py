@@ -119,6 +119,27 @@ class PerformancePlotlyTracer:
         return buy_trades_trace
 
     @staticmethod
+    def get_entry_traces(data: pd.Series):
+        entry_price_trace = go.Scatter(
+            x=data.index,
+            y=data.values,
+            name="Buy Orders",
+            mode="markers",
+            marker=dict(
+                symbol="triangle-right",
+                color="white",
+                size=12,
+                line=dict(color="black", width=1),
+                opacity=0.7,
+            ),
+            hoverinfo="text",
+            showlegend=False,
+            hovertext=data.apply(lambda x: f"Entry Price: {x} <br>")
+        )
+        return entry_price_trace
+
+
+    @staticmethod
     def get_sells_traces(data: pd.Series):
         sell_trades_trace = go.Scatter(
             x=data.index,

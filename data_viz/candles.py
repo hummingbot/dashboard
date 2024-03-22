@@ -12,7 +12,7 @@ class CandlesBase:
     def __init__(self,
                  candles_df: pd.DataFrame,
                  indicators_config: List[IndicatorConfig] = None,
-                 annotations=True,
+                 show_annotations=True,
                  line_mode=False,
                  show_indicators=False,
                  main_height=0.7,
@@ -22,7 +22,7 @@ class CandlesBase:
         self.candles_df = candles_df
         self.show_indicators = show_indicators
         self.indicators_config = indicators_config
-        self.annotations = annotations
+        self.show_annotations = show_annotations
         self.indicators_tracer = PandasTAPlotlyTracer(candles_df)
         self.tracer = PerformancePlotlyTracer()
         self.line_mode = line_mode
@@ -71,7 +71,7 @@ class CandlesBase:
             )
         else:
             hover_text = []
-            if self.annotations:
+            if self.show_annotations:
                 for i in range(len(self.candles_df)):
                     hover_text.append(
                         f"Open: {self.candles_df['open'][i]} <br>"

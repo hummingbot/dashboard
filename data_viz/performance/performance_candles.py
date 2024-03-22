@@ -16,14 +16,16 @@ class PerformanceCandles(CandlesBase):
                  show_buys: bool = False,
                  show_sells: bool = False,
                  show_positions: bool = False,
+                 show_dca_prices: bool = False,
                  show_pnl: bool = True,
                  show_indicators: bool = False,
                  show_quote_inventory_change: bool = True,
+                 show_annotations: bool = False,
                  executor_version: str = "v1",
                  main_height: float = 0.7):
         self.candles_df = candles_df
 
-        self.positions = source.position_executor if source.position_executor else source.executors
+        self.positions = source.executors if executor_version == "v2" else source.position_executor
         self.executor_version = executor_version
         self.show_buys = show_buys
         self.show_sells = show_sells
@@ -41,8 +43,8 @@ class PerformanceCandles(CandlesBase):
                          show_indicators=show_indicators,
                          rows=rows,
                          row_heights=row_heights,
-                         main_height=main_height)
-
+                         main_height=main_height,
+                         show_annotations=show_annotations)
         if show_buys:
             self.add_buy_trades(data=self.buys)
         if show_sells:
@@ -59,6 +61,8 @@ class PerformanceCandles(CandlesBase):
             self.add_quote_inventory_change(data=source.trade_fill,
                                             quote_inventory_change_column="inventory_cost",
                                             row_number=rows)
+        if show_dca_prices:
+            self.add_dca_prices()
         self.update_layout()
 
     @property
@@ -92,18 +96,44 @@ class PerformanceCandles(CandlesBase):
         return rows, row_heights
 
     def add_positions(self):
-        for index, rown in self.positions.iterrows():
-            self.base_figure.add_trace(self.tracer.get_positions_traces(position_number=rown["id"],
-                                                                        open_time=rown["datetime"],
-                                                                        close_time=rown["close_datetime"],
-                                                                        open_price=rown["entry_price"],
-                                                                        close_price=rown["close_price"],
-                                                                        side=rown["side"],
-                                                                        close_type=rown["close_type"],
-                                                                        stop_loss=rown["sl"], take_profit=rown["tp"],
-                                                                        time_limit=rown["tl"],
-                                                                        net_pnl_quote=rown["net_pnl_quote"]),
-                                       row=1, col=1)
+        if self.executor_version == "v1":
+            for index, rown in self.positions.iterrows():
+                if abs(rown["net_pnl_quote"]) > 0:
+                    self.base_figure.add_trace(self.tracer.get_positions_traces(position_number=rown["id"],
+                                                                                open_time=rown["datetime"],
+                                                                                close_time=rown["close_datetime"],
+                                                                                open_price=rown["entry_price"],
+                                                                                close_price=rown["close_price"],
+                                                                                side=rown["side"],
+                                                                                close_type=rown["close_type"],
+                                                                                stop_loss=rown["sl"], take_profit=rown["tp"],
+                                                                                time_limit=rown["tl"],
+                                                                                net_pnl_quote=rown["net_pnl_quote"]),
+                                               row=1, col=1)
+        elif self.executor_version == "v2":
+            for index, rown in self.positions.iterrows():
+                if abs(rown["net_pnl_quote"]) > 0:
+                    self.base_figure.add_trace(self.tracer.get_positions_traces(position_number=rown["id"],
+                                                                                open_time=rown["datetime"],
+                                                                                close_time=rown["close_datetime"],
+                                                                                open_price=rown["bep"],
+                                                                                close_price=rown["close_price"],
+                                                                                side=rown["side"],
+                                                                                close_type=rown["close_type"],
+                                                                                stop_loss=rown["sl"], take_profit=rown["tp"],
+                                                                                time_limit=rown["tl"],
+                                                                                net_pnl_quote=rown["net_pnl_quote"]),
+                                               row=1, col=1)
+
+    def add_dca_prices(self):
+        if self.executor_version == "v2":
+            for index, rown in self.positions.iterrows():
+                if abs(rown["net_pnl_quote"]) > 0:
+                    data = list(json.loads(rown["config"])["prices"])
+                    data_series = pd.Series(data, index=[rown["datetime"]] * len(data))
+                    self.base_figure.add_trace(self.tracer.get_entry_traces(data=data_series))
+                    self.base_figure.add_vline(x=rown["datetime"], row=1, col=1, line_color="gray", line_dash="dash")
+
 
     def update_layout(self):
         self.base_figure.update_layout(

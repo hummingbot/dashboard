@@ -55,6 +55,7 @@ else:
 
 # Load strategy data
 strategy_data = selected_db.get_strategy_data()
+executor_version = "v2" if strategy_data.executors is not None and not strategy_data.executors.empty else "v1"
 main_performance_charts = PerformanceGraphs(strategy_data)
 performance_charts = PerformanceCharts(strategy_data)
 
@@ -153,8 +154,11 @@ else:
         col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
         with col1:
             show_buys = st.checkbox("Buys", value=False)
+            if executor_version == "v2":
+                show_dca_prices = st.checkbox("DCA Prices", value=False)
         with col2:
             show_sells = st.checkbox("Sells", value=False)
+            show_annotations = st.checkbox("Annotations", value=False)
         with col3:
             show_positions = st.checkbox("Positions", value=False)
         with col4:
@@ -241,13 +245,16 @@ else:
         page_candles = PerformanceCandles(source=page_filtered_strategy_data,
                                           indicators_config=utils.load_indicators_config(indicators_config_path) if show_indicators else None,
                                           candles_df=candles_df,
+                                          show_dca_prices=show_dca_prices,
                                           show_positions=show_positions,
                                           show_buys=show_buys,
                                           show_sells=show_sells,
                                           show_pnl=show_pnl,
                                           show_quote_inventory_change=show_quote_inventory_change,
                                           show_indicators=show_indicators,
-                                          main_height=main_height)
+                                          main_height=main_height,
+                                          executor_version=executor_version,
+                                          show_annotations=show_annotations)
         st.plotly_chart(page_candles.figure(), use_container_width=True)
 
 # Tables section
@@ -270,3 +277,7 @@ if strategy_data.position_executor is not None and not strategy_data.position_ex
     with st.expander("🤖 Position executor"):
         st.write(strategy_data.position_executor)
         download_csv_button(strategy_data.position_executor, "position_executor", "download-position-executor")
+if strategy_data.executors is not None and not strategy_data.executors.empty:
+    with st.expander("🤖 Executors"):
+        st.write(strategy_data.executors)
+        download_csv_button(strategy_data.executors, "executors", "download-executors")

@@ -1,7 +1,8 @@
 import os
 import streamlit as st
-
+import json
 import pandas as pd
+from hummingbot.smart_components.executors.position_executor.data_types import CloseType, TradeType
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
@@ -29,8 +30,9 @@ class DatabaseManager:
         order_status = load_data(self.get_order_status)
         market_data = load_data(self.get_market_data)
         position_executor = load_data(self.get_position_executor_data)
+        executors = load_data(self.get_executors_data)
 
-        strategy_data = StrategyData(orders, order_status, trade_fills, market_data, position_executor)
+        strategy_data = StrategyData(orders, order_status, trade_fills, market_data, position_executor, executors)
         return strategy_data
 
     @staticmethod
@@ -49,6 +51,7 @@ class DatabaseManager:
                   "order_status": self._get_table_status(self.get_order_status),
                   "market_data": self._get_table_status(self.get_market_data),
                   "position_executor": self._get_table_status(self.get_position_executor_data),
+                  "executors": self._get_table_status(self.get_executors_data)
                   }
         return status
 
@@ -142,6 +145,18 @@ class DatabaseManager:
             query += f" WHERE {' AND '.join(conditions)}"
         return query
 
+    @staticmethod
+    def _get_executors_query(start_date=None, end_date=None):
+        query = "SELECT * FROM Executors"
+        conditions = []
+        if start_date:
+            conditions.append(f"timestamp >= '{start_date}'")
+        if end_date:
+            conditions.append(f"timestamp <= '{end_date}'")
+        if conditions:
+            query += f" WHERE {' AND '.join(conditions)}"
+        return query
+
     def get_orders(self, config_file_path=None, start_date=None, end_date=None):
         with self.session_maker() as session:
             query = self._get_orders_query(config_file_path, start_date, end_date)
@@ -202,3 +217,21 @@ class DatabaseManager:
             position_executor["close_datetime"] = pd.to_datetime(position_executor["close_timestamp"], unit="s")
             position_executor["level"] = position_executor["order_level"].apply(lambda x: x.split("_")[1])
         return position_executor
+
+    def get_executors_data(self, start_date=None, end_date=None) -> pd.DataFrame:
+        with self.session_maker() as session:
+            query = self._get_executors_query(start_date, end_date)
+            executors = pd.read_sql_query(text(query), session.connection())
+            executors.set_index("timestamp", inplace=True)
+            executors["datetime"] = pd.to_datetime(executors.index, unit="s")
+            executors["close_datetime"] = pd.to_datetime(executors["close_timestamp"], unit="s")
+            executors["trading_pair"] = executors["config"].apply(lambda x: json.loads(x)["trading_pair"])
+            executors["exchange"] = executors["config"].apply(lambda x: json.loads(x)["connector_name"])
+            executors["close_type"] = executors["close_type"].apply(lambda x: CloseType(x).name)
+            executors["side"] = executors["config"].apply(lambda x: TradeType(json.loads(x)["side"]).name)
+            executors["bep"] = executors["custom_info"].apply(lambda x: json.loads(x)["current_position_average_price"])
+            executors["close_price"] = executors["custom_info"].apply(lambda x: json.loads(x)["close_price"])
+            executors["sl"] = executors["config"].apply(lambda x: json.loads(x)["stop_loss"]).fillna(0)
+            executors["tp"] = executors["config"].apply(lambda x: json.loads(x)["take_profit"]).fillna(0)
+            executors["tl"] = executors["config"].apply(lambda x: json.loads(x)["time_limit"]).fillna(0)
+        return executors
