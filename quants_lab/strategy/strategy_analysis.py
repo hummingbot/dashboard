@@ -16,133 +16,6 @@ class StrategyAnalysis:
         self.positions["close_time"] = pd.to_datetime(self.positions["close_time"], unit="ms")
         self.base_figure = None
 
-    def create_base_figure(self, candlestick=True, volume=True, positions=False, trade_pnl=False, extra_rows=0):
-        rows, heights = self.get_n_rows_and_heights(extra_rows + trade_pnl, volume)
-        self.rows = rows
-        specs = [[{"secondary_y": True}]] * rows
-        self.base_figure = make_subplots(rows=rows, cols=1, shared_xaxes=True, vertical_spacing=0.01,
-                                         row_heights=heights, specs=specs)
-        if candlestick:
-            self.add_candles_graph(row=1, col=1)
-        if volume:
-            self.add_volume()
-        if positions:
-            self.add_positions()
-        if trade_pnl:
-            self.add_trade_pnl(row=rows)
-        self.update_layout(volume)
-
-    def add_positions(self):
-        # Add long and short positions
-        active_signals = self.positions.copy()
-        active_signals.loc[active_signals["signal"] == -1, "symbol"] = "triangle-down"
-        active_signals.loc[active_signals["signal"] == 1, "symbol"] = "triangle-up"
-        active_signals.loc[active_signals["profitable"] == 1, "color"] = "lightgreen"
-        active_signals.loc[active_signals["profitable"] == -1, "color"] = "red"
-        self.base_figure.add_trace(go.Scatter(x=active_signals.loc[(active_signals["side"] != 0), "timestamp"],
-                                              y=active_signals.loc[active_signals["side"] != 0, "close"],
-                                              name="Entry Price: $",
-                                              mode="markers",
-                                              marker_color=active_signals.loc[(active_signals["side"] != 0), "color"],
-                                              marker_symbol=active_signals.loc[(active_signals["side"] != 0), "symbol"],
-                                              marker_size=20,
-                                              marker_line={"color": "black", "width": 0.7}),
-                                   row=1, col=1)
-
-        for index, row in active_signals.iterrows():
-            self.base_figure.add_shape(type="rect",
-                                       fillcolor="green",
-                                       opacity=0.5,
-                                       x0=row.timestamp,
-                                       y0=row.close,
-                                       x1=row.close_time,
-                                       y1=row.take_profit_price,
-                                       line=dict(color="green"),
-                                       row=1, col=1)
-            # Add SL
-            self.base_figure.add_shape(type="rect",
-                                       fillcolor="red",
-                                       opacity=0.5,
-                                       x0=row.timestamp,
-                                       y0=row.close,
-                                       x1=row.close_time,
-                                       y1=row.stop_loss_price,
-                                       line=dict(color="red"),
-                                       row=1, col=1)
-
-    def get_n_rows_and_heights(self, extra_rows, volume=True):
-        rows = 1 + extra_rows + volume
-        row_heights = [0.5] * (extra_rows)
-        if volume:
-            row_heights.insert(0, 0.2)
-        row_heights.insert(0, 0.8)
-        return rows, row_heights
-
-    def figure(self):
-        return self.base_figure
-
-    def add_candles_graph(self, row, col, name_suffix='', timeframe_suffix=''):
-        self.base_figure.add_trace(
-            go.Candlestick(
-                x=self.candles_df[f"timestamp{timeframe_suffix}"],
-                open=self.candles_df[f"open{timeframe_suffix}"],
-                high=self.candles_df[f"high{timeframe_suffix}"],
-                low=self.candles_df[f"low{timeframe_suffix}"],
-                close=self.candles_df[f"close{timeframe_suffix}"],
-                name=f"OHLC_{name_suffix}"
-            ),
-            row=row, col=col,
-        )
-
-    def add_volume(self):
-        self.base_figure.add_trace(
-            go.Bar(
-                x=self.candles_df["timestamp"],
-                y=self.candles_df["volume"],
-                name="Volume",
-                opacity=0.5,
-                marker=dict(color="lightgreen")
-            ),
-            row=2, col=1,
-        )
-
-    def add_trade_pnl(self, row=2):
-        self.base_figure.add_trace(
-            go.Scatter(
-                x=self.positions["timestamp"],
-                y=self.positions["net_pnl_quote"].cumsum(),
-                name="Cumulative Trade PnL",
-                mode="lines",
-                line=dict(color="chocolate", width=2)),
-            row=row, col=1
-        )
-        self.base_figure.update_yaxes(title_text="Cum Trade PnL", row=row, col=1)
-
-    def update_layout(self, volume=True):
-        self.base_figure.update_layout(
-            title={
-                "text": "Backtesting Analysis",
-                "y": 0.95,
-                "x": 0.5,
-                "xanchor": "center",
-                "yanchor": "top"
-            },
-            legend=dict(
-                orientation="h",
-                yanchor="bottom",
-                y=-0.2,
-                xanchor="right",
-                x=1
-            ),
-            height=1500,
-            xaxis_rangeslider_visible=False,
-            hovermode="x unified"
-        )
-        self.base_figure.update_yaxes(title_text="Price", row=1, col=1)
-        if volume:
-            self.base_figure.update_yaxes(title_text="Volume", row=2, col=1)
-        self.base_figure.update_xaxes(title_text="Time", row=self.rows, col=1)
-
     def initial_portfolio(self):
         return self.positions["inventory"].dropna().values[0]
 
@@ -150,7 +23,8 @@ class StrategyAnalysis:
         return self.positions["inventory"].dropna().values[-1]
 
     def net_profit_usd(self):
-        return self.final_portfolio() - self.initial_portfolio()
+        # TODO: Fix inventory calculation, gives different to this
+        return self.positions["net_pnl_quote"].sum()
 
     def net_profit_pct(self):
         return self.net_profit_usd() / self.initial_portfolio()
@@ -159,6 +33,7 @@ class StrategyAnalysis:
         return self.positions["net_pnl_quote"] / self.initial_portfolio()
 
     def total_positions(self):
+        # TODO: Determine if it has to be shape[0] - 1 or just shape[0]
         return self.positions.shape[0] - 1
 
     def win_signals(self):
@@ -197,10 +72,10 @@ class StrategyAnalysis:
         return time_diff_minutes.mean()
 
     def start_date(self):
-        return pd.to_datetime(self.candles_df.timestamp.min(), unit="ms")
+        return pd.to_datetime(self.candles_df.index.min(), unit="ms")
 
     def end_date(self):
-        return pd.to_datetime(self.candles_df.timestamp.max(), unit="ms")
+        return pd.to_datetime(self.candles_df.index.max(), unit="ms")
 
     def avg_profit(self):
         return self.positions.net_pnl_quote.mean()
@@ -222,8 +97,10 @@ Strategy Performance Report:
 
     def pnl_over_time(self):
         fig = go.Figure()
+        positions = self.positions.copy()
+        positions.reset_index(inplace=True).sort_values("close_time", inplace=True)
         fig.add_trace(go.Scatter(name="PnL Over Time",
-                                 x=self.positions.index,
+                                 x=self.positions.close_time,
                                  y=self.positions.net_pnl_quote.cumsum()))
         # Update layout with the required attributes
         fig.update_layout(

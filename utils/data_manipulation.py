@@ -11,6 +11,7 @@ class StrategyData:
     trade_fill: pd.DataFrame
     market_data: pd.DataFrame = None
     position_executor: pd.DataFrame = None
+    executors: pd.DataFrame = None
 
     @property
     def strategy_summary(self):
@@ -67,6 +68,30 @@ class StrategyData:
             strategy_summary["TIME_LIMIT"] = np.nan
             strategy_summary["total_positions"] = np.nan
 
+        # TODO: Improve executors parsing logic
+        if self.executors is not None:
+            executors_data = self.executors.copy()
+            grouped_executors = executors_data.groupby(
+                ["exchange", "trading_pair", "close_type"]).agg(
+                metric_count=("close_type", "count")).reset_index()
+            index_cols = ["exchange", "trading_pair"]
+            pivot_executors = pd.pivot_table(grouped_executors, values="metric_count", index=index_cols,
+                                             columns="close_type").reset_index()
+            result_cols = ["EARLY STOP", "STOP_LOSS", "TRAILING_STOP"]
+            pivot_executors = pivot_executors.reindex(columns=index_cols + result_cols, fill_value=0)
+            pivot_executors["total_positions"] = pivot_executors[result_cols].sum(axis=1)
+            strategy_summary = grouped_trade_fill.merge(pivot_executors, left_on=["market", "symbol"],
+                                                        right_on=["exchange", "trading_pair"],
+                                                        how="left")
+            strategy_summary.drop(columns=["exchange", "trading_pair"], inplace=True)
+        else:
+            strategy_summary = grouped_trade_fill.copy()
+            strategy_summary["TAKE_PROFIT"] = np.nan
+            strategy_summary["STOP_LOSS"] = np.nan
+            strategy_summary["TRAILING_STOP"] = np.nan
+            strategy_summary["TIME_LIMIT"] = np.nan
+            strategy_summary["total_positions"] = np.nan
+
         strategy_summary.rename(columns=columns_dict, inplace=True)
         strategy_summary.sort_values(["Realized PnL"], ascending=True, inplace=True)
         strategy_summary["Explore"] = False
@@ -89,6 +114,11 @@ class StrategyData:
                                                        (self.position_executor["trading_pair"] == trading_pair)].copy()
         else:
             position_executor = None
+        if self.executors is not None:
+            executors = self.executors[(self.executors["exchange"] == exchange) &
+                                       (self.executors["trading_pair"] == trading_pair)].copy()
+        else:
+            executors = None
         return SingleMarketStrategyData(
             exchange=exchange,
             trading_pair=trading_pair,
@@ -96,7 +126,8 @@ class StrategyData:
             order_status=order_status,
             trade_fill=trade_fill,
             market_data=market_data,
-            position_executor=position_executor
+            position_executor=position_executor,
+            executors=executors
         )
 
     @property
@@ -149,6 +180,7 @@ class SingleMarketStrategyData:
     trade_fill: pd.DataFrame
     market_data: pd.DataFrame = None
     position_executor: pd.DataFrame = None
+    executors: pd.DataFrame = None
 
     def get_filtered_strategy_data(self, start_date: datetime.datetime, end_date: datetime.datetime):
         orders = self.orders[
@@ -165,6 +197,11 @@ class SingleMarketStrategyData:
                                                        (self.position_executor.datetime <= end_date)].copy()
         else:
             position_executor = None
+        if self.executors is not None:
+            executors = self.executors[(self.executors.datetime >= start_date) &
+                                       (self.executors.datetime <= end_date)].copy()
+        else:
+            executors = None
         return SingleMarketStrategyData(
             exchange=self.exchange,
             trading_pair=self.trading_pair,
@@ -172,7 +209,8 @@ class SingleMarketStrategyData:
             order_status=order_status,
             trade_fill=trade_fill,
             market_data=market_data,
-            position_executor=position_executor
+            position_executor=position_executor,
+            executors=executors
         )
 
     def get_market_data_resampled(self, interval):
