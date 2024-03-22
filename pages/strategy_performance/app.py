@@ -156,6 +156,9 @@ else:
             show_buys = st.checkbox("Buys", value=False)
             if executor_version == "v2":
                 show_dca_prices = st.checkbox("DCA Prices", value=False)
+            else:
+                show_dca_prices = False
+                pass
         with col2:
             show_sells = st.checkbox("Sells", value=False)
             show_annotations = st.checkbox("Annotations", value=False)

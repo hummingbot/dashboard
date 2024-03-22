@@ -109,14 +109,12 @@ def load_controllers(path):
 def get_bots_data_paths():
     root_directory = "hummingbot_files/bots"
     bots_data_paths = {"General / Uploaded data": "data"}
-    reserved_word = "hummingbot-"
-    # Walk through the directory tree
+    # Walk through the directorxy tree
     for dirpath, dirnames, filenames in os.walk(root_directory):
         for dirname in dirnames:
             if dirname == "data":
                 parent_folder = os.path.basename(dirpath)
-                if parent_folder.startswith(reserved_word):
-                    bots_data_paths[parent_folder] = os.path.join(dirpath, dirname)
+                bots_data_paths[parent_folder] = os.path.join(dirpath, dirname)
             if "dashboard" in bots_data_paths:
                 del bots_data_paths["dashboard"]
     data_sources = {key: value for key, value in bots_data_paths.items() if value is not None}
