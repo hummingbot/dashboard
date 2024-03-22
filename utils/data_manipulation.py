@@ -68,6 +68,30 @@ class StrategyData:
             strategy_summary["TIME_LIMIT"] = np.nan
             strategy_summary["total_positions"] = np.nan
 
+        # TODO: Improve executors parsing logic
+        if self.executors is not None:
+            executors_data = self.executors.copy()
+            grouped_executors = executors_data.groupby(
+                ["exchange", "trading_pair", "close_type"]).agg(
+                metric_count=("close_type", "count")).reset_index()
+            index_cols = ["exchange", "trading_pair"]
+            pivot_executors = pd.pivot_table(grouped_executors, values="metric_count", index=index_cols,
+                                             columns="close_type").reset_index()
+            result_cols = ["EARLY STOP", "STOP_LOSS", "TRAILING_STOP"]
+            pivot_executors = pivot_executors.reindex(columns=index_cols + result_cols, fill_value=0)
+            pivot_executors["total_positions"] = pivot_executors[result_cols].sum(axis=1)
+            strategy_summary = grouped_trade_fill.merge(pivot_executors, left_on=["market", "symbol"],
+                                                        right_on=["exchange", "trading_pair"],
+                                                        how="left")
+            strategy_summary.drop(columns=["exchange", "trading_pair"], inplace=True)
+        else:
+            strategy_summary = grouped_trade_fill.copy()
+            strategy_summary["TAKE_PROFIT"] = np.nan
+            strategy_summary["STOP_LOSS"] = np.nan
+            strategy_summary["TRAILING_STOP"] = np.nan
+            strategy_summary["TIME_LIMIT"] = np.nan
+            strategy_summary["total_positions"] = np.nan
+
         strategy_summary.rename(columns=columns_dict, inplace=True)
         strategy_summary.sort_values(["Realized PnL"], ascending=True, inplace=True)
         strategy_summary["Explore"] = False
