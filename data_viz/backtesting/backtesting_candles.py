@@ -35,16 +35,16 @@ class BacktestingCandles(CandlesBase):
     @property
     def buys(self):
         df = self.positions[["timestamp", "close", "close_price", "close_time", "side"]].copy()
-        df["price"] = df.apply(lambda row: row["close"] if row["side"] == 1 else row["close_price"], axis=1)
-        df["timestamp"] = df.apply(lambda row: row["timestamp"] if row["side"] == 1 else row["close_time"], axis=1)
+        df["price"] = df.apply(lambda row: row["close"] if row["side"] == "BUY" else row["close_price"], axis=1)
+        df["timestamp"] = df.apply(lambda row: row["timestamp"] if row["side"] == "BUY" else row["close_time"], axis=1)
         df.set_index("timestamp", inplace=True)
         return df["price"]
 
     @property
     def sells(self):
         df = self.positions[["timestamp", "close", "close_price", "close_time", "side"]].copy()
-        df["price"] = df.apply(lambda row: row["close"] if row["side"] == -1 else row["close_price"], axis=1)
-        df["timestamp"] = df.apply(lambda row: row["timestamp"] if row["side"] == -1 else row["close_time"], axis=1)
+        df["price"] = df.apply(lambda row: row["close"] if row["side"] == "SELL" else row["close_price"], axis=1)
+        df["timestamp"] = df.apply(lambda row: row["timestamp"] if row["side"] == "SELL" else row["close_time"], axis=1)
         df.set_index("timestamp", inplace=True)
         return df["price"]
 
