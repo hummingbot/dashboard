@@ -18,7 +18,7 @@ INDICATORS_CONFIG_PATH = "data_viz/config"
 
 def dump_indicators_config(indicators_config: List[IndicatorConfig], name: str):
     dump = [config.dict() for config in indicators_config]
-    path = os.path.join(INDICATORS_CONFIG_PATH, name)
+    path = os.path.join(INDICATORS_CONFIG_PATH, f"{name}.json")
     with open(path, "w") as f:
         json.dump(dump, f)
 

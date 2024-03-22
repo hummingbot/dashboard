@@ -47,7 +47,6 @@ class PandasTAPlotlyTracer:
     def get_ema_traces(self, indicator_config: IndicatorConfig):
         if len(self.candles_df) < indicator_config.length:
             self.raise_error_if_not_enough_data(indicator_config.title)
-            return
         else:
             self.candles_df.ta.ema(length=indicator_config.length, append=True)
             ema_trace = go.Scatter(x=self.candles_df.index,
@@ -63,7 +62,6 @@ class PandasTAPlotlyTracer:
         signal = indicator_config.signal
         if len(self.candles_df) < any([fast, slow, signal]):
             self.raise_error_if_not_enough_data(indicator_config.title)
-            return
         else:
             self.candles_df.ta.macd(fast=fast, slow=slow, signal=signal, append=True)
             macd_trace = go.Scatter(x=self.candles_df.index,
@@ -86,7 +84,6 @@ class PandasTAPlotlyTracer:
         length = indicator_config.length
         if len(self.candles_df) < length:
             self.raise_error_if_not_enough_data(indicator_config.title)
-            return
         else:
             self.candles_df.ta.rsi(length=length, append=True)
             rsi_trace = go.Scatter(x=self.candles_df.index,

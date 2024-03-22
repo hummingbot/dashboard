@@ -12,41 +12,48 @@ class CandlesBase:
     def __init__(self,
                  candles_df: pd.DataFrame,
                  indicators_config: List[IndicatorConfig] = None,
+                 annotations=True,
                  line_mode=False,
-                 show_volume=False,
-                 extra_rows=5):
+                 show_indicators=False,
+                 main_height=0.7,
+                 max_height=1000,
+                 rows: int = None,
+                 row_heights: list = None):
         self.candles_df = candles_df
+        self.show_indicators = show_indicators
         self.indicators_config = indicators_config
+        self.annotations = annotations
         self.indicators_tracer = PandasTAPlotlyTracer(candles_df)
         self.tracer = PerformancePlotlyTracer()
-        self.show_volume = show_volume
         self.line_mode = line_mode
-        rows, heights = self.get_n_rows_and_heights(extra_rows)
+        self.main_height = main_height
+        self.max_height = max_height
         self.rows = rows
-        specs = [[{"secondary_y": True}]] * rows
-        self.base_figure = make_subplots(rows=rows,
+        if rows is None:
+            rows, row_heights = self.get_n_rows_and_heights()
+            self.rows = rows
+        specs = [[{"secondary_y": True}]] * self.rows
+        self.base_figure = make_subplots(rows=self.rows,
                                          cols=1,
                                          shared_xaxes=True,
                                          vertical_spacing=0.005,
-                                         row_heights=heights,
+                                         row_heights=row_heights,
                                          specs=specs)
         if 'timestamp' in candles_df.columns:
             candles_df.set_index("timestamp", inplace=True)
         self.min_time = candles_df.index.min()
         self.max_time = candles_df.index.max()
         self.add_candles_graph()
-        if self.show_volume:
-            self.add_volume()
-        if self.indicators_config is not None:
+        if self.show_indicators and self.indicators_config is not None:
             self.add_indicators()
         self.update_layout()
 
-    def get_n_rows_and_heights(self, extra_rows):
-        rows = 1 + extra_rows + self.show_volume
-        row_heights = [0.4] * extra_rows
-        if self.show_volume:
-            row_heights.insert(0, 0.05)
-        row_heights.insert(0, 0.8)
+    def get_n_rows_and_heights(self):
+        rows = 1
+        if self.show_indicators and self.indicators_config is not None:
+            rows = max([config.row for config in self.indicators_config])
+        complementary_height = 1 - self.main_height
+        row_heights = [self.main_height] + [complementary_height / (rows - 1)] * (rows - 1) if rows > 1 else [1]
         return rows, row_heights
 
     def figure(self):
@@ -64,13 +71,14 @@ class CandlesBase:
             )
         else:
             hover_text = []
-            for i in range(len(self.candles_df)):
-                hover_text.append(
-                    f"Open: {self.candles_df['open'][i]} <br>"
-                    f"High: {self.candles_df['high'][i]} <br>"
-                    f"Low: {self.candles_df['low'][i]} <br>"
-                    f"Close: {self.candles_df['close'][i]} <br>"
-                )
+            if self.annotations:
+                for i in range(len(self.candles_df)):
+                    hover_text.append(
+                        f"Open: {self.candles_df['open'][i]} <br>"
+                        f"High: {self.candles_df['high'][i]} <br>"
+                        f"Low: {self.candles_df['low'][i]} <br>"
+                        f"Close: {self.candles_df['close'][i]} <br>"
+                    )
             self.base_figure.add_trace(
                 go.Candlestick(
                     x=self.candles_df.index,
@@ -99,18 +107,26 @@ class CandlesBase:
         )
 
     def add_buy_trades(self, data: pd.Series):
-        self.base_figure.add_trace(self.tracer.get_buys_traces(data=data),
-                                   row=1, col=1)
+        buy_traces = self.tracer.get_buys_traces(data=data) if not data.empty else None
+        if bool(buy_traces):
+            self.base_figure.add_trace(buy_traces,
+                                       row=1, col=1)
 
     def add_sell_trades(self, data: pd.Series):
-        self.base_figure.add_trace(self.tracer.get_sells_traces(data=data),
-                                   row=1, col=1)
+        sell_traces = self.tracer.get_sells_traces(data=data) if not data.empty else None
+        print(f"Sell traces: {sell_traces}")
+        if bool(sell_traces):
+            self.base_figure.add_trace(sell_traces,
+                                       row=1, col=1)
 
     def add_quote_inventory_change(self, data: pd.DataFrame, quote_inventory_change_column: str, row_number: int = 3):
-        self.base_figure.add_trace(self.tracer.get_quote_inventory_change(data=data,
-                                                                          quote_inventory_change_column=quote_inventory_change_column),
-                                   row=row_number, col=1)
-        self.base_figure.update_yaxes(title_text='Quote Inventory Change', row=row_number, col=1)
+        quote_inventory_change_trace = self.tracer.get_quote_inventory_change(
+            data=data,
+            quote_inventory_change_column=quote_inventory_change_column)
+        if quote_inventory_change_trace:
+            self.base_figure.add_trace(quote_inventory_change_trace,
+                                       row=row_number, col=1)
+            self.base_figure.update_yaxes(title_text='Quote Inventory Change', row=row_number, col=1)
 
     def add_pnl(self, data: pd.DataFrame, realized_pnl_column: str, fees_column: str, net_realized_pnl_column: str,
                 row_number: int = 2):
@@ -129,13 +145,6 @@ class CandlesBase:
 
     def update_layout(self):
         self.base_figure.update_layout(
-            title={
-                'text': "Market activity",
-                'y': 0.99,
-                'x': 0.5,
-                'xanchor': 'center',
-                'yanchor': 'top'
-            },
             legend=dict(
                 orientation="h",
                 x=0.5,
@@ -143,16 +152,13 @@ class CandlesBase:
                 xanchor="center",
                 yanchor="bottom"
             ),
-            height=1000,
+            height=self.max_height,
             xaxis=dict(rangeslider_visible=False,
                        range=[self.min_time, self.max_time]),
             yaxis=dict(range=[self.candles_df.low.min(), self.candles_df.high.max()]),
             hovermode='x unified'
         )
         self.base_figure.update_yaxes(title_text="Price", row=1, col=1)
-        # TODO: Instead of using show_volume it should iterate over custom indicators adding corresponding titles
-        if self.show_volume:
-            self.base_figure.update_yaxes(title_text="Volume", row=2, col=1)
         self.base_figure.update_xaxes(title_text="Time", row=self.rows, col=1)
 
     # ----------------------------
@@ -162,50 +168,46 @@ class CandlesBase:
     def add_bollinger_bands(self, indicator_config: IndicatorConfig):
         if indicator_config.visible:
             bbu_trace, bbm_trace, bbl_trace = self.indicators_tracer.get_bollinger_bands_traces(indicator_config)
-            self.base_figure.add_trace(trace=bbu_trace,
-                                       row=indicator_config.row,
-                                       col=indicator_config.col)
-            self.base_figure.add_trace(trace=bbm_trace,
-                                       row=indicator_config.row,
-                                       col=indicator_config.col)
-            self.base_figure.add_trace(trace=bbl_trace,
-                                       row=indicator_config.row,
-                                       col=indicator_config.col)
-        else:
-            return
+            if all([bbu_trace, bbm_trace, bbl_trace]):
+                self.base_figure.add_trace(trace=bbu_trace,
+                                           row=indicator_config.row,
+                                           col=indicator_config.col)
+                self.base_figure.add_trace(trace=bbm_trace,
+                                           row=indicator_config.row,
+                                           col=indicator_config.col)
+                self.base_figure.add_trace(trace=bbl_trace,
+                                           row=indicator_config.row,
+                                           col=indicator_config.col)
 
     def add_ema(self, indicator_config: IndicatorConfig):
         if indicator_config.visible:
             ema_trace = self.indicators_tracer.get_ema_traces(indicator_config)
-            self.base_figure.add_trace(trace=ema_trace,
-                                       row=indicator_config.row,
-                                       col=indicator_config.col)
-        else:
-            return
+            if ema_trace:
+                self.base_figure.add_trace(trace=ema_trace,
+                                           row=indicator_config.row,
+                                           col=indicator_config.col)
 
     def add_macd(self, indicator_config: IndicatorConfig):
         if indicator_config.visible:
             macd_trace, macd_signal_trace, macd_hist_trace = self.indicators_tracer.get_macd_traces(indicator_config)
-            self.base_figure.add_trace(trace=macd_trace,
-                                       row=indicator_config.row,
-                                       col=indicator_config.col)
-            self.base_figure.add_trace(trace=macd_signal_trace,
-                                       row=indicator_config.row,
-                                       col=indicator_config.col)
-            self.base_figure.add_trace(trace=macd_hist_trace,
-                                       row=indicator_config.row,
-                                       col=indicator_config.col)
-        else:
-            return
+            if all([macd_trace, macd_signal_trace, macd_hist_trace]):
+                self.base_figure.add_trace(trace=macd_trace,
+                                           row=indicator_config.row,
+                                           col=indicator_config.col)
+                self.base_figure.add_trace(trace=macd_signal_trace,
+                                           row=indicator_config.row,
+                                           col=indicator_config.col)
+                self.base_figure.add_trace(trace=macd_hist_trace,
+                                           row=indicator_config.row,
+                                           col=indicator_config.col)
 
     def add_rsi(self, indicator_config: IndicatorConfig):
         if indicator_config.visible:
             rsi_trace = self.indicators_tracer.get_rsi_traces(indicator_config)
-            self.base_figure.add_trace(trace=rsi_trace,
-                                       row=indicator_config.row,
-                                       col=indicator_config.col)
-        else:
-            return
+            if rsi_trace:
+                self.base_figure.add_trace(trace=rsi_trace,
+                                           row=indicator_config.row,
+                                           col=indicator_config.col)
 
     def add_indicators(self):
         for indicator in self.indicators_config:

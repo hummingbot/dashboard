@@ -10,20 +10,22 @@ class BacktestingCandles(CandlesBase):
                  strategy_analysis: StrategyAnalysis,
                  indicators_config: List[IndicatorConfig] = None,
                  line_mode: bool = False,
-                 show_volume: bool = False):
+                 show_buys: bool = True,
+                 show_sells: bool = True,
+                 show_positions: bool = True,
+                 show_indicators: bool = False):
         self.candles_df = strategy_analysis.candles_df
-        extra_rows = 0
-        if bool(indicators_config):
-            extra_rows = max([indicator.row for indicator in indicators_config])
         super().__init__(candles_df=self.candles_df,
                          indicators_config=indicators_config,
                          line_mode=line_mode,
-                         show_volume=show_volume,
-                         extra_rows=extra_rows)
+                         show_indicators=show_indicators)
         self.positions = strategy_analysis.positions
-        self.add_buy_trades(data=self.buys)
-        self.add_sell_trades(data=self.sells)
-        self.add_positions()
+        if show_buys:
+            self.add_buy_trades(data=self.buys)
+        if show_sells:
+            self.add_sell_trades(data=self.sells)
+        if show_positions:
+            self.add_positions()
 
     def force_datetime_format(self):
         datetime_columns = ["timestamp", "close_time", "tl", "stop_loss_time", "take_profit_time"]

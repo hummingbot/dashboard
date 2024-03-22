@@ -200,9 +200,10 @@ else:
     with col3:
         end = st.text_input("End", value="2024-01-01")
     with col4:
-        add_positions = st.checkbox("Add positions", value=True)
-        add_volume = st.checkbox("Add volume", value=True)
-        add_pnl = st.checkbox("Add PnL", value=True)
+        show_buys = st.checkbox("Buys", value=False)
+        show_sells = st.checkbox("Sells", value=False)
+        show_positions = st.checkbox("Positions", value=False)
+        show_indicators = st.checkbox("Indicators", value=False)
         save_config = st.button("💾Save controller config!")
         config = controller["config"](**st.session_state["strategy_params"])
         controller = controller["class"](config=config)
@@ -227,11 +228,13 @@ else:
             backtesting_candles = BacktestingCandles(strategy_analysis,
                                                      indicators_config=utils.load_indicators_config(indicators_config_path),
                                                      line_mode=False,
-                                                     show_volume=add_volume)
-
+                                                     show_buys=show_buys,
+                                                     show_sells=show_sells,
+                                                     show_indicators=show_indicators,
+                                                     show_positions=show_positions)
             col1, col2 = st.columns(2)
             with col1:
-                st.subheader("🏦 Market")
+                st.subheader("🏦 General")
             with col2:
                 st.subheader("📋 General stats")
             col1, col2, col3, col4 = st.columns(4)
@@ -288,7 +291,7 @@ else:
                                " or portfolio. It compares the excess return earned above a risk-free rate per unit of"
                                " risk taken.")
             st.plotly_chart(backtesting_charts.realized_pnl_over_time_fig, use_container_width=True)
-            # TODO: Improve extra rows handling
+            st.subheader("💱 Market activity")
             st.plotly_chart(backtesting_candles.figure(), use_container_width=True)
 
         except FileNotFoundError:

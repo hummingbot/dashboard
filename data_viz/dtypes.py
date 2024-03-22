@@ -13,13 +13,6 @@ class IndicatorConfig(BaseModel):
     slow: int = None
     signal: int = None
 
-    # TODO: throw error if indicator is not available
-    # @validator("title")
-    # def indicator_is_available(cls, value):
-    #     if value not in ["bbands, ema, macd, rsi"]:
-    #         raise ValueError(f"{value} is not a valid indicator. Choose from bbands, ema, macd, rsi")
-    #     return value
-
 
 class PositionsVisualConfig(BaseModel):
     show: bool = True
@@ -30,3 +23,9 @@ class PositionsVisualConfig(BaseModel):
     sell_symbol: str = 'triangle-down'
     profitable_color: str = 'green'
     non_profitable_color: str = 'red'
+
+
+MACD_EXAMPLE_CONFIG = IndicatorConfig(visible=True, title="macd", row=1, col=1, color="red", fast=12, slow=26, signal=9)
+RSI_EXAMPLE_CONFIG = IndicatorConfig(visible=True, title="rsi", row=2, col=3, color="green", length=14)
+BBANDS_EXAMPLE_CONFIG = IndicatorConfig(visible=True, title="bbands", row=1, col=1, color="blue", length=20, std=2.0)
+EMA_EXAMPLE_CONFIG = IndicatorConfig(visible=True, title="ema", row=1, col=1, color="yellow", length=20, culo="asd")

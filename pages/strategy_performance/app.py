@@ -7,6 +7,7 @@ from utils.database_manager import DatabaseManager
 from utils.graphs import PerformanceGraphs
 from data_viz.performance.performance_charts import PerformanceCharts
 from data_viz.performance.performance_candles import PerformanceCandles
+import data_viz.utils as utils
 from utils.st_utils import initialize_st_page, download_csv_button, style_metric_cards, db_error_message
 
 
@@ -147,9 +148,31 @@ if "Error" in selected_db.status["market_data"] or time_filtered_strategy_data.m
     st.warning("Market data is not available so the candles graph is not going to be rendered."
                "Make sure that you are using the latest version of Hummingbot and market data recorder activated.")
 else:
+    # Visibility options
+    with st.expander("Visual Options"):
+        col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
+        with col1:
+            show_buys = st.checkbox("Buys", value=False)
+        with col2:
+            show_sells = st.checkbox("Sells", value=False)
+        with col3:
+            show_positions = st.checkbox("Positions", value=False)
+        with col4:
+            show_pnl = st.checkbox("PNL", value=True)
+        with col5:
+            show_quote_inventory_change = st.checkbox("Quote Inventory Change", value=True)
+        with col6:
+            show_indicators = st.checkbox("Indicators", value=False)
+        with col7:
+            main_height = st.slider("Main Row Height", min_value=0.1, max_value=1.0, value=0.7, step=0.1)
     col1, col2 = st.columns([3, 1])
     with col2:
+        st.markdown("### Candles config")
         # Set custom configs
+        if show_indicators:
+            indicators_config_path = st.selectbox("Indicators path", utils.get_indicators_config_paths())
+        else:
+            indicators_config_path = None
         interval = st.selectbox("Candles Interval:", intervals.keys(), index=2)
         rows_per_page = st.number_input("Candles per Page", value=1500, min_value=1, max_value=5000)
 
@@ -170,9 +193,6 @@ else:
         page_filtered_strategy_data = single_market_strategy_data.get_filtered_strategy_data(start_time_page, end_time_page)
         page_performance_charts = PerformanceGraphs(page_filtered_strategy_data)
         page_charts = PerformanceCharts(page_filtered_strategy_data)
-        page_candles = PerformanceCandles(source=page_filtered_strategy_data,
-                                          candles_df=candles_df,
-                                          extra_rows=2)
         # candles_chart = page_performance_charts.candles_graph(candles_df, interval=interval)
         # Show auxiliary charts
         intraday_tab, returns_tab, returns_data_tab, positions_tab, other_metrics_tab = st.tabs(["Intraday", "Returns", "Returns Data", "Positions", "Other Metrics"])
@@ -218,6 +238,16 @@ else:
                 st.metric(label='Average Sell Price', value=round(time_filtered_strategy_data.average_sell_price, 4),
                           help="The average price of the base asset sold.")
     with col1:
+        page_candles = PerformanceCandles(source=page_filtered_strategy_data,
+                                          indicators_config=utils.load_indicators_config(indicators_config_path) if show_indicators else None,
+                                          candles_df=candles_df,
+                                          show_positions=show_positions,
+                                          show_buys=show_buys,
+                                          show_sells=show_sells,
+                                          show_pnl=show_pnl,
+                                          show_quote_inventory_change=show_quote_inventory_change,
+                                          show_indicators=show_indicators,
+                                          main_height=main_height)
         st.plotly_chart(page_candles.figure(), use_container_width=True)
 
 # Tables section
