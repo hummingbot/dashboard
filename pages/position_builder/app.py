@@ -3,6 +3,7 @@ import streamlit as st
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 from decimal import Decimal
+import yaml
 
 from utils.st_utils import initialize_st_page
 from hummingbot.smart_components.utils.distributions import Distributions
@@ -21,6 +22,14 @@ col_quote, col_tp_sl, col_levels, col_spread_dist, col_amount_dist = st.columns(
 def normalize(values):
     total = sum(values)
     return [val / total for val in values]
+
+
+def convert_to_yaml(spreads, order_amounts):
+    data = {
+        'dca_spreads': [float(spread)/100 for spread in spreads],
+        'dca_amounts': [float(amount) for amount in order_amounts]
+    }
+    return yaml.dump(data, default_flow_style=False)
 
 
 with col_quote:
@@ -93,7 +102,19 @@ def get_distribution(dist_type, n_levels, start, base=None, scaling_factor=None,
 spread_distribution = get_distribution(spread_dist_type, n_levels, spread_start, spread_base, spread_scaling, spread_step, spread_ratio, manual_spreads)
 amount_distribution = normalize(get_distribution(amount_dist_type, n_levels, amount_start, amount_base, amount_scaling, amount_step, amount_ratio, manual_amounts))
 order_amounts = [Decimal(amount_dist * total_amount_quote) for amount_dist in amount_distribution]
-spreads = [spread - spread_distribution[0] for spread in spread_distribution]
+spreads = [Decimal(spread - spread_distribution[0]) for spread in spread_distribution]
+
+
+# Export Button
+if st.button('Export as YAML'):
+    yaml_data = convert_to_yaml(spreads, order_amounts)
+    st.download_button(
+        label="Download YAML",
+        data=yaml_data,
+        file_name='config.yaml',
+        mime='text/yaml'
+    )
+
 break_even_values = []
 take_profit_values = []
 for level in range(n_levels):
@@ -105,10 +126,11 @@ for level in range(n_levels):
 
 accumulated_amount = [sum(order_amounts[:i+1]) for i in range(len(order_amounts))]
 
+
 def calculate_unrealized_pnl(spreads, break_even_values, accumulated_amount):
     unrealized_pnl = []
     for i in range(len(spreads)):
-        distance = abs(spreads[i]  - break_even_values[i])
+        distance = abs(spreads[i] - break_even_values[i])
         pnl = accumulated_amount[i] * distance / 100  # PNL calculation
         unrealized_pnl.append(pnl)
     return unrealized_pnl
