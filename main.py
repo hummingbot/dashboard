@@ -14,6 +14,7 @@ def main_page():
             Page("pages/master_conf/app.py", "Credentials", "🗝️"),
             Page("pages/bot_orchestration/app.py", "Instances", "🦅"),
             Page("pages/file_manager/app.py", "File Explorer", "🗂"),
+            Page("pages/position_builder/app.py", "Position Builder", "🔭"),
             Section("Backtest Manager", "⚙️"),
             Page("pages/backtest_get_data/app.py", "Get Data", "💾"),
             Page("pages/backtest_create/create.py", "Create", "⚔️"),
