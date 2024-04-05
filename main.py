@@ -107,7 +107,7 @@ if "authenticator" not in st.session_state:
 if not AUTH_SYSTEM_ENABLED:
     main_page()
 elif st.session_state["authentication_status"]:
-    config["credentials"] = st.session_state.authenticator.credentials
+    config["credentials"] = st.session_state.authenticator.authentication_handler.credentials
     dump_dict_to_yaml(config, "credentials.yml")
     with st.sidebar:
         st.write(f'Welcome {st.session_state["name"]}!')
