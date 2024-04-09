@@ -1,7 +1,7 @@
 #### Instructions
 - **Upload SQLite Locally**:
 Drag and drop the SQLite file into the designated area on the page.
-Ensure that the file size does not exceed 1GB. Setting ```enableXsrfProtection = false``` in ```.streamlit/config.toml``` may be necessary if ```error 403``` is raised.
+Ensure that the file size does not exceed 1GB. Setting ```enableXsrfProtection = false``` in ```.streamlit/config.toml``` may be necessary if ```AxiosError: Request failed with status code 403``` is raised.
 - **Extract from S3**:
 Provide the necessary credentials, including the bucket name, access key ID, secret access key, and region name.
 Click on the "Extract" button to initiate the extraction process.
