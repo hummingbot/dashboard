@@ -12,6 +12,7 @@ dependencies:
       - streamlit
       - psycopg2-binary
       - boto3
+      - python-dotenv
       - watchdog
       - plotly
       - pycoingecko
