@@ -10,6 +10,8 @@ dependencies:
   - pip:
       - hummingbot
       - streamlit
+      - psycopg2-binary
+      - boto3
       - watchdog
       - plotly
       - pycoingecko
