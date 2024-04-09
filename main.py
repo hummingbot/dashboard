@@ -24,7 +24,7 @@ def main_page():
             Section("Performance Analysis", "📈"),
             Page("pages/etl/app.py", "ETL", "📦"),
             Page("pages/strategy_performance/app.py", "V1 Strategies", "🚀"),
-            # Page("pages/dca_analyzer/app.py", "DCA Analyzer", "🪭"),
+            Page("pages/dca_analyzer/app.py", "DCA Analyzer", "🪭"),
             Section("Community Pages", "👨‍👩‍👧‍👦"),
             # Page("pages/viz_lab/app.py", "Viz Lab", "🥼"),
             Page("pages/db_inspector/app.py", "DB Inspector", "🔍"),
