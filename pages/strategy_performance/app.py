@@ -1,17 +1,16 @@
-import os
 import pandas as pd
 import streamlit as st
 import math
-from utils.os_utils import get_databases
-from utils.database_manager import DatabaseManager
-from utils.graphs import PerformanceGraphs
-from utils.st_utils import initialize_st_page, download_csv_button, style_metric_cards, db_error_message
+from utils.os_utils import get_local_dbs
+from utils.sqlite_manager import SQLiteManager
+from data_viz.charts import ChartsBase
+from data_viz.performance.performance_candles import PerformanceCandles
+import data_viz.utils as utils
+from utils.st_utils import initialize_st_page, download_csv_button, db_error_message
 
 
-initialize_st_page(title="Strategy Performance", icon="🚀")
-style_metric_cards()
+initialize_st_page(title="Strategy Performance V1", icon="🚀")
 
-UPLOAD_FOLDER = "data"
 
 # Start content here
 intervals = {
@@ -28,45 +27,49 @@ intervals = {
 # Data source section
 st.subheader("🔫 Data source")
 
-# Upload database
-with st.expander("⬆️ Upload"):
-    uploaded_db = st.file_uploader("Select a Hummingbot SQLite Database", type=["sqlite", "db"])
-    if uploaded_db is not None:
-        file_contents = uploaded_db.read()
-        with open(os.path.join(UPLOAD_FOLDER, uploaded_db.name), "wb") as f:
-            f.write(file_contents)
-        st.success("File uploaded and saved successfully!")
-        selected_db = DatabaseManager(uploaded_db.name)
-
 # Find and select existing databases
-dbs = get_databases()
-if dbs is not None:
-    bot_source = st.selectbox("Choose your database source:", dbs.keys())
-    db_names = [x for x in dbs[bot_source]]
-    selected_db_name = st.selectbox("Select a database to start:", db_names)
-    selected_db = DatabaseManager(db_name=dbs[bot_source][selected_db_name])
+dbs = get_local_dbs("data")
+if dbs is not None and bool(dbs):
+    bots_source = st.selectbox("Choose a folder containing local databases", dbs.keys())
+    db_names = [x for x in dbs[bots_source]]
+    selected_db_name = st.selectbox("Select a database", db_names)
+    selected_db = SQLiteManager(dbs[bots_source][selected_db_name])
 else:
-    st.warning("Ups! No databases were founded. Start uploading one")
+    st.warning("Ups! No databases were founded. Start uploading one in ETL page.")
     selected_db = None
     st.stop()
 
 # Load strategy data
-strategy_data = selected_db.get_strategy_data()
-main_performance_charts = PerformanceGraphs(strategy_data)
+strategy_data = selected_db.get_strategy_v1_data()
+executor_version = selected_db.version
+charts = ChartsBase()
 
 # Strategy summary section
 st.divider()
 st.subheader("📝 Strategy summary")
-if not main_performance_charts.has_summary_table:
+if strategy_data.trade_fill_summary is None:
     db_error_message(db=selected_db,
                      error_message="Inaccesible summary table. Please try uploading a new database.")
     st.stop()
 else:
     main_tab, chart_tab = st.tabs(["Main", "Chart"])
     with chart_tab:
-        st.plotly_chart(main_performance_charts.summary_chart(), use_container_width=True)
+        st.plotly_chart(charts.realized_pnl_over_trading_pair(data=strategy_data.trade_fill_summary,
+                                                              trading_pair_column="Trading Pair",
+                                                              realized_pnl_column="Realized PnL",
+                                                              exchange="Exchange"),
+                        use_container_width=True)
     with main_tab:
-        selection = main_performance_charts.strategy_summary_table()
+        summary = st.data_editor(strategy_data.trade_fill_summary,
+                                 column_config={"PnL Over Time": st.column_config.LineChartColumn("PnL Over Time",
+                                                                                                  y_min=0,
+                                                                                                  y_max=5000),
+                                                "Explore": st.column_config.CheckboxColumn(required=True)
+                                                },
+                                 use_container_width=True,
+                                 hide_index=True
+                                 )
+        selection = summary[summary.Explore] if not summary[summary.Explore].empty else None
         if selection is None:
             st.info("💡 Choose a trading pair and start analyzing!")
             st.stop()
@@ -76,7 +79,6 @@ else:
         else:
             selected_exchange = selection["Exchange"].values[0]
             selected_trading_pair = selection["Trading Pair"].values[0]
-
 
 # Explore Trading Pair section
 st.divider()
@@ -94,7 +96,6 @@ start_time, end_time = st.select_slider("Select a time range to analyze",
                                         value=(date_array[0], date_array[-1]))
 single_market_strategy_data = strategy_data.get_single_market_strategy_data(selected_exchange, selected_trading_pair)
 time_filtered_strategy_data = single_market_strategy_data.get_filtered_strategy_data(start_time, end_time)
-time_filtered_performance_charts = PerformanceGraphs(time_filtered_strategy_data)
 
 # Header metrics
 col1, col2, col3, col4, col5, col6, col7, col8 = st.columns(8)
@@ -135,7 +136,10 @@ with col8:
               help="The total amount of quote asset sold.")
 
 # Cummulative pnl chart
-st.plotly_chart(time_filtered_performance_charts.pnl_over_time(), use_container_width=True)
+st.plotly_chart(charts.realized_pnl_over_time(data=time_filtered_strategy_data.trade_fill
+                                              .sort_values(by="timestamp"),
+                                              cum_realized_pnl_column="net_realized_pnl"),
+                use_container_width=True)
 
 # Market activity section
 st.subheader("💱 Market activity")
@@ -143,9 +147,31 @@ if "Error" in selected_db.status["market_data"] or time_filtered_strategy_data.m
     st.warning("Market data is not available so the candles graph is not going to be rendered."
                "Make sure that you are using the latest version of Hummingbot and market data recorder activated.")
 else:
+    # Visibility options
+    with st.expander("Visual Options"):
+        col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
+        with col1:
+            show_buys = st.checkbox("Buys", value=False)
+        with col2:
+            show_sells = st.checkbox("Sells", value=False)
+        with col3:
+            show_annotations = st.checkbox("Annotations", value=False)
+        with col4:
+            show_pnl = st.checkbox("PNL", value=True)
+        with col5:
+            show_quote_inventory_change = st.checkbox("Quote Inventory Change", value=True)
+        with col6:
+            show_indicators = st.checkbox("Indicators", value=False)
+        with col7:
+            main_height = st.slider("Main Row Height", min_value=0.1, max_value=1.0, value=0.7, step=0.1)
     col1, col2 = st.columns([3, 1])
     with col2:
+        st.markdown("### Candles config")
         # Set custom configs
+        if show_indicators:
+            indicators_config_path = st.selectbox("Indicators path", utils.get_indicators_config_paths())
+        else:
+            indicators_config_path = None
         interval = st.selectbox("Candles Interval:", intervals.keys(), index=2)
         rows_per_page = st.number_input("Candles per Page", value=1500, min_value=1, max_value=5000)
 
@@ -158,21 +184,26 @@ else:
             selected_page = 0
         start_idx = selected_page * rows_per_page
         end_idx = start_idx + rows_per_page
-        candles_df = time_filtered_strategy_data.get_market_data_resampled(interval=f"{intervals[interval]}S").iloc[start_idx:end_idx]
+        candles_df = time_filtered_strategy_data.get_market_data_resampled(
+            interval=f"{intervals[interval]}S").iloc[start_idx:end_idx]
         start_time_page = candles_df.index.min()
         end_time_page = candles_df.index.max()
 
         # Get Page Filtered Strategy Data
         page_filtered_strategy_data = single_market_strategy_data.get_filtered_strategy_data(start_time_page, end_time_page)
-        page_performance_charts = PerformanceGraphs(page_filtered_strategy_data)
-        candles_chart = page_performance_charts.candles_graph(candles_df, interval=interval)
 
         # Show auxiliary charts
-        intraday_tab, returns_tab, returns_data_tab, positions_tab, other_metrics_tab = st.tabs(["Intraday", "Returns", "Returns Data", "Positions", "Other Metrics"])
+        intraday_tab, returns_tab, returns_data_tab, other_metrics_tab = st.tabs(["Intraday", "Returns", "Returns Data", "Other Metrics"])
         with intraday_tab:
-            st.plotly_chart(time_filtered_performance_charts.intraday_performance(), use_container_width=True)
+            st.plotly_chart(charts.intraday_performance(data=page_filtered_strategy_data.trade_fill,
+                                                        quote_volume_column="quote_volume",
+                                                        datetime_column="timestamp",
+                                                        realized_pnl_column="realized_pnl"),
+                            use_container_width=True)
         with returns_tab:
-            st.plotly_chart(time_filtered_performance_charts.returns_histogram(), use_container_width=True)
+            st.plotly_chart(charts.returns_distribution(data=page_filtered_strategy_data.trade_fill,
+                                                        realized_pnl_column="realized_pnl"),
+                            use_container_width=True)
         with returns_data_tab:
             raw_returns_data = time_filtered_strategy_data.trade_fill[["timestamp", "gross_pnl", "trade_fee", "realized_pnl"]].dropna(subset="realized_pnl")
             st.dataframe(raw_returns_data,
@@ -180,12 +211,6 @@ else:
                          hide_index=True,
                          height=(min(len(time_filtered_strategy_data.trade_fill) * 39, 600)))
             download_csv_button(raw_returns_data, "raw_returns_data", "download-raw-returns")
-        with positions_tab:
-            positions_sunburst = page_performance_charts.position_executor_summary_sunburst()
-            if positions_sunburst:
-                st.plotly_chart(page_performance_charts.position_executor_summary_sunburst(), use_container_width=True)
-            else:
-                st.info("No position executor data found.")
         with other_metrics_tab:
             col3, col4 = st.columns(2)
             with col3:
@@ -212,7 +237,18 @@ else:
                 st.metric(label='Average Sell Price', value=round(time_filtered_strategy_data.average_sell_price, 4),
                           help="The average price of the base asset sold.")
     with col1:
-        st.plotly_chart(candles_chart, use_container_width=True)
+        page_candles = PerformanceCandles(trade_fill=page_filtered_strategy_data.trade_fill,
+                                          indicators_config=utils.load_indicators_config(indicators_config_path) if show_indicators else None,
+                                          candles_df=candles_df,
+                                          show_buys=show_buys,
+                                          show_sells=show_sells,
+                                          show_pnl=show_pnl,
+                                          show_quote_inventory_change=show_quote_inventory_change,
+                                          show_indicators=show_indicators,
+                                          main_height=main_height,
+                                          executor_version=executor_version,
+                                          show_annotations=show_annotations)
+        st.plotly_chart(page_candles.figure(), use_container_width=True)
 
 # Tables section
 st.divider()
@@ -230,7 +266,3 @@ if not strategy_data.market_data.empty:
     with st.expander("💱 Market Data"):
         st.write(strategy_data.market_data)
         download_csv_button(strategy_data.market_data, "market_data", "download-market-data")
-if strategy_data.position_executor is not None and not strategy_data.position_executor.empty:
-    with st.expander("🤖 Position executor"):
-        st.write(strategy_data.position_executor)
-        download_csv_button(strategy_data.position_executor, "position_executor", "download-position-executor")

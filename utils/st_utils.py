@@ -6,7 +6,7 @@ import inspect
 import streamlit as st
 from st_pages import add_page_title
 
-from utils.database_manager import DatabaseManager
+from utils.sqlite_manager import SQLiteManager
 
 def initialize_st_page(title: str, icon: str, layout="wide", initial_sidebar_state="collapsed"):
     st.set_page_config(
@@ -67,7 +67,7 @@ def style_metric_cards(
     )
 
 
-def db_error_message(db: DatabaseManager, error_message: str):
+def db_error_message(db: SQLiteManager, error_message: str):
     container = st.container()
     with container:
         st.warning(error_message)
