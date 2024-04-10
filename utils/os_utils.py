@@ -117,9 +117,9 @@ def get_bots_data_paths():
     return data_sources
 
 
-def get_local_dbs(root_folder: str):
+def get_local_dbs():
     databases = {}
-    bots_data_paths = get_bots_data_paths(root_folder)
+    bots_data_paths = get_bots_data_paths()
     for source_name, source_path in bots_data_paths.items():
         sqlite_files = {}
         for db_name in os.listdir(source_path):

@@ -28,7 +28,7 @@ intervals = {
 st.subheader("🔫 Data source")
 
 # Find and select existing databases
-dbs = get_local_dbs("data")
+dbs = get_local_dbs()
 if dbs is not None and bool(dbs):
     bots_source = st.selectbox("Choose a folder containing local databases", dbs.keys())
     db_names = [x for x in dbs[bots_source]]
