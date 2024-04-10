@@ -274,3 +274,23 @@ for index, rown in filtered_executors_data.iterrows():
 candles_figure.update_yaxes(title_text="Realized PnL ($)", row=2, col=1)
 candles_figure.update_yaxes(title_text="Volume ($)", row=3, col=1)
 st.plotly_chart(candles_figure, use_container_width=True)
+
+
+# Tables section
+st.divider()
+st.subheader("Tables")
+with st.expander("💵 Trades"):
+    trade_fill = postgres.read_trade_fill()
+    st.write(trade_fill)
+    download_csv_button(trade_fill, "trade_fill", "download-trades")
+with st.expander("📩 Orders"):
+    orders = postgres.read_orders()
+    st.write(orders)
+    download_csv_button(orders, "orders", "download-orders")
+if not market_data.empty:
+    with st.expander("💱 Market Data"):
+        st.write(market_data)
+        download_csv_button(market_data, "market_data", "download-market-data")
+with st.expander("📈 Executors"):
+    st.write(executors)
+    download_csv_button(executors, "executors", "download-executors")
