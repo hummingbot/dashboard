@@ -40,7 +40,11 @@ else:
     st.stop()
 
 # Load strategy data
-strategy_data = selected_db.get_strategy_v1_data()
+try:
+    strategy_data = selected_db.get_strategy_v1_data()
+except NotImplementedError as e:
+    st.error(f"Error: {e}")
+    st.stop()
 executor_version = selected_db.version
 charts = ChartsBase()
 

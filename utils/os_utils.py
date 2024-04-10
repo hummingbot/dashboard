@@ -107,16 +107,13 @@ def load_controllers(path):
 
 
 def get_bots_data_paths(root_folder: str):
-    bots_data_paths = {"General / Uploaded data": "data"}
-    # Walk through the directory tree
-    for dirpath, dirnames, filenames in os.walk(root_folder):
+    dbs = {"uploaded": "data/uploaded"}
+    for dirpath, dirnames, filenames in os.walk("data/s3"):
         for dirname in dirnames:
-            if dirname == "data" or dirname == "uploaded":
+            if dirname == "data":
                 parent_folder = os.path.basename(dirpath)
-                bots_data_paths[parent_folder] = os.path.join(dirpath, dirname)
-            if "dashboard" in bots_data_paths:
-                del bots_data_paths["dashboard"]
-    data_sources = {key: value for key, value in bots_data_paths.items() if value is not None}
+                dbs[f"s3_{parent_folder}"] = os.path.join(dirpath, dirname)
+    data_sources = {key: value for key, value in dbs.items() if value is not None}
     return data_sources
 
 
