@@ -236,6 +236,7 @@ class SQLiteManager:
             executors["trading_pair"] = executors["config"].apply(lambda x: json.loads(x)["trading_pair"])
             executors["exchange"] = executors["config"].apply(lambda x: json.loads(x)["connector_name"])
             executors["side"] = executors["config"].apply(lambda x: json.loads(x)["side"])
+            executors["level_id"] = executors["config"].apply(lambda x: json.loads(x).get("level_id"))
             executors["bep"] = executors["custom_info"].apply(lambda x: json.loads(x)["current_position_average_price"])
             executors["close_price"] = executors["custom_info"].apply(lambda x: json.loads(x)["close_price"])
             executors["close_type"] = executors["close_type"].apply(lambda x: CloseType(x).name)

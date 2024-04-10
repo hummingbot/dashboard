@@ -62,6 +62,7 @@ class PostgresConnector:
                     close_type VARCHAR(255),
                     close_timestamp INT,
                     status INT,
+                    level_id VARCHAR(255),
                     config JSONB,
                     net_pnl_pct FLOAT,
                     net_pnl_quote FLOAT,
@@ -94,9 +95,9 @@ class PostgresConnector:
         with self.conn.cursor() as cursor:
             for _, row in executors.iterrows():
                 cursor.execute("""
-                    INSERT INTO executors (id, type, close_type, close_timestamp, status, config, net_pnl_pct, net_pnl_quote, cum_fees_quote, filled_amount_quote, is_active, is_trading, custom_info, controller_id, datetime, close_datetime, cum_net_pnl_quote, cum_filled_amount_quote, trading_pair, exchange, side, bep, close_price, sl, tp, tl, instance, db_path, db_name)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                    """, (row["id"], row["type"], row["close_type"], row["close_timestamp"], row["status"], row["config"], row["net_pnl_pct"], row["net_pnl_quote"], row["cum_fees_quote"], row["filled_amount_quote"], row["is_active"], row["is_trading"], row["custom_info"], row["controller_id"], row["datetime"], row["close_datetime"], row["cum_net_pnl_quote"], row["cum_filled_amount_quote"], row["trading_pair"], row["exchange"], row["side"], row["bep"], row["close_price"], row["sl"], row["tp"], row["tl"], row["instance"], row["db_path"], row["db_name"]))
+                    INSERT INTO executors (id, type, close_type, level_id, close_timestamp, status, config, net_pnl_pct, net_pnl_quote, cum_fees_quote, filled_amount_quote, is_active, is_trading, custom_info, controller_id, datetime, close_datetime, cum_net_pnl_quote, cum_filled_amount_quote, trading_pair, exchange, side, bep, close_price, sl, tp, tl, instance, db_path, db_name)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    """, (row["id"], row["type"], row["close_type"], row["level_id"], row["close_timestamp"], row["status"], row["config"], row["net_pnl_pct"], row["net_pnl_quote"], row["cum_fees_quote"], row["filled_amount_quote"], row["is_active"], row["is_trading"], row["custom_info"], row["controller_id"], row["datetime"], row["close_datetime"], row["cum_net_pnl_quote"], row["cum_filled_amount_quote"], row["trading_pair"], row["exchange"], row["side"], row["bep"], row["close_price"], row["sl"], row["tp"], row["tl"], row["instance"], row["db_path"], row["db_name"]))
             self.conn.commit()
 
     def read_executors(self):

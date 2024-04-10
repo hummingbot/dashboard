@@ -92,8 +92,7 @@ except OperationalError as e:
     st.stop()
 
 st.markdown("#### Select databases")
-root_folder = st.text_input("Select your root folder", value="data")
-db_orchestrator = DatabaseOrchestrator(root_folder)
+db_orchestrator = DatabaseOrchestrator()
 healthy_dbs = [db.db_path for db in db_orchestrator.healthy_dbs]
 with st.expander("Database status report"):
     st.dataframe(db_orchestrator.status_report, use_container_width=True)

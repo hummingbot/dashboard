@@ -106,7 +106,7 @@ def load_controllers(path):
     return controllers
 
 
-def get_bots_data_paths(root_folder: str):
+def get_bots_data_paths():
     dbs = {"uploaded": "data/uploaded"}
     for dirpath, dirnames, filenames in os.walk("data/s3"):
         for dirname in dirnames:

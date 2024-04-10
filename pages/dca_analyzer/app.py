@@ -13,6 +13,14 @@ from data_viz.tracers import PerformancePlotlyTracer
 
 load_dotenv()
 
+
+def format_duration(seconds):
+    minutes, seconds = divmod(seconds, 60)
+    hours, minutes = divmod(minutes, 60)
+    days, hours = divmod(hours, 24)
+    return f"{int(days)}d {int(hours)}h {int(minutes)}m"
+
+
 intervals = {
     "1m": 60,
     "3m": 60 * 3,
@@ -33,13 +41,14 @@ def custom_sort(row):
 
 
 initialize_st_page(title="DCA Performance", icon="🚀")
+st.subheader("🔫 Data source")
 
 try:
-    postgres_etl = PostgresConnector(host="dashboard-db-1",
-                               port=5432,
-                               database=os.environ.get("POSTGRES_DB"),
-                               user=os.environ.get("POSTGRES_USER"),
-                               password=os.environ.get("POSTGRES_PASSWORD"))
+    postgres = PostgresConnector(host="dashboard-db-1",
+                                 port=5432,
+                                 database=os.environ.get("POSTGRES_DB"),
+                                 user=os.environ.get("POSTGRES_USER"),
+                                 password=os.environ.get("POSTGRES_PASSWORD"))
 except Exception as e:
     col1, col2, col3, col4, col5 = st.columns(5)
     with col1:
@@ -53,7 +62,7 @@ except Exception as e:
     with col5:
         db_password = st.text_input("DB Password", os.environ.get("POSTGRES_PASSWORD"), type="password")
     try:
-        postgres_etl = PostgresConnector(host=host, port=port, database=db_name, user=db_user, password=db_password)
+        postgres = PostgresConnector(host=host, port=port, database=db_name, user=db_user, password=db_password)
         st.success("Connected to PostgreSQL database successfully!")
     except OperationalError as e:
         # Log the error message to Streamlit interface
@@ -62,18 +71,25 @@ except Exception as e:
         logging.error(f"Error connecting to PostgreSQL database: {e}")
         st.stop()
 
-executors = postgres_etl.read_executors()
-executors["level_id"] = executors["config"].apply(lambda x: x.get("level_id", None))
-
-market_data = postgres_etl.read_market_data()
-
+executors = postgres.read_executors()
+market_data = postgres.read_market_data()
 tracer = PerformancePlotlyTracer()
 
+st.subheader("📊 Overview")
 grouped_executors = executors.groupby(["instance", "controller_id", "exchange", "trading_pair", "db_name"]).agg(
     {"net_pnl_quote": "sum",
-     "id": "count"}).reset_index()
-st.dataframe(grouped_executors, use_container_width=True)
+     "id": "count",
+     "datetime": "min",
+     "close_datetime": "max"}).reset_index()
 
+# Apply the function to the duration column
+grouped_executors["duration"] = (grouped_executors["close_datetime"] - grouped_executors["datetime"]).dt.total_seconds().apply(format_duration)
+grouped_executors.rename(columns={"datetime": "start_datetime_utc",
+                                  "close_datetime": "end_datetime_utc",
+                                  "id": "total_executors"}, inplace=True)
+st.dataframe(grouped_executors, use_container_width=True, hide_index=True)
+
+st.subheader("🔍 Filters")
 col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
 with col1:
     db_name = st.multiselect("Select db", executors["db_name"].unique())
@@ -90,7 +106,6 @@ with col6:
 with col7:
     end_datetime = st.date_input("End date", value=executors["datetime"].max())
 
-st.divider()
 st.subheader("Performance Analysis")
 
 filtered_executors_data = executors.copy()

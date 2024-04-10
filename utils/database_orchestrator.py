@@ -3,11 +3,12 @@ from typing import List
 import os
 
 from utils.sqlite_manager import SQLiteManager
+from utils.os_utils import get_bots_data_paths
 
 
 class DatabaseOrchestrator:
-    def __init__(self, root_folder: str):
-        self.root_folder = os.path.join(os.getcwd(), root_folder)
+    def __init__(self):
+        pass
 
     @property
     def dbs_map(self):
@@ -29,25 +30,10 @@ class DatabaseOrchestrator:
     def db_names(self):
         return [os.path.basename(db.db_path) for db in self.healthy_dbs]
 
-    def get_dbs_paths(self):
-        """
-        Get all the paths containing databases in the root folder
-        :return: dict with the name of the folder as key and the path as value
-        """
-        bots_data_paths = {}
-        for dirpath, dirnames, filenames in os.walk(self.root_folder):
-            for dirname in dirnames:
-                if dirname == "data":
-                    parent_folder = os.path.basename(dirpath)
-                    bots_data_paths[parent_folder] = os.path.join(dirpath, dirname)
-                if "dashboard" in bots_data_paths:
-                    del bots_data_paths["dashboard"]
-        data_sources = {key: value for key, value in bots_data_paths.items() if value is not None}
-        return data_sources
-
-    def get_dbs_map(self):
+    @staticmethod
+    def get_dbs_map():
         databases = {}
-        bots_data_paths = self.get_dbs_paths()
+        bots_data_paths = get_bots_data_paths()
         for source_name, source_path in bots_data_paths.items():
             sqlite_files = {}
             for db_name in os.listdir(source_path):
@@ -112,4 +98,3 @@ class DatabaseOrchestrator:
             market_data = pd.concat([market_data, new_market_data])
             executors = pd.concat([executors, new_executors])
         return {"trade_fill": trade_fill, "orders": orders, "order_status": order_status, "market_data": market_data, "executors": executors}
-
