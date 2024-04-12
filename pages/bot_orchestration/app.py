@@ -1,99 +1,15 @@
-from types import SimpleNamespace
-
-from commlib.exceptions import RPCClientTimeoutError
-
-import constants
 import streamlit as st
-from streamlit_elements import elements, mui, lazy, sync, event
-import time
+from streamlit_elements import elements, mui
 
-from docker_manager import DockerManager
-from hbotrc import BotCommands
-
-from ui_components.bot_performance_card import BotPerformanceCard
+from ui_components.bot_performance_card_v2 import BotPerformanceCardV2
 from ui_components.dashboard import Dashboard
-from ui_components.exited_bot_card import ExitedBotCard
-from ui_components.launch_bot_card import LaunchBotCard
-from ui_components.launch_broker_card import LaunchBrokerCard
+from utils.backend_api_client import BackendAPIClient
 from utils.st_utils import initialize_st_page
 
-CARD_WIDTH = 6
+# Constants for UI layout
+CARD_WIDTH = 12
 CARD_HEIGHT = 3
-NUM_CARD_COLS = 2
-
-initialize_st_page(title="Instances", icon="🦅", initial_sidebar_state="collapsed")
-
-if "is_broker_running" not in st.session_state:
-    st.session_state.is_broker_running = False
-
-if "active_bots" not in st.session_state:
-    st.session_state.active_bots = {}
-
-if "exited_bots" not in st.session_state:
-    st.session_state.exited_bots = {}
-
-if "new_bot_name" not in st.session_state:
-    st.session_state.new_bot_name = ""
-
-if "selected_strategy" not in st.session_state:
-    st.session_state.selected_strategy = None
-
-if "editor_tabs" not in st.session_state:
-    st.session_state.editor_tabs = {}
-
-
-def update_containers_info(docker_manager):
-    active_containers = docker_manager.get_active_containers()
-    st.session_state.is_broker_running = "hummingbot-broker" in active_containers
-    if st.session_state.is_broker_running:
-        try:
-            active_hbot_containers = [container for container in active_containers if
-                                      "hummingbot-" in container and "broker" not in container
-                                      and "master_bot_conf" not in container]
-            previous_active_bots = list(st.session_state.active_bots)
-
-            # Remove bots that are no longer active
-            for bot in previous_active_bots:
-                if bot not in active_hbot_containers:
-                    del st.session_state.active_bots[bot]
-
-            # Add new bots
-            for bot in active_hbot_containers:
-                if bot not in previous_active_bots:
-                    st.session_state.active_bots[bot] = {
-                        "bot_name": bot,
-                        "broker_client": BotCommands(host='localhost', port=1883, username='admin', password='password',
-                                                     bot_id=bot)
-                    }
-
-            # Update bot info
-            for bot in list(st.session_state.active_bots):
-                try:
-                    broker_client = st.session_state.active_bots[bot]["broker_client"]
-                    status = broker_client.status()
-                    history = broker_client.history()
-                    is_running = "No strategy is currently running" not in status.msg
-                    st.session_state.active_bots[bot]["is_running"] = is_running
-                    st.session_state.active_bots[bot]["status"] = status.msg
-                    st.session_state.active_bots[bot]["trades"] = history.trades
-                    st.session_state.active_bots[bot]["selected_strategy"] = None
-                except RPCClientTimeoutError:
-                    st.error(f"RPCClientTimeoutError: Could not connect to {bot}. Please review the connection.")
-                    del st.session_state.active_bots[bot]
-        except RuntimeError:
-            st.rerun()
-        st.session_state.active_bots = dict(
-            sorted(st.session_state.active_bots.items(), key=lambda x: x[1]['is_running'], reverse=True))
-    else:
-        st.session_state.active_bots = {}
-
-
-docker_manager = DockerManager()
-if not docker_manager.is_docker_running():
-    st.warning("Docker is not running. Please start Docker and refresh the page.")
-    st.stop()
-update_containers_info(docker_manager)
-exited_containers = [container for container in docker_manager.get_exited_containers() if "broker" not in container]
+NUM_CARD_COLS = 1
 
 
 def get_grid_positions(n_cards: int, cols: int = NUM_CARD_COLS, card_width: int = CARD_HEIGHT, card_height: int = CARD_WIDTH):
@@ -102,55 +18,32 @@ def get_grid_positions(n_cards: int, cols: int = NUM_CARD_COLS, card_width: int 
     return sorted(x_y, key=lambda x: (x[1], x[0]))
 
 
-if "create_containers_board" not in st.session_state:
-    board = Dashboard()
-    create_containers_board = SimpleNamespace(
-        dashboard=board,
-        launch_bot=LaunchBotCard(board, 0, 0, 8, 1.5),
-        launch_broker=LaunchBrokerCard(board, 8, 0, 4, 1.5)
-    )
-    st.session_state.create_containers_board = create_containers_board
-
-else:
-    create_containers_board = st.session_state.create_containers_board
+initialize_st_page(title="Instances", icon="🦅", initial_sidebar_state="collapsed")
+api_client = BackendAPIClient.get_instance(host="localhost", port=8000)
 
 
-with elements("create_bot"):
-    with mui.Paper(elevation=3, style={"padding": "2rem"}, spacing=[2, 2], container=True):
-        with create_containers_board.dashboard():
-            create_containers_board.launch_bot()
-            create_containers_board.launch_broker()
+if not api_client.is_docker_running():
+    st.warning("Docker is not running. Please start Docker and refresh the page.")
+    st.stop()
 
 
-with elements("active_instances_board"):
-    with mui.Paper(sx={"padding": "2rem"}, variant="outlined"):
-        mui.Typography("🦅 Active Instances", variant="h5")
-        if st.session_state.is_broker_running:
-            quantity_of_active_bots = len(st.session_state.active_bots)
-            if quantity_of_active_bots > 0:
-                # TODO: Make layout configurable
-                grid_positions = get_grid_positions(n_cards=quantity_of_active_bots, cols=NUM_CARD_COLS,
-                                                    card_width=CARD_WIDTH, card_height=CARD_HEIGHT)
+active_bots_response = api_client.get_active_bots_status()
+if active_bots_response.get("status") == "success":
+    with elements("active_instances_board"):
+        with mui.Paper(sx={"padding": "2rem"}, variant="outlined"):
+            mui.Typography("🦅 Active Instances", variant="h5")
+            active_bots = active_bots_response.get("data")
+            if active_bots:
+                positions = get_grid_positions(len(active_bots), NUM_CARD_COLS, CARD_WIDTH, CARD_HEIGHT)
                 active_instances_board = Dashboard()
-                for (bot, config), (x, y) in zip(st.session_state.active_bots.items(), grid_positions):
-                    st.session_state.active_bots[bot]["bot_performance_card"] = BotPerformanceCard(active_instances_board,
-                                                                                                    x, y,
-                                                                                                    CARD_WIDTH, CARD_HEIGHT)
-                with active_instances_board():
-                    for bot, config in st.session_state.active_bots.items():
-                        st.session_state.active_bots[bot]["bot_performance_card"](config)
+                for (bot, bot_info), (x, y) in zip(active_bots.items(), positions):
+                    card = BotPerformanceCardV2(active_instances_board, x, y, CARD_WIDTH, CARD_HEIGHT)
+                    with active_instances_board():
+                        card(bot_info)
             else:
                 mui.Alert("No active bots found. Please create a new bot.", severity="info", sx={"margin": "1rem"})
-        else:
-            mui.Alert("Please start Hummingbot Broker to control your bots.", severity="warning", sx={"margin": "1rem"})
-with elements("stopped_instances_board"):
-    grid_positions = get_grid_positions(n_cards=len(exited_containers), cols=NUM_CARD_COLS, card_width=CARD_WIDTH, card_height=CARD_HEIGHT)
-    exited_instances_board = Dashboard()
-    for exited_instance, (x, y) in zip(exited_containers, grid_positions):
-        st.session_state.exited_bots[exited_instance] = ExitedBotCard(exited_instances_board, x, y,
-                                                                        CARD_WIDTH, 1)
-    with mui.Paper(style={"padding": "2rem"}, variant="outlined"):
-        mui.Typography("💤 Stopped Instances", variant="h5")
-        with exited_instances_board():
-            for bot, card in st.session_state.exited_bots.items():
-                card(bot)
+
+
+
+
+
