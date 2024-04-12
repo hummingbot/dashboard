@@ -39,17 +39,10 @@ ENV COMMIT_SHA=${COMMIT}
 ENV COMMIT_BRANCH=${BRANCH}
 ENV BUILD_DATE=${DATE}
 
-ENV INSTALLATION_TYPE=docker
-
 # Install system dependencies
 RUN apt-get update && \
     apt-get install -y curl && \
     rm -rf /var/lib/apt/lists/*
-
-# Install Docker CLI
-RUN curl -fsSL https://get.docker.com -o get-docker.sh && \
-    sh get-docker.sh && \
-    rm get-docker.sh
 
 # Create mount points
 RUN mkdir -p /home/dashboard/data
