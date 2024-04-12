@@ -456,7 +456,7 @@ with c3:
     download_config = st.download_button(
         label="Download YAML",
         data=yaml_config,
-        file_name='config.yaml',
+        file_name=f'{id.lower()}.yml',
         mime='text/yaml'
     )
     upload_config_to_backend = st.button("Upload Config to BackendAPI")
