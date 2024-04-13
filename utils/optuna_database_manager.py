@@ -6,8 +6,6 @@ import pandas as pd
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
-from utils.data_manipulation import StrategyData
-
 
 class OptunaDBManager:
     def __init__(self, db_name, db_root_path: Optional[str]):

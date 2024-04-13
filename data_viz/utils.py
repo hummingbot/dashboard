@@ -13,7 +13,7 @@ example_case = [
     IndicatorConfig(visible=True, title="macd", row=2, col=1, color="red", fast=12, slow=26, signal=9),
     IndicatorConfig(visible=True, title="rsi", row=3, col=1, color="green", length=14)
 ]
-INDICATORS_CONFIG_PATH = "data_viz/config"
+INDICATORS_CONFIG_PATH = "data_viz/conf"
 
 
 def dump_indicators_config(indicators_config: List[IndicatorConfig], name: str):
@@ -34,4 +34,4 @@ def get_indicators_config_paths():
 
 
 if __name__ == "__main__":
-    dump_indicators_config(example_case, "config/example_case.json")
+    dump_indicators_config(example_case, "conf/example_case.json")

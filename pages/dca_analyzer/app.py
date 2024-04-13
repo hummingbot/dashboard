@@ -6,8 +6,9 @@ import logging
 from psycopg2 import OperationalError
 import os
 
-from data_viz.performance.performance_candles import PerformanceCandles
-from utils.st_utils import initialize_st_page, download_csv_button, db_error_message
+from data_viz.candles import PerformanceCandles
+from data_viz.charts import ChartsBase
+from utils.st_utils import initialize_st_page, download_csv_button
 from utils.postgres_connector import PostgresConnector
 from data_viz.tracers import PerformancePlotlyTracer
 
@@ -73,6 +74,7 @@ except Exception as e:
 
 executors = postgres.read_executors()
 market_data = postgres.read_market_data()
+charts = ChartsBase()
 tracer = PerformancePlotlyTracer()
 
 st.subheader("📊 Overview")
@@ -155,14 +157,8 @@ with col8:
 # PnL Over Time
 realized_pnl_data = filtered_executors_data[["close_datetime", "net_pnl_quote"]].sort_values("close_datetime")
 realized_pnl_data["cum_pnl_over_time"] = realized_pnl_data["net_pnl_quote"].cumsum()
-fig = go.Figure()
-fig.add_trace(tracer.get_realized_pnl_over_time_traces(data=realized_pnl_data,
-                                                       cum_realized_pnl_column="cum_pnl_over_time"))
-fig.update_layout(title=dict(text='Cummulative PnL', x=0.43, y=0.95),
-                  plot_bgcolor='rgba(0,0,0,0)',
-                  paper_bgcolor='rgba(0,0,0,0)')
-
-st.plotly_chart(fig, use_container_width=True)
+realized_pnl_over_time_fig = charts.realized_pnl_over_time(data=realized_pnl_data, cum_realized_pnl_column="cum_pnl_over_time")
+st.plotly_chart(realized_pnl_over_time_fig, use_container_width=True)
 
 # Close Types
 col1, col2 = st.columns(2)
@@ -231,13 +227,12 @@ end_time_page = candles_df.index.max()
 filtered_executors_data.sort_values("close_datetime", inplace=True)
 filtered_executors_data["cum_net_pnl_quote"] = filtered_executors_data["net_pnl_quote"].cumsum()
 filtered_executors_data["cum_filled_amount_quote"] = filtered_executors_data["filled_amount_quote"].cumsum()
-performance_candles = PerformanceCandles(executor_version="v2",
+performance_candles = PerformanceCandles(strategy_version="v2",
                                          rows=3,
                                          row_heights=[0.6, 0.2, 0.2],
                                          indicators_config=None,
                                          candles_df=candles_df,
                                          executors_df=filtered_executors_data,
-                                         show_dca_prices=False,
                                          show_positions=True,
                                          show_buys=False,
                                          show_sells=False,

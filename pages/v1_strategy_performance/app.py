@@ -4,7 +4,7 @@ import math
 from utils.os_utils import get_local_dbs
 from utils.sqlite_manager import SQLiteManager
 from data_viz.charts import ChartsBase
-from data_viz.performance.performance_candles import PerformanceCandles
+from data_viz.candles import PerformanceCandles
 import data_viz.utils as utils
 from utils.st_utils import initialize_st_page, download_csv_button, db_error_message
 
@@ -45,7 +45,7 @@ try:
 except NotImplementedError as e:
     st.error(f"Error: {e}")
     st.stop()
-executor_version = selected_db.version
+strategy_version = selected_db.version
 charts = ChartsBase()
 
 # Strategy summary section
@@ -250,7 +250,7 @@ else:
                                           show_quote_inventory_change=show_quote_inventory_change,
                                           show_indicators=show_indicators,
                                           main_height=main_height,
-                                          executor_version=executor_version,
+                                          strategy_version=strategy_version,
                                           show_annotations=show_annotations)
         st.plotly_chart(page_candles.figure(), use_container_width=True)
 

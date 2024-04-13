@@ -11,8 +11,8 @@ import streamlit as st
 from decimal import Decimal
 
 from quants_lab.strategy.strategy_analysis import StrategyAnalysis
-from data_viz.backtesting.backtesting_charts import BacktestingCharts
-from data_viz.backtesting.backtesting_candles import BacktestingCandles
+from data_viz.charts import ChartsBase
+from data_viz.candles import BacktestingCandles
 import data_viz.utils as utils
 from utils.optuna_database_manager import OptunaDBManager
 from utils.os_utils import load_controllers
@@ -39,6 +39,7 @@ def initialize_session_state_vars():
         st.session_state.backtesting_params = {}
 
 
+charts = ChartsBase()
 initialize_session_state_vars()
 dbs = get_databases()
 if not dbs:
@@ -71,8 +72,11 @@ else:
         total_positions_filter = (merged_df["total_positions"] >= total_positions[0]) & (merged_df["total_positions"] <= total_positions[1])
     with scatter_column:
         # Show and compare all the study trials
-        bt_main_charts = BacktestingCharts()
-        st.plotly_chart(bt_main_charts.pnl_vs_max_drawdown_fig(data=merged_df[net_profit_filter & accuracy_filter & max_drawdown_filter & total_positions_filter]), use_container_width=True)
+        fig = charts.pnl_vs_max_drawdown(data=merged_df[net_profit_filter & accuracy_filter & max_drawdown_filter & total_positions_filter],
+                                         max_drawdown_pct_column="max_drawdown_pct",
+                                         net_pnl_pct_column="net_pnl_pct",
+                                         hovertext_column="hover_text")
+        st.plotly_chart(fig, use_container_width=True)
     # Get study trials
     trials = studies[study_selected]
     # Choose trial
@@ -219,19 +223,17 @@ else:
             backtesting_results = engine.run_backtesting(initial_portfolio_usd=initial_portfolio_usd,
                                                          trade_cost=trade_cost,
                                                          start=start, end=end)
-            strategy_analysis = StrategyAnalysis(
-                positions=backtesting_results["executors_df"],
-                candles_df=backtesting_results["processed_data"],
-            )
 
-            backtesting_charts = BacktestingCharts(strategy_analysis)
-            backtesting_candles = BacktestingCandles(strategy_analysis,
+            strategy_analysis = StrategyAnalysis(positions=backtesting_results["executors_df"])
+            backtesting_candles = BacktestingCandles(candles_df=backtesting_results["processed_data"],
+                                                     positions_df=backtesting_results["executors_df"],
                                                      indicators_config=utils.load_indicators_config(indicators_config_path),
                                                      line_mode=False,
                                                      show_buys=show_buys,
                                                      show_sells=show_sells,
                                                      show_indicators=show_indicators,
                                                      show_positions=show_positions)
+
             col1, col2 = st.columns(2)
             with col1:
                 st.subheader("🏦 General")
@@ -290,7 +292,8 @@ else:
                           help="The Sharpe ratio is a measure that quantifies the risk-adjusted return of an investment"
                                " or portfolio. It compares the excess return earned above a risk-free rate per unit of"
                                " risk taken.")
-            st.plotly_chart(backtesting_charts.realized_pnl_over_time_fig, use_container_width=True)
+            st.plotly_chart(charts.realized_pnl_over_time(strategy_analysis.positions,
+                                                          "net_pnl_quote"), use_container_width=True)
             st.subheader("💱 Market activity")
             st.plotly_chart(backtesting_candles.figure(), use_container_width=True)
 
