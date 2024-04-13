@@ -23,7 +23,7 @@ def main_page():
             Page("pages/launch_bot/app.py", "Deploy", "🙌"),
             Section("Performance Analysis", "📈"),
             Page("pages/etl/app.py", "ETL", "📦"),
-            Page("pages/strategy_performance/app.py", "V1 Strategies", "🚀"),
+            Page("pages/v1_strategy_performance/app.py", "V1 Strategies", "🚀"),
             Page("pages/dca_analyzer/app.py", "DCA Analyzer", "🪭"),
             Section("Community Pages", "👨‍👩‍👧‍👦"),
             Page("pages/viz_lab/app.py", "Viz Lab", "🥼"),
