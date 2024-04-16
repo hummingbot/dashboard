@@ -15,11 +15,6 @@ from utils.st_utils import initialize_st_page
 
 initialize_st_page(title="Credentials", icon="🗝️", initial_sidebar_state="collapsed")
 
-docker_manager = DockerManager()
-if not docker_manager.is_docker_running():
-    st.warning("Docker is not running. Please start Docker and refresh the page.")
-    st.stop()
-
 if "mc_board" not in st.session_state:
     board = Dashboard()
     mc_board = SimpleNamespace(

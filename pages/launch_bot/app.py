@@ -3,8 +3,6 @@ from types import SimpleNamespace
 import streamlit as st
 from streamlit_elements import elements, mui
 
-from docker_manager import DockerManager
-
 from ui_components.dashboard import Dashboard
 from ui_components.launch_strategy_v2 import LaunchStrategyV2
 from utils.st_utils import initialize_st_page
@@ -14,12 +12,6 @@ CARD_HEIGHT = 3
 NUM_CARD_COLS = 2
 
 initialize_st_page(title="Launch Bot", icon="🙌", initial_sidebar_state="collapsed")
-
-
-docker_manager = DockerManager()
-if not docker_manager.is_docker_running():
-    st.warning("Docker is not running. Please start Docker and refresh the page.")
-    st.stop()
 
 
 def get_grid_positions(n_cards: int, cols: int = NUM_CARD_COLS, card_width: int = CARD_HEIGHT, card_height: int = CARD_WIDTH):
