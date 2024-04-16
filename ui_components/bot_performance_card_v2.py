@@ -1,16 +1,17 @@
 from streamlit_elements import mui, lazy
+
+from CONFIG import BACKEND_API_HOST, BACKEND_API_PORT
 from ui_components.dashboard import Dashboard
 import streamlit as st
 import time
 import pandas as pd
-import datetime
 
 from utils.backend_api_client import BackendAPIClient
 
 TRADES_TO_SHOW = 5
-WIDE_COL_WIDTH = 150
+WIDE_COL_WIDTH = 180
 MEDIUM_COL_WIDTH = 140
-backend_api_client = BackendAPIClient.get_instance()
+backend_api_client = BackendAPIClient.get_instance(host=BACKEND_API_HOST, port=BACKEND_API_PORT)
 
 
 def stop_bot(bot_name):

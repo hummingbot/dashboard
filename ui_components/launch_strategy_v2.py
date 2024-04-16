@@ -1,11 +1,9 @@
-import json
 import time
 
 import streamlit as st
-from hummingbot.core.data_type.common import PositionMode, OrderType, TradeType
-from hummingbot.smart_components.utils.config_encoder_decoder import ConfigEncoderDecoder
 from streamlit_elements import mui, lazy
 
+from CONFIG import BACKEND_API_HOST, BACKEND_API_PORT
 from utils.backend_api_client import BackendAPIClient
 from .dashboard import Dashboard
 
@@ -28,21 +26,21 @@ class LaunchStrategyV2(Dashboard.Item):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._backend_api_client = BackendAPIClient.get_instance()
+        self._backend_api_client = BackendAPIClient.get_instance(host=BACKEND_API_HOST, port=BACKEND_API_PORT)
         self._controller_configs_available = self._backend_api_client.get_all_controllers_config()
         self._controller_config_selected = None
         self._bot_name = None
-        self._image_name = "hummingbot/hummingbot:latest"
+        self._image_name = "dardonacci/hummingbot:latest"
         self._credentials = "master_account"
 
     def _set_bot_name(self, event):
         self._bot_name = event.target.value
 
-    def _set_image_name(self, event):
-        self._image_name = event.target.value
+    def _set_image_name(self, _, childs):
+        self._image_name = childs.props.value
 
-    def _set_credentials(self, event):
-        self._credentials = event.target.value
+    def _set_credentials(self, _, childs):
+        self._credentials = childs.props.value
 
     def _set_controller(self, event):
         self._controller_selected = event.target.value

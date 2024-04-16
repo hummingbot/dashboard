@@ -1,3 +1,7 @@
+import os
+
+from dotenv import load_dotenv
+
 MINER_COINS = ["Algorand", "Avalanche", "DAO Maker", "Faith Tribe", "Fear", "Frontier",
                    "Harmony", "Hot Cross", "HUMAN Protocol", "Oddz", "Shera", "Firo",
                    "Vesper Finance", "Youclout", "Nimiq"]
@@ -12,3 +16,7 @@ CERTIFIED_EXCHANGES = ["ascendex", "binance", "bybit", "gate.io", "hitbtc", "huo
 CERTIFIED_STRATEGIES = ["xemm", "cross exchange market making", "pmm", "pure market making"]
 
 AUTH_SYSTEM_ENABLED = False
+load_dotenv()
+
+BACKEND_API_HOST = os.getenv("BACKEND_API_HOST", "localhost")
+BACKEND_API_PORT = os.getenv("BACKEND_API_PORT", 8000)

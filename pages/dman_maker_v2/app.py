@@ -5,6 +5,7 @@ import plotly.graph_objects as go
 from decimal import Decimal
 import yaml
 
+from CONFIG import BACKEND_API_HOST, BACKEND_API_PORT
 from utils.backend_api_client import BackendAPIClient
 from utils.st_utils import initialize_st_page
 from hummingbot.smart_components.utils.distributions import Distributions
@@ -430,8 +431,8 @@ config = {
         "connector_name": connector,
         "trading_pair": trading_pair,
         "total_amount_quote": total_amount_quote,
-        "buy_spreads": buy_spread_distributions,
-        "sell_spreads": sell_spread_distributions,
+        "buy_spreads": [spread / 100 for spread in buy_spread_distributions],
+        "sell_spreads": [spread / 100 for spread in sell_spread_distributions],
         "buy_amounts_pct": buy_order_amounts_quote,
         "sell_amounts_pct": sell_order_amounts_quote,
         "executor_refresh_time": executor_refresh_time * 60,
@@ -463,6 +464,6 @@ with c3:
 
 
 if upload_config_to_backend:
-    backend_api_client = BackendAPIClient.get_instance()
+    backend_api_client = BackendAPIClient.get_instance(host=BACKEND_API_HOST, port=BACKEND_API_PORT)
     backend_api_client.add_controller_config(config)
     st.success("Config uploaded successfully!")

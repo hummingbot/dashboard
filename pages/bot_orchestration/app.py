@@ -1,6 +1,7 @@
 import streamlit as st
 from streamlit_elements import elements, mui
 
+from CONFIG import BACKEND_API_HOST, BACKEND_API_PORT
 from ui_components.bot_performance_card_v2 import BotPerformanceCardV2
 from ui_components.dashboard import Dashboard
 from utils.backend_api_client import BackendAPIClient
@@ -19,7 +20,7 @@ def get_grid_positions(n_cards: int, cols: int = NUM_CARD_COLS, card_width: int 
 
 
 initialize_st_page(title="Instances", icon="🦅", initial_sidebar_state="collapsed")
-api_client = BackendAPIClient.get_instance(host="localhost", port=8000)
+api_client = BackendAPIClient.get_instance(host=BACKEND_API_HOST, port=BACKEND_API_PORT)
 
 
 if not api_client.is_docker_running():
