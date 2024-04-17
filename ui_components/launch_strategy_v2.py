@@ -120,17 +120,24 @@ class LaunchStrategyV2(Dashboard.Item):
                 all_controllers_config = self._backend_api_client.get_all_controllers_config()
                 data = []
                 for config in all_controllers_config:
+                    connector_name = config.get("connector_name", "Unknown")
+                    trading_pair = config.get("trading_pair", "Unknown")
+                    total_amount_quote = config.get("total_amount_quote", 0)
+                    stop_loss = config.get("stop_loss", 0)
+                    take_profit = config.get("take_profit", 0)
+                    trailing_stop = config.get("trailing_stop", {"activation_price": 0, "trailing_delta": 0})
+                    time_limit = config.get("time_limit", 0)
                     data.append({"id": config["id"], "controller_name": config["controller_name"],
                                  "controller_type": config["controller_type"],
-                                 "connector_name": config["connector_name"],
-                                 "trading_pair": config["trading_pair"],
-                                 "total_amount_quote": config["total_amount_quote"],
-                                 "max_loss_quote": config["total_amount_quote"] * config["stop_loss"],
-                                 "stop_loss": config["stop_loss"],
-                                 "take_profit": config["take_profit"],
-                                 "trailing_stop": str(config["trailing_stop"]["activation_price"]) + " / " +
-                                                  str(config["trailing_stop"]["trailing_delta"]),
-                                 "time_limit": config["time_limit"]})
+                                 "connector_name": connector_name,
+                                 "trading_pair": trading_pair,
+                                 "total_amount_quote": total_amount_quote,
+                                 "max_loss_quote": total_amount_quote * stop_loss / 2,
+                                 "stop_loss": stop_loss,
+                                 "take_profit": take_profit,
+                                 "trailing_stop": str(trailing_stop["activation_price"]) + " / " +
+                                                  str(trailing_stop["trailing_delta"]),
+                                 "time_limit": time_limit})
 
                 with mui.Grid(item=True, xs=12):
                     mui.Alert("Select the controller configs to deploy", severity="info")
