@@ -7,7 +7,7 @@ import yaml
 from CONFIG import BACKEND_API_HOST, BACKEND_API_PORT
 from utils.backend_api_client import BackendAPIClient
 from utils.st_utils import initialize_st_page
-from utils.st_inputs import normalize, distribution_inputs, get_distribution
+from ui_components.st_inputs import normalize, distribution_inputs, get_distribution
 
 # Initialize the Streamlit page
 initialize_st_page(title="D-Man Maker V2", icon="🧙‍♂️", initial_sidebar_state="collapsed")

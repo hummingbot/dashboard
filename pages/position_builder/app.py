@@ -1,4 +1,3 @@
-from math import exp
 import streamlit as st
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
@@ -6,7 +5,7 @@ from decimal import Decimal
 import yaml
 
 from utils.st_utils import initialize_st_page
-from hummingbot.smart_components.utils.distributions import Distributions
+from ui_components.st_inputs import normalize, distribution_inputs, get_distribution
 
 # Initialize the Streamlit page
 initialize_st_page(title="Position Generator", icon="🔭", initial_sidebar_state="collapsed")
@@ -17,12 +16,6 @@ st.write("---")
 
 # Layout in columns
 col_quote, col_tp_sl, col_levels, col_spread_dist, col_amount_dist = st.columns([1, 1, 1, 2, 2])
-
-
-def normalize(values):
-    total = sum(values)
-    return [val / total for val in values]
-
 
 def convert_to_yaml(spreads, order_amounts):
     data = {
@@ -43,61 +36,9 @@ with col_levels:
     n_levels = st.number_input("Number of Levels", min_value=1, value=5)
 
 
-def distribution_inputs(column, dist_type_name):
-    if dist_type_name == "Spread":
-        dist_type = column.selectbox(
-            f"Type of {dist_type_name} Distribution",
-            ("GeoCustom", "Geometric", "Fibonacci", "Manual", "Logarithmic", "Arithmetic"),
-            key=f"{dist_type_name.lower()}_dist_type",
-            # Set the default value
-        )
-    else:
-        dist_type = column.selectbox(
-            f"Type of {dist_type_name} Distribution",
-            ("Geometric", "Fibonacci", "Manual", "Logarithmic", "Arithmetic"),
-            key=f"{dist_type_name.lower()}_dist_type",
-            # Set the default value
-        )
-    base, scaling_factor, step, ratio, manual_values = None, None, None, None, None
-
-    if dist_type != "Manual":
-        start = column.number_input(f"{dist_type_name} Start Value", value=1.0, key=f"{dist_type_name.lower()}_start")
-        if dist_type == "Logarithmic":
-            base = column.number_input(f"{dist_type_name} Log Base", value=exp(1), key=f"{dist_type_name.lower()}_base")
-            scaling_factor = column.number_input(f"{dist_type_name} Scaling Factor", value=2.0, key=f"{dist_type_name.lower()}_scaling")
-        elif dist_type == "Arithmetic":
-            step = column.number_input(f"{dist_type_name} Step", value=0.1, key=f"{dist_type_name.lower()}_step")
-        elif dist_type == "Geometric":
-            ratio = column.number_input(f"{dist_type_name} Ratio", value=2.0, key=f"{dist_type_name.lower()}_ratio")
-        elif dist_type == "GeoCustom":
-            ratio = column.number_input(f"{dist_type_name} Ratio", value=2.0, key=f"{dist_type_name.lower()}_ratio")
-    else:
-        manual_values = [column.number_input(f"{dist_type_name} for level {i+1}", value=1.0, key=f"{dist_type_name.lower()}_{i}") for i in range(n_levels)]
-        start = None  # As start is not relevant for Manual type
-
-    return dist_type, start, base, scaling_factor, step, ratio, manual_values
-
-
 # Spread and Amount Distributions
 spread_dist_type, spread_start, spread_base, spread_scaling, spread_step, spread_ratio, manual_spreads = distribution_inputs(col_spread_dist, "Spread")
 amount_dist_type, amount_start, amount_base, amount_scaling, amount_step, amount_ratio, manual_amounts = distribution_inputs(col_amount_dist, "Amount")
-
-
-def get_distribution(dist_type, n_levels, start, base=None, scaling_factor=None, step=None, ratio=None, manual_values=None):
-    if dist_type == "Manual":
-        return manual_values
-    elif dist_type == "Linear":
-        return Distributions.linear(n_levels, start, start + tp)
-    elif dist_type == "Fibonacci":
-        return Distributions.fibonacci(n_levels, start)
-    elif dist_type == "Logarithmic":
-        return Distributions.logarithmic(n_levels, base, scaling_factor, start)
-    elif dist_type == "Arithmetic":
-        return Distributions.arithmetic(n_levels, start, step)
-    elif dist_type == "Geometric":
-        return Distributions.geometric(n_levels, start, ratio)
-    elif dist_type == "GeoCustom":
-        return [Decimal("0")] + Distributions.geometric(n_levels - 1, start, ratio)
 
 spread_distribution = get_distribution(spread_dist_type, n_levels, spread_start, spread_base, spread_scaling, spread_step, spread_ratio, manual_spreads)
 amount_distribution = normalize(get_distribution(amount_dist_type, n_levels, amount_start, amount_base, amount_scaling, amount_step, amount_ratio, manual_amounts))
