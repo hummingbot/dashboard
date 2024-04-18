@@ -302,3 +302,24 @@ class PerformancePlotlyTracer:
         returns_distribution_traces = [go.Histogram(name="Losses", x=losses, marker_color=BEARISH_COLOR),
                                        go.Histogram(name="Profits", x=profits, marker_color=BULLISH_COLOR)]
         return returns_distribution_traces
+
+    @staticmethod
+    def get_close_types_pie_chart_traces(data: pd.DataFrame, close_type_column: str, values_column: str):
+        close_types_pie_chart_traces = go.Pie(labels=data[close_type_column],
+                                              values=data[values_column],
+                                              hole=0.4,
+                                              hoverinfo="label+percent+name")
+        return close_types_pie_chart_traces
+
+    @staticmethod
+    def get_level_id_pie_chart_traces(data: pd.DataFrame, level_id_column: str, values_column: str):
+        level_id_pie_chart_traces = go.Pie(labels=data[level_id_column],
+                                           values=data[values_column],
+                                           hole=0.4)
+        return level_id_pie_chart_traces
+
+    @staticmethod
+    def get_level_id_histogram_traces(data: pd.DataFrame, level_id_column: str, values_column: str):
+        level_id_pie_chart_traces = go.Bar(x=data[level_id_column],
+                                           y=data[values_column])
+        return level_id_pie_chart_traces

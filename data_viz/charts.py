@@ -141,3 +141,33 @@ class ChartsBase:
             )
         )
         return fig
+
+    def close_types_pie_chart(self, data: pd.DataFrame(), close_type_column: str, values_column: str):
+        fig = go.Figure()
+        fig.add_trace(self.tracer.get_close_types_pie_chart_traces(data=data,
+                                                                   close_type_column=close_type_column,
+                                                                   values_column=values_column))
+        fig.update_layout(
+            title=dict(
+                text='Close Types',
+            )
+        )
+        return fig
+
+    def level_id_pie_chart(self, data: pd.DataFrame(), level_id_column: str, values_column: str):
+        fig = go.Figure()
+        fig.add_trace(self.tracer.get_level_id_pie_chart_traces(data=data,
+                                                                level_id_column=level_id_column,
+                                                                values_column=values_column))
+        fig.update_layout(
+            title=dict(
+                text='Level ID Distribution',
+            )
+        )
+        return fig
+
+    def level_id_histogram(self, data: pd.DataFrame, level_id_column: str, values_column: str):
+        fig = go.Figure()
+        fig.add_trace(self.tracer.get_level_id_histogram_traces(data, level_id_column, values_column))
+        fig.update_layout(title="Level ID Distribution")
+        return fig

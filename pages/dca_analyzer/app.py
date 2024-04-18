@@ -157,29 +157,25 @@ with col8:
 # PnL Over Time
 realized_pnl_data = filtered_executors_data[["close_datetime", "net_pnl_quote"]].sort_values("close_datetime")
 realized_pnl_data["cum_pnl_over_time"] = realized_pnl_data["net_pnl_quote"].cumsum()
-realized_pnl_over_time_fig = charts.realized_pnl_over_time(data=realized_pnl_data, cum_realized_pnl_column="cum_pnl_over_time")
-st.plotly_chart(realized_pnl_over_time_fig, use_container_width=True)
+st.plotly_chart(charts.realized_pnl_over_time(data=realized_pnl_data,
+                                              cum_realized_pnl_column="cum_pnl_over_time"),
+                use_container_width=True)
 
 # Close Types
 col1, col2 = st.columns(2)
 with col1:
     close_type_data = filtered_executors_data.groupby("close_type").agg({"id": "count"}).reset_index()
-    fig = go.Figure()
-    fig.add_trace(go.Pie(labels=close_type_data["close_type"],
-                         values=close_type_data["id"],
-                         hole=0.3))
-    fig.update_layout(title="Close Types Distribution")
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(charts.close_types_pie_chart(data=close_type_data,
+                                                 close_type_column="close_type",
+                                                 values_column="id"), use_container_width=True)
 
 # Level IDs
 with col2:
     level_id_data = filtered_executors_data.groupby("level_id").agg({"id": "count"}).reset_index()
-    fig = go.Figure()
-    fig.add_trace(go.Pie(labels=level_id_data["level_id"],
-                         values=level_id_data["id"],
-                         hole=0.3))
-    fig.update_layout(title="Level ID Distribution")
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(charts.level_id_pie_chart(level_id_data,
+                                              level_id_column="level_id",
+                                              values_column="id"),
+                    use_container_width=True)
 
 # Apply custom sorting function to create a new column 'sorting_order'
 level_id_data[['type', 'number']] = level_id_data['level_id'].str.split('_', expand=True)
@@ -187,12 +183,10 @@ level_id_data["number"] = level_id_data["number"].astype(int)
 level_id_data['sorting_order'] = level_id_data.apply(custom_sort, axis=1)
 level_id_data = level_id_data.sort_values(by='sorting_order')
 level_id_data.drop(columns=['type', 'number', 'sorting_order'], inplace=True)
-
-fig = go.Figure()
-fig.add_trace(go.Bar(x=level_id_data["level_id"],
-                     y=level_id_data["id"]))
-fig.update_layout(title="Level ID Distribution")
-st.plotly_chart(fig, use_container_width=True)
+st.plotly_chart(charts.level_id_histogram(level_id_data,
+                                          level_id_column="level_id",
+                                          values_column="id"),
+                use_container_width=True)
 
 # Market data
 st.subheader("Market Data")
@@ -227,12 +221,14 @@ end_time_page = candles_df.index.max()
 filtered_executors_data.sort_values("close_datetime", inplace=True)
 filtered_executors_data["cum_net_pnl_quote"] = filtered_executors_data["net_pnl_quote"].cumsum()
 filtered_executors_data["cum_filled_amount_quote"] = filtered_executors_data["filled_amount_quote"].cumsum()
+page_filtered_executors_data = filtered_executors_data[(filtered_executors_data["datetime"] >= start_time_page) &
+                                                       (filtered_executors_data["close_datetime"] <= end_time_page)]
 performance_candles = PerformanceCandles(strategy_version="v2",
                                          rows=3,
                                          row_heights=[0.6, 0.2, 0.2],
                                          indicators_config=None,
                                          candles_df=candles_df,
-                                         executors_df=filtered_executors_data,
+                                         executors_df=page_filtered_executors_data,
                                          show_positions=True,
                                          show_buys=False,
                                          show_sells=False,
@@ -243,29 +239,16 @@ performance_candles = PerformanceCandles(strategy_version="v2",
                                          show_annotations=True)
 candles_figure = performance_candles.figure()
 
-candles_figure.add_trace(go.Scatter(x=filtered_executors_data["close_datetime"],
-                                    y=filtered_executors_data["cum_net_pnl_quote"],
+candles_figure.add_trace(go.Scatter(x=page_filtered_executors_data["close_datetime"],
+                                    y=page_filtered_executors_data["cum_net_pnl_quote"],
                                     mode="lines",
                                     fill="tozeroy",
                                     name="Cum Realized PnL (Quote)"), row=2, col=1)
-candles_figure.add_trace(go.Scatter(x=filtered_executors_data["close_datetime"],
-                                    y=filtered_executors_data["cum_filled_amount_quote"],
+candles_figure.add_trace(go.Scatter(x=page_filtered_executors_data["close_datetime"],
+                                    y=page_filtered_executors_data["cum_filled_amount_quote"],
                                     mode="lines",
                                     fill="tozeroy",
                                     name="Cum Volume (Quote)"), row=3, col=1)
-for index, rown in filtered_executors_data.iterrows():
-    if abs(rown["net_pnl_quote"]) > 0:
-        candles_figure.add_trace(tracer.get_positions_traces(position_number=rown["id"],
-                                                             open_time=rown["datetime"],
-                                                             close_time=rown["close_datetime"],
-                                                             open_price=rown["bep"],
-                                                             close_price=rown["close_price"],
-                                                             side=rown["side"],
-                                                             close_type=rown["close_type"],
-                                                             stop_loss=rown["sl"], take_profit=rown["tp"],
-                                                             time_limit=rown["tl"],
-                                                             net_pnl_quote=rown["net_pnl_quote"]),
-                                 row=1, col=1)
 candles_figure.update_yaxes(title_text="Realized PnL ($)", row=2, col=1)
 candles_figure.update_yaxes(title_text="Volume ($)", row=3, col=1)
 st.plotly_chart(candles_figure, use_container_width=True)
