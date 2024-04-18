@@ -2,6 +2,8 @@ import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 import pandas_ta as ta
+import yaml
+from hummingbot.connector.connector_base import OrderType
 
 from CONFIG import BACKEND_API_HOST, BACKEND_API_PORT
 from utils.backend_api_client import BackendAPIClient
@@ -39,13 +41,35 @@ st.write("---")
 st.write("## Candles Configuration")
 c1, c2, c3, c4 = st.columns(4)
 with c1:
-    connector_name = st.text_input("Connector Name", value="binance")
+    connector_name = st.text_input("Connector Name", value="binance_perpetual")
+    candles_connector = st.text_input("Candles Connector", value="binance_perpetual")
 with c2:
     trading_pair = st.text_input("Trading Pair", value="WLD-USDT")
+    candles_trading_pair = st.text_input("Candles Trading Pair", value="WLD-USDT")
 with c3:
     interval = st.selectbox("Candle Interval", options=["1m", "3m", "5m", "15m", "30m"], index=1)
 with c4:
     max_records = st.number_input("Max Records", min_value=100, max_value=10000, value=1000)
+with c4:
+    bb_short_threshold = st.number_input("Short Threshold", value=1.0)
+
+st.write("## Positions Configuration")
+c1, c2, c3, c4 = st.columns(4)
+with c1:
+    sl = st.number_input("Stop Loss (%)", min_value=0.0, max_value=100.0, value=2.0, step=0.1)
+    tp = st.number_input("Take Profit (%)", min_value=0.0, max_value=100.0, value=3.0, step=0.1)
+    take_profit_order_type = st.selectbox("Take Profit Order Type", (OrderType.LIMIT, OrderType.MARKET))
+with c2:
+    ts_ap = st.number_input("Trailing Stop Activation Price (%)", min_value=0.0, max_value=100.0, value=1.0, step=0.1)
+    ts_delta = st.number_input("Trailing Stop Delta (%)", min_value=0.0, max_value=100.0, value=0.3, step=0.1)
+    time_limit = st.number_input("Time Limit (minutes)", min_value=0, value=60 * 6)
+with c3:
+    executor_amount_quote = st.number_input("Executor Amount Quote", min_value=10.0, value=100.0, step=1.0)
+    max_executors_per_side = st.number_input("Max Executors Per Side", min_value=1, value=2)
+    cooldown_time = st.number_input("Cooldown Time (seconds)", min_value=0, value=300)
+with c4:
+    leverage = st.number_input("Leverage", min_value=1, value=20)
+    position_mode = st.selectbox("Position Mode", ("HEDGE", "ONEWAY"))
 
 st.write("## Bollinger Bands Configuration")
 c1, c2, c3, c4 = st.columns(4)
@@ -55,12 +79,11 @@ with c2:
     bb_std = st.number_input("Standard Deviation Multiplier", min_value=1.0, max_value=5.0, value=2.0)
 with c3:
     bb_long_threshold = st.number_input("Long Threshold", value=0.0)
-with c4:
-    bb_short_threshold = st.number_input("Short Threshold", value=1.0)
+
 
 
 # Load candle data
-candle_data = get_candles(connector_name=connector_name, trading_pair=trading_pair, interval=interval, max_records=max_records)
+candle_data = get_candles(connector_name=candles_connector, trading_pair=candles_trading_pair, interval=interval, max_records=max_records)
 df = pd.DataFrame(candle_data)
 df.index = pd.to_datetime(df['timestamp'], unit='ms')
 candles_processed = add_indicators(df, bb_length, bb_std, bb_long_threshold, bb_short_threshold)
@@ -146,3 +169,58 @@ fig.update_yaxes(
 
 # Use Streamlit's functionality to display the plot
 st.plotly_chart(fig, use_container_width=True)
+
+c1, c2, c3 = st.columns([2, 2, 1])
+
+with c1:
+    config_base = st.text_input("Config Base", value=f"bollinger_v1-{connector_name}-{trading_pair.split('-')[0]}")
+with c2:
+    config_tag = st.text_input("Config Tag", value="1.1")
+
+id = f"{config_base}-{config_tag}"
+config = {
+    "id": id,
+    "controller_name": "bollinger_v1",
+    "controller_type": "directional_trading",
+    "manual_kill_switch": None,
+    "candles_config": [],
+    "connector_name": connector_name,
+    "trading_pair": trading_pair,
+    "executor_amount_quote": executor_amount_quote,
+    "max_executors_per_side": max_executors_per_side,
+    "cooldown_time": cooldown_time,
+    "leverage": leverage,
+    "position_mode": position_mode,
+    "stop_loss": sl / 100,
+    "take_profit": tp / 100,
+    "time_limit": time_limit,
+    "take_profit_order_type": take_profit_order_type.value,
+    "trailing_stop": {
+        "activation_price": ts_ap / 100,
+        "trailing_delta": ts_delta / 100
+    },
+    "candles_connector": candles_connector,
+    "candles_trading_pair": candles_trading_pair,
+    "interval": interval,
+    "bb_length": bb_length,
+    "bb_std": bb_std,
+    "bb_long_threshold": bb_long_threshold,
+    "bb_short_threshold": bb_short_threshold
+}
+
+yaml_config = yaml.dump(config, default_flow_style=False)
+
+with c3:
+    download_config = st.download_button(
+        label="Download YAML",
+        data=yaml_config,
+        file_name=f'{id.lower()}.yml',
+        mime='text/yaml'
+    )
+    upload_config_to_backend = st.button("Upload Config to BackendAPI")
+
+
+if upload_config_to_backend:
+    backend_api_client = BackendAPIClient.get_instance(host=BACKEND_API_HOST, port=BACKEND_API_PORT)
+    backend_api_client.add_controller_config(config)
+    st.success("Config uploaded successfully!")
