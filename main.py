@@ -17,6 +17,7 @@ def main_page():
             Page("pages/pmm_simple/app.py", "PMM Simple", "👨‍🏫"),
             Page("pages/dman_maker_v2/app.py", "D-Man Maker V2", "🤖"),
             Page("pages/bollinger_v1/app.py", "Bollinger V1", "📈"),
+            Page("pages/macd_bb_v1/app.py", "MACD_BB V1", "📉"),
             Page("pages/xemm_controller/app.py", "XEMM Controller", "⚡️"),
             Page("pages/position_builder/app.py", "Position Builder", "🔭"),
             # Page("pages/master_conf/app.py", "Credentials", "🗝️"),
