@@ -221,6 +221,7 @@ config = {
             "trailing_delta": ts_delta / 100},
         "top_executor_refresh_time": None,
     }
+
 yaml_config = yaml.dump(config, default_flow_style=False)
 
 with c3:

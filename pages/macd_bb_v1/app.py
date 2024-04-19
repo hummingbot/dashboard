@@ -145,3 +145,20 @@ config = {
     "macd_slow": macd_slow,
     "macd_signal": macd_signal,
 }
+
+yaml_config = yaml.dump(config, default_flow_style=False)
+
+with c3:
+    download_config = st.download_button(
+        label="Download YAML",
+        data=yaml_config,
+        file_name=f'{id.lower()}.yml',
+        mime='text/yaml'
+    )
+    upload_config_to_backend = st.button("Upload Config to BackendAPI")
+
+
+if upload_config_to_backend:
+    backend_api_client = BackendAPIClient.get_instance(host=BACKEND_API_HOST, port=BACKEND_API_PORT)
+    backend_api_client.add_controller_config(config)
+    st.success("Config uploaded successfully!")
