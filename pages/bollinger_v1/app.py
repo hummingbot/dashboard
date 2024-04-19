@@ -50,8 +50,7 @@ with c3:
     interval = st.selectbox("Candle Interval", options=["1m", "3m", "5m", "15m", "30m"], index=1)
 with c4:
     max_records = st.number_input("Max Records", min_value=100, max_value=10000, value=1000)
-with c4:
-    bb_short_threshold = st.number_input("Short Threshold", value=1.0)
+
 
 st.write("## Positions Configuration")
 c1, c2, c3, c4 = st.columns(4)
@@ -79,8 +78,8 @@ with c2:
     bb_std = st.number_input("Standard Deviation Multiplier", min_value=1.0, max_value=5.0, value=2.0)
 with c3:
     bb_long_threshold = st.number_input("Long Threshold", value=0.0)
-
-
+with c4:
+    bb_short_threshold = st.number_input("Short Threshold", value=1.0)
 
 # Load candle data
 candle_data = get_candles(connector_name=candles_connector, trading_pair=candles_trading_pair, interval=interval, max_records=max_records)
