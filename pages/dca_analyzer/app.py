@@ -3,7 +3,7 @@ import streamlit as st
 import plotly.graph_objects as go
 from dotenv import load_dotenv
 import logging
-from psycopg2 import OperationalError
+from sqlalchemy.exc import OperationalError
 import os
 
 from data_viz.candles import PerformanceCandles
@@ -20,7 +20,6 @@ def format_duration(seconds):
     hours, minutes = divmod(minutes, 60)
     days, hours = divmod(hours, 24)
     return f"{int(days)}d {int(hours)}h {int(minutes)}m"
-
 
 intervals = {
     "1m": 60,

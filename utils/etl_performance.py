@@ -1,8 +1,8 @@
 from sqlalchemy import create_engine, delete, insert, text, inspect, MetaData, Table, Column, VARCHAR, INT, FLOAT, TIMESTAMP,  Integer, String, Float, DateTime
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.exc import OperationalError
 
-from psycopg2 import OperationalError
 import pandas as pd
 
 
