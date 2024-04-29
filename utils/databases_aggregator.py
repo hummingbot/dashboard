@@ -3,16 +3,16 @@ from typing import List
 import os
 
 from utils.sqlite_manager import SQLiteManager
-from utils.os_utils import get_bots_data_paths
+from utils.os_utils import get_local_dbs
 
 
-class DatabaseOrchestrator:
-    def __init__(self):
-        pass
+class DatabasesAggregator:
+    def __init__(self, root_path: str = "data"):
+        self.root_path = root_path
 
     @property
     def dbs_map(self):
-        return self.get_dbs_map()
+        return get_local_dbs(self.root_path)
 
     @property
     def status_report(self):
@@ -30,23 +30,8 @@ class DatabaseOrchestrator:
     def db_names(self):
         return [os.path.basename(db.db_path) for db in self.healthy_dbs]
 
-    @staticmethod
-    def get_dbs_map():
-        databases = {}
-        bots_data_paths = get_bots_data_paths()
-        for source_name, source_path in bots_data_paths.items():
-            sqlite_files = {}
-            for db_name in os.listdir(source_path):
-                if db_name.endswith(".sqlite"):
-                    sqlite_files[db_name] = os.path.join(source_path, db_name)
-            databases[source_name] = sqlite_files
-        if len(databases) > 0:
-            return {key: value for key, value in databases.items() if value}
-        else:
-            return None
-
     def get_databases(self):
-        dbs_map = self.get_dbs_map() or {}
+        dbs_map = get_local_dbs(self.root_path) or {}
         dbs = []
         for source, db_files in dbs_map.items():
             for db_name, db_path in db_files.items():

@@ -106,9 +106,9 @@ def load_controllers(path):
     return controllers
 
 
-def get_bots_data_paths():
-    dbs = {"uploaded": "data/uploaded"}
-    for dirpath, dirnames, filenames in os.walk("data/s3"):
+def get_bots_data_paths(root_path: str):
+    dbs = {"uploaded": os.path.join(root_path, "uploaded")}
+    for dirpath, dirnames, filenames in os.walk(os.path.join(root_path, "data")):
         for dirname in dirnames:
             if dirname == "data":
                 parent_folder = os.path.basename(dirpath)
@@ -117,9 +117,9 @@ def get_bots_data_paths():
     return data_sources
 
 
-def get_local_dbs():
+def get_local_dbs(root_path: str):
     databases = {}
-    bots_data_paths = get_bots_data_paths()
+    bots_data_paths = get_bots_data_paths(root_path)
     for source_name, source_path in bots_data_paths.items():
         sqlite_files = {}
         for db_name in os.listdir(source_path):

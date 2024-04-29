@@ -5,7 +5,7 @@ import logging
 from psycopg2 import OperationalError
 
 from utils.postgres_connector import PostgresConnector
-from utils.database_orchestrator import DatabaseOrchestrator
+from utils.databases_aggregator import DatabasesAggregator
 from utils.s3_utils import S3Manager
 from utils.st_utils import initialize_st_page
 from utils.sqlite_manager import SQLiteManager
@@ -92,7 +92,7 @@ except OperationalError as e:
     st.stop()
 
 st.markdown("#### Select databases")
-db_orchestrator = DatabaseOrchestrator()
+db_orchestrator = DatabasesAggregator()
 healthy_dbs = [db.db_path for db in db_orchestrator.healthy_dbs]
 with st.expander("Database status report"):
     st.dataframe(db_orchestrator.status_report, use_container_width=True)
