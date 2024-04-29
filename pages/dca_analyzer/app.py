@@ -9,7 +9,7 @@ import os
 from data_viz.candles import PerformanceCandles
 from data_viz.charts import ChartsBase
 from utils.st_utils import initialize_st_page, download_csv_button
-from utils.postgres_connector import PostgresConnector
+from utils.etl_performance import ETLPerformance
 from data_viz.tracers import PerformancePlotlyTracer
 
 load_dotenv()
@@ -45,11 +45,12 @@ initialize_st_page(title="DCA Performance", icon="🚀")
 st.subheader("🔫 Data source")
 
 try:
-    postgres = PostgresConnector(host="dashboard-db-1",
-                                 port=5432,
-                                 database=os.environ.get("POSTGRES_DB"),
-                                 user=os.environ.get("POSTGRES_USER"),
-                                 password=os.environ.get("POSTGRES_PASSWORD"))
+    etl = ETLPerformance(host="dashboard-db-1",
+                         port=5432,
+                         database=os.environ.get("POSTGRES_DB"),
+                         user=os.environ.get("POSTGRES_USER"),
+                         password=os.environ.get("POSTGRES_PASSWORD"))
+    etl.test_connection()
 except Exception as e:
     col1, col2, col3, col4, col5 = st.columns(5)
     with col1:
@@ -63,7 +64,7 @@ except Exception as e:
     with col5:
         db_password = st.text_input("DB Password", os.environ.get("POSTGRES_PASSWORD"), type="password")
     try:
-        postgres = PostgresConnector(host=host, port=port, database=db_name, user=db_user, password=db_password)
+        etl = ETLPerformance(host=host, port=port, database=db_name, user=db_user, password=db_password)
         st.success("Connected to PostgreSQL database successfully!")
     except OperationalError as e:
         # Log the error message to Streamlit interface
@@ -72,8 +73,8 @@ except Exception as e:
         logging.error(f"Error connecting to PostgreSQL database: {e}")
         st.stop()
 
-executors = postgres.read_executors()
-market_data = postgres.read_market_data()
+executors = etl.read_executors()
+market_data = etl.read_market_data()
 charts = ChartsBase()
 tracer = PerformancePlotlyTracer()
 
@@ -258,11 +259,11 @@ st.plotly_chart(candles_figure, use_container_width=True)
 st.divider()
 st.subheader("Tables")
 with st.expander("💵 Trades"):
-    trade_fill = postgres.read_trade_fill()
+    trade_fill = etl.read_trade_fill()
     st.write(trade_fill)
     download_csv_button(trade_fill, "trade_fill", "download-trades")
 with st.expander("📩 Orders"):
-    orders = postgres.read_orders()
+    orders = etl.read_orders()
     st.write(orders)
     download_csv_button(orders, "orders", "download-orders")
 if not market_data.empty:

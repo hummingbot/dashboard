@@ -2,9 +2,9 @@ import streamlit as st
 import os
 import pandas as pd
 import logging
-from psycopg2 import OperationalError
+from sqlalchemy.exc import OperationalError
 
-from utils.postgres_connector import PostgresConnector
+from utils.etl_performance import ETLPerformance
 from utils.databases_aggregator import DatabasesAggregator
 from utils.s3_utils import S3Manager
 from utils.st_utils import initialize_st_page
@@ -82,7 +82,8 @@ with col4:
 with col5:
     db_password = st.text_input("DB Password", os.environ.get("POSTGRES_PASSWORD"), type="password")
 try:
-    postgres_etl = PostgresConnector(host=host, port=port, database=db_name, user=db_user, password=db_password)
+    etl = ETLPerformance(host=host, port=port, database=db_name, user=db_user, password=db_password)
+    etl.test_connection()
     st.success("Connected to PostgreSQL database successfully!")
 except OperationalError as e:
     # Log the error message to Streamlit interface
@@ -105,8 +106,8 @@ st.markdown("#### Load databases")
 clean_tables_before = st.checkbox("Clean tables before loading", False)
 if st.button("Load into Postgres database"):
     tables_dict = db_orchestrator.get_tables(selected_dbs)
-    postgres_etl.create_tables()
+    etl.create_tables()
     if clean_tables_before:
-        postgres_etl.clean_tables()
-    postgres_etl.insert_data(tables_dict)
+        etl.clean_tables()
+    etl.insert_data(tables_dict)
     st.success("Data loaded successfully!")

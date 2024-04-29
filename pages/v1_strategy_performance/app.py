@@ -11,7 +11,6 @@ from utils.st_utils import initialize_st_page, download_csv_button, db_error_mes
 
 initialize_st_page(title="Strategy Performance V1", icon="🚀")
 
-
 # Start content here
 intervals = {
     "1m": 60,
@@ -28,7 +27,7 @@ intervals = {
 st.subheader("🔫 Data source")
 
 # Find and select existing databases
-dbs = get_local_dbs()
+dbs = get_local_dbs("data")
 if dbs is not None and bool(dbs):
     bots_source = st.selectbox("Choose a folder containing local databases", dbs.keys())
     db_names = [x for x in dbs[bots_source]]
