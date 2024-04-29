@@ -8,7 +8,7 @@ from utils.etl_performance import ETLPerformance
 from utils.databases_aggregator import DatabasesAggregator
 from utils.s3_utils import S3Manager
 from utils.st_utils import initialize_st_page
-from utils.sqlite_manager import SQLiteManager
+from utils.hummingbot_database import HummingbotDatabase
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -23,7 +23,7 @@ if uploaded_db is not None:
     with open(os.path.join("data/uploaded", uploaded_db.name), "wb") as f:
         f.write(file_contents)
     st.success("File uploaded and saved successfully!")
-    selected_db = SQLiteManager(uploaded_db.name)
+    selected_db = HummingbotDatabase(uploaded_db.name)
 
 st.divider()
 

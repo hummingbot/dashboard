@@ -2,7 +2,7 @@ import pandas as pd
 import streamlit as st
 import math
 from utils.os_utils import get_local_dbs
-from utils.sqlite_manager import SQLiteManager
+from utils.hummingbot_database import HummingbotDatabase
 from data_viz.charts import ChartsBase
 from data_viz.candles import PerformanceCandles
 import data_viz.utils as utils
@@ -32,7 +32,7 @@ if dbs is not None and bool(dbs):
     bots_source = st.selectbox("Choose a folder containing local databases", dbs.keys())
     db_names = [x for x in dbs[bots_source]]
     selected_db_name = st.selectbox("Select a database", db_names)
-    selected_db = SQLiteManager(dbs[bots_source][selected_db_name])
+    selected_db = HummingbotDatabase(dbs[bots_source][selected_db_name])
 else:
     st.warning("Ups! No databases were founded. Start uploading one in ETL page.")
     selected_db = None

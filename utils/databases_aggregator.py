@@ -2,7 +2,7 @@ import pandas as pd
 from typing import List
 import os
 
-from utils.sqlite_manager import SQLiteManager
+from utils.hummingbot_database import HummingbotDatabase
 from utils.os_utils import get_local_dbs
 
 
@@ -19,11 +19,11 @@ class DatabasesAggregator:
         return self.get_status_report()
 
     @property
-    def dbs(self) -> List[SQLiteManager]:
+    def dbs(self) -> List[HummingbotDatabase]:
         return self.get_databases()
 
     @property
-    def healthy_dbs(self) -> List[SQLiteManager]:
+    def healthy_dbs(self) -> List[HummingbotDatabase]:
         return [db for db in self.dbs if db.status["general_status"]]
 
     @property
@@ -35,7 +35,7 @@ class DatabasesAggregator:
         dbs = []
         for source, db_files in dbs_map.items():
             for db_name, db_path in db_files.items():
-                dbs.append(SQLiteManager(db_path=db_path, instance_name=source))
+                dbs.append(HummingbotDatabase(db_path=db_path, instance_name=source))
         return dbs
 
     def get_status_report(self):

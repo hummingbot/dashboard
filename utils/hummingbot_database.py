@@ -20,7 +20,7 @@ class CloseType(Enum):
     COMPLETED = 9
 
 
-class SQLiteManager:
+class HummingbotDatabase:
     def __init__(self, db_path: str, instance_name: str = None):
         self.db_name = os.path.basename(db_path)
         self.db_path = db_path
