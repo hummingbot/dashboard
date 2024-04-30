@@ -10,7 +10,7 @@ from utils.backend_api_client import BackendAPIClient
 from utils.st_utils import initialize_st_page
 
 # Initialize the Streamlit page
-initialize_st_page(title="Bollinger V1", icon="📈", initial_sidebar_state="expanded")
+initialize_st_page(title="Trend Follower V1", icon="📈", initial_sidebar_state="expanded")
 
 
 @st.cache_data
@@ -19,22 +19,27 @@ def get_candles(connector_name="binance", trading_pair="BTC-USDT", interval="1m"
     return backend_client.get_real_time_candles(connector_name, trading_pair, interval, max_records)
 
 @st.cache_data
-def add_indicators(df, bb_length, bb_std, bb_long_threshold, bb_short_threshold):
-    # Add Bollinger Bands
-    df.ta.bbands(length=bb_length, std=bb_std, append=True)
+def add_indicators(df, sma_fast, sma_slow, entry_threshold):
+    # Add indicators
+    df.ta.sma(close='close', length=sma_fast, append=True)
+    df.ta.sma(close='close', length=sma_slow, append=True)
+    df = df.dropna()
+    cross_up = ta.cross(df[f"SMA_{sma_fast}"], df[f"SMA_{sma_slow}"], above=True)
+    cross_down = ta.cross(df[f"SMA_{sma_fast}"], df[f"SMA_{sma_slow}"], above=False)
+    sma_fast = df[f"SMA_{sma_fast}"]
+    sma_slow = df[f"SMA_{sma_slow}"]
 
     # Generate signal
-    long_condition = df[f"BBP_{bb_length}_{bb_std}"] < bb_long_threshold
-    short_condition = df[f"BBP_{bb_length}_{bb_std}"] > bb_short_threshold
+    long_condition = (cross_up == 1) & (df["close"] * (1 - entry_threshold) < sma_fast)
+    short_condition = (cross_down == 1) & (df["close"] * (1 + entry_threshold) > sma_fast)
 
-    # Generate signal
     df["signal"] = 0
     df.loc[long_condition, "signal"] = 1
     df.loc[short_condition, "signal"] = -1
     return df
 
 
-st.text("This tool will let you create a config for Bollinger V1 and visualize the strategy.")
+st.text("This tool will let you create a config for Trend Follower V1 and visualize the strategy.")
 st.write("---")
 
 # Inputs for Bollinger Band configuration
@@ -71,25 +76,19 @@ with c4:
     position_mode = st.selectbox("Position Mode", ("HEDGE", "ONEWAY"))
 
 st.write("## Bollinger Bands Configuration")
-c1, c2, c3, c4 = st.columns(4)
+c1, c2, c3 = st.columns(3)
 with c1:
-    bb_length = st.number_input("Bollinger Bands Length", min_value=20, max_value=200, value=100)
+    sma_fast = st.number_input("Fast SMA Length", min_value=10, max_value=100, value=20)
 with c2:
-    bb_std = st.number_input("Standard Deviation Multiplier", min_value=1.0, max_value=5.0, value=2.0)
+    sma_slow = st.number_input("Slow SMA Length", min_value=20, max_value=500, value=200)
 with c3:
-    bb_long_threshold = st.number_input("Long Threshold", value=0.0)
-with c4:
-    bb_short_threshold = st.number_input("Short Threshold", value=1.0)
+    entry_threshold = st.number_input("Entry Threshold (%)", min_value=0.0, max_value=100.0, value=1.0, step=0.1) / 100
 
 # Load candle data
 candle_data = get_candles(connector_name=candles_connector, trading_pair=candles_trading_pair, interval=interval, max_records=max_records)
 df = pd.DataFrame(candle_data)
 df.index = pd.to_datetime(df['timestamp'], unit='ms')
-candles_processed = add_indicators(df, bb_length, bb_std, bb_long_threshold, bb_short_threshold)
-# Create a dynamic variable naming convention based on bb_length and bb_std
-bb_lower = f'BBL_{bb_length}_{bb_std}'
-bb_middle = f'BBM_{bb_length}_{bb_std}'
-bb_upper = f'BBU_{bb_length}_{bb_std}'
+candles_processed = add_indicators(df, sma_fast, sma_slow, entry_threshold)
 
 
 # Prepare data for signals
@@ -110,7 +109,7 @@ tech_colors = {
 
 # Create a subplot with 2 rows
 fig = make_subplots(rows=2, cols=1, shared_xaxes=True,
-                    vertical_spacing=0.02, subplot_titles=('Candlestick with Bollinger Bands', 'Trading Signals'),
+                    vertical_spacing=0.02, subplot_titles=('Candlestick with Moving Averages', 'Trading Signals'),
                     row_heights=[0.7, 0.3])
 
 # Candlestick plot
@@ -122,17 +121,16 @@ fig.add_trace(go.Candlestick(x=candles_processed.index,
                              name="Candlesticks", increasing_line_color='#2ECC71', decreasing_line_color='#E74C3C'),
               row=1, col=1)
 
-# Bollinger Bands
-fig.add_trace(go.Scatter(x=candles_processed.index, y=candles_processed[bb_upper], line=dict(color=tech_colors['upper_band']), name='Upper Band'), row=1, col=1)
-fig.add_trace(go.Scatter(x=candles_processed.index, y=candles_processed[bb_middle], line=dict(color=tech_colors['middle_band']), name='Middle Band'), row=1, col=1)
-fig.add_trace(go.Scatter(x=candles_processed.index, y=candles_processed[bb_lower], line=dict(color=tech_colors['lower_band']), name='Lower Band'), row=1, col=1)
+# Moving Averages
+fig.add_trace(go.Scatter(x=candles_processed.index, y=candles_processed[f"SMA_{sma_fast}"], line=dict(color='blue'), name=f'Fast SMA ({sma_fast})'), row=1, col=1)
+fig.add_trace(go.Scatter(x=candles_processed.index, y=candles_processed[f"SMA_{sma_slow}"], line=dict(color='red'), name=f'Slow SMA ({sma_slow})'), row=1, col=1)
 
 # Signals plot
 fig.add_trace(go.Scatter(x=buy_signals.index, y=buy_signals['close'], mode='markers',
-                         marker=dict(color=tech_colors['buy_signal'], size=10, symbol='triangle-up'),
+                         marker=dict(color=tech_colors['buy_signal'], size=20, symbol='triangle-up'),
                          name='Buy Signal'), row=1, col=1)
 fig.add_trace(go.Scatter(x=sell_signals.index, y=sell_signals['close'], mode='markers',
-                         marker=dict(color=tech_colors['sell_signal'], size=10, symbol='triangle-down'),
+                         marker=dict(color=tech_colors['sell_signal'], size=20, symbol='triangle-down'),
                          name='Sell Signal'), row=1, col=1)
 
 fig.add_trace(go.Scatter(x=signals.index, y=signals['signal'], mode='markers',
@@ -201,10 +199,6 @@ config = {
     "candles_connector": candles_connector,
     "candles_trading_pair": candles_trading_pair,
     "interval": interval,
-    "bb_length": bb_length,
-    "bb_std": bb_std,
-    "bb_long_threshold": bb_long_threshold,
-    "bb_short_threshold": bb_short_threshold
 }
 
 yaml_config = yaml.dump(config, default_flow_style=False)

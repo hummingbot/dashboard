@@ -16,7 +16,7 @@ initialize_st_page(title="MACD_BB V1", icon="📊", initial_sidebar_state="expan
 @st.cache_data
 def get_candles(connector_name, trading_pair, interval, max_records):
     backend_client = BackendAPIClient(BACKEND_API_HOST, BACKEND_API_PORT)
-    return backend_client.get_candles(connector_name, trading_pair, interval, max_records)
+    return backend_client.get_real_time_candles(connector_name, trading_pair, interval, max_records)
 
 @st.cache_data
 def add_indicators(df, bb_length, bb_std, bb_long_threshold, bb_short_threshold, macd_fast, macd_slow, macd_signal):
