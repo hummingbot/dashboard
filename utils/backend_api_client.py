@@ -160,14 +160,27 @@ class BackendAPIClient:
         response = requests.post(url, json=config)
         return response.json()
 
-    def get_candles(self, connector: str, trading_pair: str, interval: str, max_records: int):
+    def get_real_time_candles(self, connector: str, trading_pair: str, interval: str, max_records: int):
         """Get candles data."""
-        url = f"{self.base_url}/candles"
+        url = f"{self.base_url}/real-time-candles"
         payload = {
             "connector": connector,
             "trading_pair": trading_pair,
             "interval": interval,
             "max_records": max_records
+        }
+        response = requests.post(url, json=payload)
+        return response.json()
+
+    def get_historical_candles(self, connector: str, trading_pair: str, interval: str, start_time: int, end_time: int):
+        """Get historical candles data."""
+        url = f"{self.base_url}/historical-candles"
+        payload = {
+            "connector": connector,
+            "trading_pair": trading_pair,
+            "interval": interval,
+            "start_time": start_time,
+            "end_time": end_time
         }
         response = requests.post(url, json=payload)
         return response.json()
