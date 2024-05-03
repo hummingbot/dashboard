@@ -106,31 +106,34 @@ grouped_executors = executors.groupby(["instance", "controller_id", "exchange", 
     {"net_pnl_quote": "sum",
      "id": "count",
      "datetime": "min",
-     "close_datetime": "max"}).reset_index()
+     "close_datetime": "max",
+     "filled_amount_quote": "sum"}).reset_index()
 
 # Apply the function to the duration column
 grouped_executors["duration"] = (grouped_executors["close_datetime"] - grouped_executors["datetime"]).dt.total_seconds().apply(format_duration)
+grouped_executors["filled_amount_quote"] = grouped_executors["filled_amount_quote"].apply(lambda x: f"$ {x:.2f}")
+grouped_executors["net_pnl_quote"] = grouped_executors["net_pnl_quote"].apply(lambda x: f"$ {x:.2f}")
+grouped_executors["filter"] = False
 grouped_executors.rename(columns={"datetime": "start_datetime_utc",
-                                  "close_datetime": "end_datetime_utc",
                                   "id": "total_executors"}, inplace=True)
-st.dataframe(grouped_executors, use_container_width=True, hide_index=True)
-
-st.subheader("🔍 Filters")
-col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
-with col1:
-    db_name = st.multiselect("Select db", executors["db_name"].unique())
-with col2:
-    instance_name = st.multiselect("Select instance", executors["instance"].unique())
-with col3:
-    controller_id = st.multiselect("Select controller", executors["controller_id"].unique())
-with col4:
-    exchange = st.multiselect("Select exchange", executors["exchange"].unique())
-with col5:
-    trading_pair = st.multiselect("Select trading_pair", executors["trading_pair"].unique())
-with col6:
-    start_datetime = st.date_input("Start date", value=executors["datetime"].min())
-with col7:
-    end_datetime = st.date_input("End date", value=executors["datetime"].max())
+cols_to_show = ["filter", "controller_id", "exchange", "trading_pair", "db_name", "total_executors", "filled_amount_quote", "net_pnl_quote", "duration"]
+selection = st.data_editor(grouped_executors[cols_to_show], use_container_width=True, hide_index=True, column_config={"filter": st.column_config.CheckboxColumn(required=True)})
+with st.expander("🔍 Filters"):
+    col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
+    with col1:
+        db_name = st.multiselect("Select db", executors["db_name"].unique(), default=grouped_executors.loc[selection["filter"], "db_name"].unique())
+    with col2:
+        instance_name = st.multiselect("Select instance", executors["instance"].unique(), default=grouped_executors.loc[selection["filter"], "instance"].unique())
+    with col3:
+        controller_id = st.multiselect("Select controller", executors["controller_id"].unique(), default=grouped_executors.loc[selection["filter"], "controller_id"].unique())
+    with col4:
+        exchange = st.multiselect("Select exchange", executors["exchange"].unique(), default=grouped_executors.loc[selection["filter"], "exchange"].unique())
+    with col5:
+        trading_pair = st.multiselect("Select trading_pair", executors["trading_pair"].unique(), default=grouped_executors.loc[selection["filter"], "trading_pair"].unique())
+    with col6:
+        start_datetime = st.date_input("Start date", value=executors["datetime"].min())
+    with col7:
+        end_datetime = st.date_input("End date", value=executors["datetime"].max())
 
 st.subheader("Performance Analysis")
 
@@ -189,7 +192,7 @@ st.plotly_chart(charts.realized_pnl_over_time(data=realized_pnl_data,
                 use_container_width=True)
 
 # Close Types
-col1, col2 = st.columns(2)
+col1, col2, col3 = st.columns(3)
 with col1:
     close_type_data = filtered_executors_data.groupby("close_type").agg({"id": "count"}).reset_index()
     st.plotly_chart(charts.close_types_pie_chart(data=close_type_data,
@@ -204,8 +207,16 @@ with col2:
                                               values_column="id"),
                     use_container_width=True)
 
+with (col3):
+    intra_level_id_data = filtered_executors_data.groupby(['exit_level', 'close_type']).size().reset_index(name='count')
+    fig = go.Figure()
+    fig.add_trace(go.Pie(labels=intra_level_id_data.loc[intra_level_id_data["exit_level"] != 0, 'exit_level'],
+                         values=intra_level_id_data.loc[intra_level_id_data["exit_level"] != 0, 'count'],
+                         hole=0.4))
+    fig.update_layout(title='Count of Close Types by Exit Level')
+    st.plotly_chart(fig, use_container_width=True)
+
 # Intra level Analysis
-intra_level_id_data = filtered_executors_data.groupby(['exit_level', 'close_type']).size().reset_index(name='count')
 intra_level_id_pnl_data = filtered_executors_data.groupby(['exit_level'])['net_pnl_quote'].sum().reset_index(name='pnl')
 
 fig = go.Figure()
