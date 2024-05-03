@@ -183,12 +183,13 @@ class PerformancePlotlyTracer:
                                      x=[open_time, close_time],
                                      y=[open_price, close_price],
                                      mode="lines",
-                                     line=dict(color="lightgreen" if net_pnl_quote > 0 else "red"),
+                                     line=dict(color="lightgreen" if net_pnl_quote > 0 else "red",
+                                               dash='dash' if close_type == "TIME_LIMIT" else 'solid'),
                                      hoverinfo="text",
                                      hovertext=f"Position N°: {position_number} <br>"
                                                f"Open datetime: {open_time} <br>"
                                                f"Close datetime: {close_time} <br>"
-                                               f"Side: {side} <br>"
+                                               f"Side: {'long' if side == 1 else 'short'} <br>"
                                                f"Entry price: {open_price} <br>"
                                                f"Close price: {close_price} <br>"
                                                f"Close type: {close_type} <br>"
