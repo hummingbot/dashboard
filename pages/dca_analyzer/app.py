@@ -2,6 +2,8 @@ import math
 import streamlit as st
 import plotly.graph_objects as go
 from dotenv import load_dotenv
+import json
+import pandas as pd
 import logging
 from sqlalchemy.exc import OperationalError
 import os
@@ -15,11 +17,30 @@ from data_viz.tracers import PerformancePlotlyTracer
 load_dotenv()
 
 
+def get_total_and_exit_levels(executors_with_orders: pd.DataFrame, executors: pd.DataFrame):
+    exit_level = executors_with_orders[executors_with_orders["position"] == "OPEN"].groupby("executor_id")["position"].count()
+    executors["exit_level"] = executors["id"].map(exit_level).fillna(0.0).astype(int)
+    executors["total_levels"] = executors["config"].apply(lambda x: len(json.loads(x)["prices"]))
+    return executors
+
+def get_executors_with_orders(executors: pd.DataFrame, orders: pd.DataFrame):
+    df = pd.DataFrame(executors['custom_info'].tolist(), index=executors['id'],
+                         columns=["custom_info"]).reset_index()
+    df["custom_info"] = df["custom_info"].apply(lambda x: json.loads(x))
+    df["orders"] = df["custom_info"].apply(lambda x: x["order_ids"])
+    df.rename(columns={"id": "executor_id"}, inplace=True)
+    exploded_df = df.explode("orders").rename(columns={"orders": "order_id"})
+    exec_with_orders = exploded_df.merge(orders, left_on="order_id", right_on="client_order_id", how="inner")
+    exec_with_orders = exec_with_orders[exec_with_orders["last_status"].isin(["SellOrderCompleted", "BuyOrderCompleted"])]
+    return exec_with_orders[["executor_id", "order_id", "last_status", "last_update_timestamp", "price", "amount", "position"]]
+
+
 def format_duration(seconds):
     minutes, seconds = divmod(seconds, 60)
     hours, minutes = divmod(minutes, 60)
     days, hours = divmod(hours, 24)
     return f"{int(days)}d {int(hours)}h {int(minutes)}m"
+
 
 intervals = {
     "1m": 60,
@@ -75,6 +96,8 @@ except Exception as e:
 executors = etl.read_executors()
 market_data = etl.read_market_data()
 orders = etl.read_orders()
+executors_with_orders = get_executors_with_orders(executors, orders)
+executors = get_total_and_exit_levels(executors_with_orders, executors)
 charts = ChartsBase()
 tracer = PerformancePlotlyTracer()
 
@@ -180,6 +203,46 @@ with col2:
                                               level_id_column="level_id",
                                               values_column="id"),
                     use_container_width=True)
+
+# Intra level Analysis
+intra_level_id_data = filtered_executors_data.groupby(['exit_level', 'close_type']).size().reset_index(name='count')
+intra_level_id_pnl_data = filtered_executors_data.groupby(['exit_level'])['net_pnl_quote'].sum().reset_index(name='pnl')
+
+fig = go.Figure()
+
+for close_type in intra_level_id_data['close_type'].unique():
+    temp_data = intra_level_id_data[intra_level_id_data['close_type'] == close_type]
+    fig.add_trace(go.Bar(
+        x=temp_data['exit_level'],
+        y=temp_data['count'],
+        name=close_type,
+        yaxis='y'
+    ))
+
+fig.add_trace(go.Scatter(x=intra_level_id_pnl_data['exit_level'],
+                         y=intra_level_id_pnl_data['pnl'],
+                         mode='lines+markers',
+                         name='PnL',
+                         text=intra_level_id_pnl_data['pnl'].apply(lambda x: f"$ {x:.2f}"),
+                         textposition='top center',
+                         yaxis='y2'))
+
+# Determine the maximum absolute value of count and pnl for setting the y-axis range
+max_count = max(abs(intra_level_id_data['count'].min()), abs(intra_level_id_data['count'].max()))
+max_pnl = max(abs(intra_level_id_pnl_data['pnl'].min()), abs(intra_level_id_pnl_data['pnl'].max()))
+
+# Update layout
+fig.update_layout(
+    title='Count of Close Types by Exit Level and PnL by Exit Level',
+    xaxis=dict(title='Exit Level'),
+    yaxis=dict(title='Count', side='left', range=[-max_count, max_count]),
+    yaxis2=dict(title='PnL', overlaying='y', side='right', range=[-max_pnl, max_pnl]),
+    barmode='group'
+)
+
+st.plotly_chart(fig, use_container_width=True)
+
+
 
 # Apply custom sorting function to create a new column 'sorting_order'
 level_id_data[['type', 'number']] = level_id_data['level_id'].str.split('_', expand=True)
