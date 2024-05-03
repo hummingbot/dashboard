@@ -74,6 +74,7 @@ except Exception as e:
 
 executors = etl.read_executors()
 market_data = etl.read_market_data()
+orders = etl.read_orders()
 charts = ChartsBase()
 tracer = PerformancePlotlyTracer()
 
@@ -128,7 +129,7 @@ if trading_pair:
 # if end_datetime:
 #     filtered_executors_data = filtered_executors_data[filtered_executors_data["close_datetime"] <= pd.to_datetime(end_datetime)]
 
-col1, col2, col3, col4, col5, col6, col7, col8 = st.columns(8)
+col1, col2, col3, col4, col5, col6, col7, col8, col9 = st.columns(9)
 with col1:
     st.metric("Composed PnL", f"$ {filtered_executors_data['net_pnl_quote'].sum():.2f}")
     st.metric("Profit per Executor", f"$ {filtered_executors_data['net_pnl_quote'].sum() / len(filtered_executors_data):.2f}")
@@ -148,9 +149,12 @@ with col6:
     st.metric("# Early Stop", f"{len(filtered_executors_data[filtered_executors_data['close_type'] == 'EARLY_STOP'])}",
               delta=f"{filtered_executors_data[filtered_executors_data['close_type'] == 'EARLY_STOP']['net_pnl_quote'].sum():.2f}")
 with col7:
+    st.metric("# Time Limit", f"{len(filtered_executors_data[filtered_executors_data['close_type'] == 'TIME_LIMIT'])}",
+              delta=f"{filtered_executors_data[filtered_executors_data['close_type'] == 'TIME_LIMIT']['net_pnl_quote'].sum():.2f}")
+with col8:
     st.metric("Long %", f"{100 * len(filtered_executors_data[filtered_executors_data['side'] == 1]) / len(filtered_executors_data):.2f} %",
               delta=f"{filtered_executors_data[filtered_executors_data['side'] == 1]['net_pnl_quote'].sum():.2f}")
-with col8:
+with col9:
     st.metric("Short %", f"{100 * len(filtered_executors_data[filtered_executors_data['side'] == 2]) / len(filtered_executors_data):.2f} %",
               delta=f"{filtered_executors_data[filtered_executors_data['side'] == 2]['net_pnl_quote'].sum():.2f}")
 
@@ -196,7 +200,7 @@ with col1:
 with col2:
     interval = st.selectbox("Select interval", list(intervals.keys()), index=3)
 with col3:
-    rows_per_page = st.number_input("Candles per Page", value=400, min_value=1, max_value=5000)
+    rows_per_page = st.number_input("Candles per Page", value=1500, min_value=1, max_value=5000)
 filtered_market_data = market_data[market_data["trading_pair"] == trading_pair]
 filtered_market_data.set_index("timestamp", inplace=True)
 market_data_resampled = filtered_market_data.resample(f"{intervals[interval]}S").agg({
