@@ -1,0 +1,44 @@
+version: "3.9"
+services:
+  dashboard:
+    container_name: dashboard
+    build:
+        context: .
+        dockerfile: Dockerfile
+    image: hummingbot/dashboard:performance-refactor
+    volumes:
+      - /dashboard/data:/dashboard/data
+    ports:
+      - "8501:8501"
+    env_file:
+      - .env
+    networks:
+      - dashboard_network
+
+  db:
+    image: postgres:14
+    ports:
+      - "5480:5432"
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+        - db-data:/var/lib/postgresql/data/pgdata
+    secrets:
+      - postgres_password
+    networks:
+      - dashboard_network
+
+volumes:
+    db-data:
+
+secrets:
+  postgres_password:
+    file: .env
+
+networks:
+  dashboard_network:
+    driver: bridge
+
+
