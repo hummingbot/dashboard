@@ -36,11 +36,11 @@ class ETLPerformance:
     def executors_table(self):
         return Table('executors',
                      MetaData(),
-               Column('id', Integer),
+                     Column('id', String),
                      Column('type', String),
                      Column('close_type', String),
-                     Column('level_id', Integer),
-                     Column('close_timestamp', DateTime),
+                     Column('level_id', String),
+                     Column('close_timestamp', Integer),
                      Column('status', String),
                      Column('config', String),
                      Column('net_pnl_pct', Float),
@@ -50,7 +50,7 @@ class ETLPerformance:
                      Column('is_active', Integer),
                      Column('is_trading', Integer),
                      Column('custom_info', String),
-                     Column('controller_id', Integer),
+                     Column('controller_id', String),
                      Column('datetime', DateTime),
                      Column('close_datetime', DateTime),
                      Column('cum_net_pnl_quote', Float),
@@ -107,6 +107,7 @@ class ETLPerformance:
     def orders_table(self):
         return Table(
             'orders', MetaData(),
+            Column('client_order_id', VARCHAR(255)),
             Column('config_file_path', VARCHAR(255)),
             Column('strategy', VARCHAR(255)),
             Column('market', VARCHAR(255)),
@@ -228,7 +229,7 @@ class ETLPerformance:
 
     def create_market_data_table(self):
         inspector = inspect(self.engine)
-        if 'executors' not in inspector.get_table_names():
+        if 'market_data' not in inspector.get_table_names():
             with self.engine.connect() as conn:
                 self.market_data_table.create(conn)
                 conn.commit()
@@ -333,6 +334,7 @@ class ETLPerformance:
         with self.engine.connect() as conn:
             for _, row in orders.iterrows():
                 ins = insert(self.orders_table).values(
+                    client_order_id=row["id"],
                     config_file_path=row["config_file_path"],
                     strategy=row["strategy"],
                     market=row["market"],
