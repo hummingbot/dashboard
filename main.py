@@ -11,31 +11,31 @@ def main_page():
         [
             Page("main.py", "Hummingbot Dashboard", "📊"),
             Section("Bot Orchestration", "🐙"),
-            Page("pages/bot_orchestration/app.py", "Instances", "🦅"),
-            Page("pages/launch_bot/app.py", "Deploy", "🚀"),
+            Page("frontend/pages/bot_orchestration/app.py", "Instances", "🦅"),
+            Page("frontend/pages/launch_bot/app.py", "Deploy", "🚀"),
             Section("Config Generator", "🎛️"),
-            Page("pages/pmm_simple/app.py", "PMM Simple", "👨‍🏫"),
-            Page("pages/dman_maker_v2/app.py", "D-Man Maker V2", "🤖"),
-            Page("pages/bollinger_v1/app.py", "Bollinger V1", "📈"),
-            Page("pages/trend_follower_v1/app.py", "Trend Follower V1", "📈"),
-            Page("pages/kalman_filter_v1/app.py", "Kalman Filter V1", "👨‍🔬"),
-            Page("pages/macd_bb_v1/app.py", "MACD_BB V1", "📊"),
-            Page("pages/dman_v5/app.py", "D-Man V5", "📊"),
-            Page("pages/xemm_controller/app.py", "XEMM Controller", "⚡️"),
-            Page("pages/position_builder/app.py", "Position Builder", "🔭"),
-            Page("pages/dynamic_position_builder/app.py", "Dynamic Position Builder", "🔭"),
+            Page("frontend/pages/pmm_simple/app.py", "PMM Simple", "👨‍🏫"),
+            Page("frontend/pages/dman_maker_v2/app.py", "D-Man Maker V2", "🤖"),
+            Page("frontend/pages/bollinger_v1/app.py", "Bollinger V1", "📈"),
+            Page("frontend/pages/trend_follower_v1/app.py", "Trend Follower V1", "📈"),
+            Page("frontend/pages/kalman_filter_v1/app.py", "Kalman Filter V1", "👨‍🔬"),
+            Page("frontend/pages/macd_bb_v1/app.py", "MACD_BB V1", "📊"),
+            Page("frontend/pages/dman_v5/app.py", "D-Man V5", "📊"),
+            Page("frontend/pages/xemm_controller/app.py", "XEMM Controller", "⚡️"),
+            Page("frontend/pages/position_builder/app.py", "Position Builder", "🔭"),
+            Page("frontend/pages/dynamic_position_builder/app.py", "Dynamic Position Builder", "🔭"),
             # Page("pages/master_conf/app.py", "Credentials", "🗝️"),
             # Page("pages/file_manager/app.py", "File Explorer", "🗂"),
             Section("Data", "💾"),
-            Page("pages/data_download_candles/app.py", "Download Candles", "💹"),
+            Page("frontend/pages/data_download_candles/app.py", "Download Candles", "💹"),
             # Page("pages/backtest_create/create.py", "Create", "⚔️"),
             # Page("pages/backtest_optimize/optimize.py", "Optimize", "🧪"),
             # Page("pages/backtest_analyze/analyze.py", "Analyze", "🔬"),
             Section("Community Pages", "👨‍👩‍👧‍👦"),
-            Page("pages/strategy_performance/app.py", "Strategy Performance", "🚀"),
-            Page("pages/db_inspector/app.py", "DB Inspector", "🔍"),
-            Page("pages/token_spreads/app.py", "Token Spreads", "🧙"),
-            Page("pages/tvl_vs_mcap/app.py", "TVL vs Market Cap", "🦉"),
+            Page("frontend/pages/strategy_performance/app.py", "Strategy Performance", "🚀"),
+            Page("frontend/pages/db_inspector/app.py", "DB Inspector", "🔍"),
+            Page("frontend/pages/token_spreads/app.py", "Token Spreads", "🧙"),
+            Page("frontend/pages/tvl_vs_mcap/app.py", "TVL vs Market Cap", "🦉"),
         ]
     )
 
@@ -96,11 +96,9 @@ def main_page():
 
     st.header("Feedback and Issues")
 
-    st.write(
-        "Please give us feedback in the **#dashboard** channel of the [Hummingbot Discord](https://discord.gg/hummingbot)! 🙏")
+    st.write("Please give us feedback in the **#dashboard** channel of the [Hummingbot Discord](https://discord.gg/hummingbot)! 🙏")
 
-    st.write(
-        "If you encounter any bugs or have suggestions for improvement, please create an issue in the [Hummingbot Dashboard Github](https://github.com/hummingbot/dashboard).")
+    st.write("If you encounter any bugs or have suggestions for improvement, please create an issue in the [Hummingbot Dashboard Github](https://github.com/hummingbot/dashboard).")
 
 
 config = read_yaml_file("credentials.yml")

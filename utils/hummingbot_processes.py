@@ -18,7 +18,7 @@ async def aget_candles(connector_name: str, trading_pair: str, interval: str, ma
     candles.start()
 
     pbar = tqdm(total=candles._candles.maxlen)
-    while not candles.is_ready:
+    while not candles.ready:
         await asyncio.sleep(1)
         awaited_records = candles._candles.maxlen - len(candles._candles)
         pbar.update(candles._candles.maxlen - awaited_records - pbar.n)
@@ -32,7 +32,7 @@ async def aget_candles(connector_name: str, trading_pair: str, interval: str, ma
 async def adownload_candles(connector_name: str, trading_pair: str, interval: str, max_records: int, download_path: str):
     candles = CandlesFactory.get_candle(CandlesConfig(connector_name, trading_pair, interval, max_records))
     candles.start()
-    while not candles.is_ready:
+    while not candles.ready:
         print(f"Candles not ready yet! Missing {candles._candles.maxlen - len(candles._candles)}")
         await asyncio.sleep(1)
     df = candles.candles_df
