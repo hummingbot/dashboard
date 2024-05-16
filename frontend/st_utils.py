@@ -7,7 +7,8 @@ import inspect
 import streamlit as st
 from st_pages import add_page_title
 
-def initialize_st_page(title: str, icon: str, layout="wide", initial_sidebar_state="collapsed"):
+
+def initialize_st_page(title: str, icon: str, layout="wide", initial_sidebar_state="expanded"):
     st.set_page_config(
         page_title=title,
         page_icon=icon,
