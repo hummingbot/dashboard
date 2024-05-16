@@ -3,8 +3,8 @@ from datetime import datetime, time
 import pandas as pd
 import plotly.graph_objects as go
 
-from utils.backend_api_client import BackendAPIClient
-from utils.st_utils import initialize_st_page
+from backend.services.backend_api_client import BackendAPIClient
+from frontend.st_utils import initialize_st_page
 
 # Initialize Streamlit page
 initialize_st_page(title="Download Candles", icon="💾", initial_sidebar_state="collapsed")
