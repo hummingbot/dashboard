@@ -1,4 +1,4 @@
-def get_default_layout(title, height=600, width=800):
+def get_default_layout(title, height=800, width=1800):
     return {
         "template": "plotly_dark",
         "title": title,
@@ -7,9 +7,7 @@ def get_default_layout(title, height=600, width=800):
         "font": {"color": 'white', "size": 12},  # Consistent font color and size
         "height": height,
         "width": width,
-        "margin": {"l": 20, "r": 20, "t": 50, "b": 20},
-        "xaxis": {"title": "Spread (%)"},
-        "yaxis": {"title": "Amount (Quote)"}
+        "margin": {"l": 20, "r": 20, "t": 50, "b": 20}
     }
 
 
@@ -27,5 +25,15 @@ def get_color_scheme():
         'macd_line': '#FFA500',  # Orange
         'macd_signal': '#800080',  # Purple
         'macd_histogram_positive': '#32CD32',  # Green
-        'macd_histogram_negative': '#FF6347'  # Red
+        'macd_histogram_negative': '#FF6347',  # Red
+        'spread': '#00BFFF',  # Deep Sky Blue
+        'break_even': '#FFD700',  # Gold
+        'take_profit': '#32CD32',  # Green
+        'order_amount': '#1E90FF',  # Dodger Blue
+        'cum_amount': '#4682B4',  # Steel Blue
+        'stop_loss': '#FF0000',  # Red
+        'cum_unrealized_pnl': '#FFA07A'  # Light Salmon
+
     }
+
+
