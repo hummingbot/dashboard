@@ -1,7 +1,7 @@
 .ONESHELL:
 .PHONY: run
-.PHONY: conda_remove
-.PHONY: conda_create
+.PHONY: uninstall
+.PHONY: install
 
 run:
 	streamlit run main.py
