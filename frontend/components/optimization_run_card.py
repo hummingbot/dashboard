@@ -4,8 +4,7 @@ import optuna
 from streamlit_elements import mui, lazy
 
 import constants
-from utils.os_utils import get_python_files_from_directory, \
-    get_function_from_file
+from backend.utils.os_utils import get_function_from_file, get_python_files_from_directory
 from .dashboard import Dashboard
 
 

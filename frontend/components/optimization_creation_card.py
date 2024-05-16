@@ -2,8 +2,8 @@ from streamlit_elements import mui, lazy
 import datetime
 
 import constants
-from utils.file_templates import strategy_optimization_template
-from utils.os_utils import save_file, load_controllers
+from backend.utils.file_templates import strategy_optimization_template
+from backend.utils.os_utils import load_controllers, save_file
 from .dashboard import Dashboard
 
 

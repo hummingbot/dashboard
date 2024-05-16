@@ -1,8 +1,8 @@
 from streamlit_elements import mui
 
 import constants
+from backend.utils.os_utils import get_python_files_from_directory
 from frontend.components.file_explorer_base import FileExplorerBase
-from utils.os_utils import get_python_files_from_directory
 
 
 class OptimizationsStrategiesFileExplorer(FileExplorerBase):
