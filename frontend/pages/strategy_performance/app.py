@@ -2,11 +2,10 @@ import os
 import pandas as pd
 import streamlit as st
 import math
-from utils.os_utils import get_databases
-from utils.database_manager import DatabaseManager
-from utils.graphs import PerformanceGraphs
-from utils.st_utils import initialize_st_page, download_csv_button, style_metric_cards, db_error_message
 
+from backend.utils.os_utils import get_databases
+from frontend.data_viz.graphs import PerformanceGraphs
+from frontend.st_utils import initialize_st_page, style_metric_cards
 
 initialize_st_page(title="Strategy Performance", icon="🚀")
 style_metric_cards()

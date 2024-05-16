@@ -1,17 +1,15 @@
 import streamlit as st
-from pathlib import Path
 import plotly.express as px
 import CONFIG
-from utils.coingecko_utils import CoinGeckoUtils
-from utils.miner_utils import MinerUtils
-from utils.st_utils import initialize_st_page
-
+from backend.services.coingecko_client import CoinGeckoClient
+from backend.services.miner_client import MinerClient
+from frontend.st_utils import initialize_st_page
 
 initialize_st_page(title="Token Spreads", icon="🧙")
 
 # Start content here
-cg_utils = CoinGeckoUtils()
-miner_utils = MinerUtils()
+cg_utils = CoinGeckoClient()
+miner_utils = MinerClient()
 
 @st.cache_data
 def get_all_coins_df():

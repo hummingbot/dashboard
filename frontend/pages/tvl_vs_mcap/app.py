@@ -4,8 +4,7 @@ import pandas as pd
 import plotly.express as px
 from defillama import DefiLlama
 
-from utils.st_utils import initialize_st_page
-
+from frontend.st_utils import initialize_st_page
 
 initialize_st_page(title="TVL vs Market Cap", icon="🦉")
 

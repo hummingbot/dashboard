@@ -3,8 +3,7 @@ import streamlit as st
 import sqlite3
 import pandas as pd
 
-from utils.st_utils import initialize_st_page
-
+from frontend.st_utils import initialize_st_page
 
 initialize_st_page(title="DB Inspector", icon="🔍")
 
