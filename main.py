@@ -3,7 +3,7 @@ from st_pages import Page, Section, show_pages
 from streamlit_authenticator import Authenticate
 
 from CONFIG import AUTH_SYSTEM_ENABLED
-from utils.os_utils import read_yaml_file, dump_dict_to_yaml
+from backend.utils.os_utils import read_yaml_file, dump_dict_to_yaml
 
 
 def main_page():
@@ -17,10 +17,10 @@ def main_page():
             Page("frontend/pages/pmm_simple/app.py", "PMM Simple", "👨‍🏫"),
             Page("frontend/pages/dman_maker_v2/app.py", "D-Man Maker V2", "🤖"),
             Page("frontend/pages/bollinger_v1/app.py", "Bollinger V1", "📈"),
-            Page("frontend/pages/trend_follower_v1/app.py", "Trend Follower V1", "📈"),
-            Page("frontend/pages/kalman_filter_v1/app.py", "Kalman Filter V1", "👨‍🔬"),
+            # Page("frontend/pages/trend_follower_v1/app.py", "Trend Follower V1", "📈"),
+            # Page("frontend/pages/kalman_filter_v1/app.py", "Kalman Filter V1", "👨‍🔬"),
             Page("frontend/pages/macd_bb_v1/app.py", "MACD_BB V1", "📊"),
-            Page("frontend/pages/dman_v5/app.py", "D-Man V5", "📊"),
+            # Page("frontend/pages/dman_v5/app.py", "D-Man V5", "📊"),
             Page("frontend/pages/xemm_controller/app.py", "XEMM Controller", "⚡️"),
             Page("frontend/pages/position_builder/app.py", "Position Builder", "🔭"),
             Page("frontend/pages/dynamic_position_builder/app.py", "Dynamic Position Builder", "🔭"),
@@ -115,7 +115,7 @@ if "authenticator" not in st.session_state:
 if not AUTH_SYSTEM_ENABLED:
     main_page()
 elif st.session_state["authentication_status"]:
-    config["credentials"] = st.session_state.authenticator.credentials
+    config["credentials"] = st.session_state.authenticator_handler.credentials
     dump_dict_to_yaml(config, "credentials.yml")
     with st.sidebar:
         st.write(f'Welcome {st.session_state["name"]}!')
