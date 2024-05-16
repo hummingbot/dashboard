@@ -2,10 +2,10 @@ import streamlit as st
 from streamlit_elements import elements, mui
 
 from CONFIG import BACKEND_API_HOST, BACKEND_API_PORT
-from frontend.components.bot_performance_card_v2 import BotPerformanceCardV2
+from frontend.components.bot_performance_card import BotPerformanceCardV2
 from frontend.components.dashboard import Dashboard
-from utils.backend_api_client import BackendAPIClient
-from utils.st_utils import initialize_st_page
+from backend.services.backend_api_client import BackendAPIClient
+from frontend.st_utils import initialize_st_page
 
 # Constants for UI layout
 CARD_WIDTH = 12
