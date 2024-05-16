@@ -1,7 +1,7 @@
 from _decimal import Decimal
 from math import exp
 
-from hummingbot.smart_components.utils.distributions import Distributions
+from hummingbot.strategy_v2.utils.distributions import Distributions
 
 
 def normalize(values):
