@@ -6,8 +6,7 @@ from frontend.components.dashboard import Dashboard
 from frontend.components.editor import Editor
 from frontend.components.launch_master_bot_card import LaunchMasterBotCard
 from frontend.components.master_conf_file_explorer import MasterConfFileExplorer
-from utils.st_utils import initialize_st_page
-
+from frontend.st_utils import initialize_st_page
 
 initialize_st_page(title="Credentials", icon="🗝️", initial_sidebar_state="collapsed")
 

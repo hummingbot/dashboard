@@ -5,7 +5,7 @@ from streamlit_elements import elements, mui
 
 from frontend.components.dashboard import Dashboard
 from frontend.components.launch_strategy_v2 import LaunchStrategyV2
-from utils.st_utils import initialize_st_page
+from frontend.st_utils import initialize_st_page
 
 CARD_WIDTH = 6
 CARD_HEIGHT = 3
