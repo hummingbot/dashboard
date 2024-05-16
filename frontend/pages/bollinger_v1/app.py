@@ -1,13 +1,15 @@
+from datetime import datetime
+
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
-import pandas_ta as ta
 import yaml
+import pandas_ta as ta  # noqa: F401
 from hummingbot.connector.connector_base import OrderType
 
 from CONFIG import BACKEND_API_HOST, BACKEND_API_PORT
-from utils.backend_api_client import BackendAPIClient
-from utils.st_utils import initialize_st_page
+from backend.services.backend_api_client import BackendAPIClient
+from frontend.st_utils import initialize_st_page
 
 # Initialize the Streamlit page
 initialize_st_page(title="Bollinger V1", icon="📈", initial_sidebar_state="expanded")
@@ -207,6 +209,7 @@ config = {
     "bb_short_threshold": bb_short_threshold
 }
 
+
 yaml_config = yaml.dump(config, default_flow_style=False)
 
 with c3:
@@ -223,3 +226,28 @@ if upload_config_to_backend:
     backend_api_client = BackendAPIClient.get_instance(host=BACKEND_API_HOST, port=BACKEND_API_PORT)
     backend_api_client.add_controller_config(config)
     st.success("Config uploaded successfully!")
+
+st.write("---")
+st.write("### Backtesting")
+c1, c2, c3, c4, c5 = st.columns(5)
+with c1:
+    start_datetime = st.date_input("Start Date", datetime(2024, 5, 1))
+with c2:
+    end_datetime = st.date_input("End Date", datetime(2024, 5, 1))
+with c3:
+    backtesting_resolution = st.selectbox("Backtesting Resolution", options=["1m", "3m", "5m", "15m", "30m"], index=1)
+with c4:
+    trade_cost = st.number_input("Trade Cost", min_value=0.0, value=0.0006, step=0.0001)
+with c5:
+    run_backtesting = st.button("Run Backtesting")
+
+if run_backtesting:
+    backend_api_client = BackendAPIClient.get_instance(host=BACKEND_API_HOST, port=BACKEND_API_PORT)
+    backtesting_results = backend_api_client.run_backtesting(
+        start_time=int(start_datetime.timestamp()) * 1000,
+        end_time=(end_datetime.timestamp()) * 1000,
+        backtesting_resolution=backtesting_resolution,
+        trade_cost=trade_cost,
+        config=yaml_config,
+    )
+    st.write(backtesting_results)

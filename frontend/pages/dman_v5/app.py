@@ -1,14 +1,12 @@
 import streamlit as st
 import pandas as pd
-import pandas_ta as ta
 import plotly.graph_objects as go
 import yaml
-from hummingbot.connector.connector_base import OrderType
 from plotly.subplots import make_subplots
 
 from CONFIG import BACKEND_API_HOST, BACKEND_API_PORT
-from utils.backend_api_client import BackendAPIClient
-from utils.st_utils import initialize_st_page
+from backend.services.backend_api_client import BackendAPIClient
+from frontend.st_utils import initialize_st_page
 
 # Initialize the Streamlit page
 initialize_st_page(title="D-Man V5", icon="📊", initial_sidebar_state="expanded")

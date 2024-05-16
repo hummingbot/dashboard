@@ -1,15 +1,10 @@
-from math import exp
 import streamlit as st
-from plotly.subplots import make_subplots
 import plotly.graph_objects as go
-from decimal import Decimal
 import yaml
 
 from CONFIG import BACKEND_API_HOST, BACKEND_API_PORT
-from utils.backend_api_client import BackendAPIClient
-from utils.st_utils import initialize_st_page
-from hummingbot.smart_components.utils.distributions import Distributions
-
+from backend.services.backend_api_client import BackendAPIClient
+from frontend.st_utils import initialize_st_page
 
 # Initialize the Streamlit page
 initialize_st_page(title="XEMM Multiple Levels", icon="⚡️", initial_sidebar_state="collapsed")
