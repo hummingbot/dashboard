@@ -5,8 +5,7 @@ from streamlit_elements import elements, mui
 from frontend.components.bots_file_explorer import BotsFileExplorer
 from frontend.components.dashboard import Dashboard
 from frontend.components.editor import Editor
-from utils.st_utils import initialize_st_page
-
+from frontend.st_utils import initialize_st_page
 
 initialize_st_page(title="Strategy Configs", icon="🗂️", initial_sidebar_state="collapsed")
 

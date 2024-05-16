@@ -4,8 +4,8 @@ import plotly.graph_objects as go
 from decimal import Decimal
 import yaml
 
-from utils.st_utils import initialize_st_page
 from frontend.components.st_inputs import normalize, distribution_inputs, get_distribution
+from frontend.st_utils import initialize_st_page
 
 # Initialize the Streamlit page
 initialize_st_page(title="Position Generator", icon="🔭", initial_sidebar_state="collapsed")
