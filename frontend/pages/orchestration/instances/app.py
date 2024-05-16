@@ -19,7 +19,7 @@ def get_grid_positions(n_cards: int, cols: int = NUM_CARD_COLS, card_width: int 
     return sorted(x_y, key=lambda x: (x[1], x[0]))
 
 
-initialize_st_page(title="Instances", icon="🦅", initial_sidebar_state="collapsed")
+initialize_st_page(title="Instances", icon="🦅")
 api_client = BackendAPIClient.get_instance(host=BACKEND_API_HOST, port=BACKEND_API_PORT)
 
 

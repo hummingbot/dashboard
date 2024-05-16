@@ -11,7 +11,7 @@ from frontend.components.backtesting import backtesting_section
 from frontend.st_utils import initialize_st_page
 
 # Initialize the Streamlit page
-initialize_st_page(title="PMM Simple", icon="👨‍🏫", initial_sidebar_state="collapsed")
+initialize_st_page(title="PMM Simple", icon="👨‍🏫")
 backend_api_client = BackendAPIClient.get_instance(host=BACKEND_API_HOST, port=BACKEND_API_PORT)
 
 # Page content

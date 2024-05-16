@@ -8,7 +8,7 @@ from frontend.components.st_inputs import normalize, distribution_inputs, get_di
 from frontend.st_utils import initialize_st_page
 
 # Initialize the Streamlit page
-initialize_st_page(title="Position Generator", icon="🔭", initial_sidebar_state="collapsed")
+initialize_st_page(title="Position Generator", icon="🔭")
 
 # Page content
 st.text("This tool will help you analyze and generate a position config.")

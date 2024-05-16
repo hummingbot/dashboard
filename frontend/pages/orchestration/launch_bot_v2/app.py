@@ -11,7 +11,7 @@ CARD_WIDTH = 6
 CARD_HEIGHT = 3
 NUM_CARD_COLS = 2
 
-initialize_st_page(title="Launch Bot", icon="🙌", initial_sidebar_state="collapsed")
+initialize_st_page(title="Launch Bot", icon="🙌")
 
 
 def get_grid_positions(n_cards: int, cols: int = NUM_CARD_COLS, card_width: int = CARD_HEIGHT, card_height: int = CARD_WIDTH):

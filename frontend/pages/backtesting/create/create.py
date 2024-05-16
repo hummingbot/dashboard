@@ -9,7 +9,7 @@ from frontend.components.directional_strategy_creation_card import DirectionalSt
 from frontend.components.editor import Editor
 from frontend.st_utils import initialize_st_page
 
-initialize_st_page(title="Create", icon="️⚔️", initial_sidebar_state="collapsed")
+initialize_st_page(title="Create", icon="️⚔️")
 
 # TODO:
 #    * Add videos explaining how to the triple barrier method works and how the backtesting is designed,

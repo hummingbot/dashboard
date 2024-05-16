@@ -13,7 +13,7 @@ from frontend.components.optimizations_file_explorer import OptimizationsStrateg
 from backend.utils import os_utils
 from frontend.st_utils import initialize_st_page
 
-initialize_st_page(title="Optimize", icon="🧪", initial_sidebar_state="collapsed")
+initialize_st_page(title="Optimize", icon="🧪")
 
 def run_optuna_dashboard():
     os_utils.execute_bash_command(f"optuna-dashboard sqlite:///data/backtesting/backtesting_report.db")

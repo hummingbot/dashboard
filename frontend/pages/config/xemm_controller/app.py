@@ -7,7 +7,7 @@ from backend.services.backend_api_client import BackendAPIClient
 from frontend.st_utils import initialize_st_page
 
 # Initialize the Streamlit page
-initialize_st_page(title="XEMM Multiple Levels", icon="⚡️", initial_sidebar_state="collapsed")
+initialize_st_page(title="XEMM Multiple Levels", icon="⚡️")
 
 # Page content
 st.text("This tool will let you create a config for XEMM Controller and upload it to the BackendAPI.")

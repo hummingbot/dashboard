@@ -10,7 +10,7 @@ from frontend.components.st_inputs import normalize, distribution_inputs, get_di
 from frontend.st_utils import initialize_st_page
 
 # Initialize the Streamlit page
-initialize_st_page(title="D-Man Maker V2", icon="🧙‍♂️", initial_sidebar_state="collapsed")
+initialize_st_page(title="D-Man Maker V2", icon="🧙‍♂️")
 
 # Page content
 st.text("This tool will let you create a config for D-Man Maker V2 and upload it to the BackendAPI.")

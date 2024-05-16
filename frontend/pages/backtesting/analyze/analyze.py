@@ -16,7 +16,7 @@ from frontend.data_viz.graphs import BacktestingGraphs
 from frontend.data_viz.strategy_analysis import StrategyAnalysis
 from frontend.st_utils import initialize_st_page
 
-initialize_st_page(title="Analyze", icon="🔬", initial_sidebar_state="collapsed")
+initialize_st_page(title="Analyze", icon="🔬")
 
 BASE_DATA_DIR = "data/backtesting"
 
