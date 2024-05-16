@@ -1,4 +1,6 @@
+import pandas as pd
 import requests
+from hummingbot.strategy_v2.models.executors_info import ExecutorInfo
 
 
 class BackendAPIClient:
@@ -196,4 +198,9 @@ class BackendAPIClient:
             "config": config
         }
         response = requests.post(url, json=payload)
-        return response.json()
+        backtesting_results = response.json()
+        return {
+            "processed_data": pd.DataFrame(backtesting_results["processed_data"]),
+            "executors": [ExecutorInfo(**executor) for executor in backtesting_results["executors"]],
+            "results": backtesting_results["results"]
+        }
