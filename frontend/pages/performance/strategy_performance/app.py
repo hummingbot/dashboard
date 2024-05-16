@@ -4,7 +4,7 @@ import streamlit as st
 import math
 
 from backend.utils.os_utils import get_databases
-from frontend.data_viz.graphs import PerformanceGraphs
+from frontend.visualization.graphs import PerformanceGraphs
 from frontend.st_utils import initialize_st_page, style_metric_cards
 
 initialize_st_page(title="Strategy Performance", icon="🚀")

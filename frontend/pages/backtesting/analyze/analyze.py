@@ -12,8 +12,8 @@ from decimal import Decimal
 
 from backend.utils.optuna_database_manager import OptunaDBManager
 from backend.utils.os_utils import load_controllers
-from frontend.data_viz.graphs import BacktestingGraphs
-from frontend.data_viz.strategy_analysis import StrategyAnalysis
+from frontend.visualization.graphs import BacktestingGraphs
+from frontend.visualization.strategy_analysis import StrategyAnalysis
 from frontend.st_utils import initialize_st_page
 
 initialize_st_page(title="Analyze", icon="🔬")
