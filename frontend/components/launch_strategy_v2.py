@@ -4,7 +4,7 @@ import streamlit as st
 from streamlit_elements import mui, lazy
 
 from CONFIG import BACKEND_API_HOST, BACKEND_API_PORT
-from utils.backend_api_client import BackendAPIClient
+from backend.services.backend_api_client import BackendAPIClient
 from .dashboard import Dashboard
 
 

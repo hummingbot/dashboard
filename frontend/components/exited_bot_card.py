@@ -2,7 +2,7 @@ from docker_manager import DockerManager
 from streamlit_elements import mui
 from frontend.components.dashboard import Dashboard
 
-from utils import os_utils
+from backend.utils import os_utils
 
 
 class ExitedBotCard(Dashboard.Item):
