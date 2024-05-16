@@ -6,7 +6,7 @@ from hummingbot.strategy_v2.utils.distributions import Distributions
 
 def normalize(values):
     total = sum(values)
-    return [Decimal(val / total) for val in values]
+    return [val / total for val in values]
 
 
 def distribution_inputs(column, dist_type_name, levels=3):
