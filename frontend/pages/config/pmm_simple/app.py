@@ -1,14 +1,14 @@
 import streamlit as st
-from frontend.components.st_inputs import initialize_st_page
 from backend.services.backend_api_client import BackendAPIClient
 from CONFIG import BACKEND_API_HOST, BACKEND_API_PORT
 
 # Import submodules
-from frontend.pages.pmm_simple.user_inputs import user_inputs
-from frontend.pages.pmm_simple.order_calculation import calculate_orders
+from frontend.pages.config.pmm_simple.user_inputs import user_inputs
+from frontend.pages.config.pmm_simple import calculate_orders
 from frontend.data_viz.visualization import visualize_orders
-from frontend.pages.pmm_simple.config_handling import handle_config
+from frontend.pages.config.pmm_simple import handle_config
 from frontend.components.backtesting import backtesting_section
+from frontend.st_utils import initialize_st_page
 
 # Initialize the Streamlit page
 initialize_st_page(title="PMM Simple", icon="👨‍🏫", initial_sidebar_state="collapsed")
