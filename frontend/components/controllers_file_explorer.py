@@ -1,8 +1,8 @@
 from streamlit_elements import mui
 
 import constants
+from backend.utils.os_utils import load_controllers
 from frontend.components.file_explorer_base import FileExplorerBase
-from utils.os_utils import load_controllers
 
 
 class ControllersFileExplorer(FileExplorerBase):

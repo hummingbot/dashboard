@@ -1,7 +1,7 @@
 import streamlit as st
-from streamlit_elements import mui, elements
+from streamlit_elements import mui
 
-from utils.os_utils import load_file, remove_file
+from backend.utils.os_utils import remove_file, load_file
 from .dashboard import Dashboard
 
 
@@ -29,8 +29,9 @@ class FileExplorerBase(Dashboard.Item):
     def add_file_to_tab(self):
         language = "python" if self.selected_file.endswith(".py") else "yaml"
         if self.is_file_editable:
-            self._tabs[self.selected_file] = {"content": load_file(self.selected_file),
-                                                          "language": language}
+            self._tabs[self.selected_file] = {
+                "content": load_file(self.selected_file),
+                "language": language}
 
     def remove_file_from_tab(self):
         if self.is_file_editable and self.selected_file in self._tabs:
