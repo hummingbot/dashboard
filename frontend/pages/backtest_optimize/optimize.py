@@ -10,9 +10,8 @@ from frontend.components.editor import Editor
 from frontend.components.optimization_creation_card import OptimizationCreationCard
 from frontend.components.optimization_run_card import OptimizationRunCard
 from frontend.components.optimizations_file_explorer import OptimizationsStrategiesFileExplorer
-from utils import os_utils
-
-from utils.st_utils import initialize_st_page
+from backend.utils import os_utils
+from frontend.st_utils import initialize_st_page
 
 initialize_st_page(title="Optimize", icon="🧪", initial_sidebar_state="collapsed")
 

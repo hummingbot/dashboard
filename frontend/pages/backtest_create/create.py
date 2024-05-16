@@ -7,9 +7,7 @@ from frontend.components.dashboard import Dashboard
 from frontend.components.controllers_file_explorer import ControllersFileExplorer
 from frontend.components.directional_strategy_creation_card import DirectionalStrategyCreationCard
 from frontend.components.editor import Editor
-
-from utils.st_utils import initialize_st_page
-
+from frontend.st_utils import initialize_st_page
 
 initialize_st_page(title="Create", icon="️⚔️", initial_sidebar_state="collapsed")
 

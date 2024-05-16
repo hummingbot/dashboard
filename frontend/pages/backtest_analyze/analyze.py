@@ -1,8 +1,8 @@
 from hummingbot.core.data_type.common import PositionMode, TradeType, OrderType
 from hummingbot.data_feed.candles_feed.candles_factory import CandlesConfig
-from hummingbot.smart_components.strategy_frameworks.data_types import OrderLevel, TripleBarrierConf
-from hummingbot.smart_components.strategy_frameworks.directional_trading import DirectionalTradingBacktestingEngine
-from hummingbot.smart_components.utils.config_encoder_decoder import ConfigEncoderDecoder
+from hummingbot.strategy_v2.strategy_frameworks.data_types import OrderLevel, TripleBarrierConf
+from hummingbot.strategy_v2.strategy_frameworks.directional_trading import DirectionalTradingBacktestingEngine
+from hummingbot.strategy_v2.utils.config_encoder_decoder import ConfigEncoderDecoder
 
 import constants
 import os
@@ -10,12 +10,11 @@ import json
 import streamlit as st
 from decimal import Decimal
 
-from quants_lab.strategy.strategy_analysis import StrategyAnalysis
-from utils.graphs import BacktestingGraphs
-from utils.optuna_database_manager import OptunaDBManager
-from utils.os_utils import load_controllers
-from utils.st_utils import initialize_st_page
-
+from backend.utils.optuna_database_manager import OptunaDBManager
+from backend.utils.os_utils import load_controllers
+from frontend.data_viz.graphs import BacktestingGraphs
+from frontend.data_viz.strategy_analysis import StrategyAnalysis
+from frontend.st_utils import initialize_st_page
 
 initialize_st_page(title="Analyze", icon="🔬", initial_sidebar_state="collapsed")
 
