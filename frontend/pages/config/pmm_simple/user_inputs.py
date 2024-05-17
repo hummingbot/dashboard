@@ -6,7 +6,6 @@ from frontend.components.risk_management import get_risk_management_inputs
 
 
 def user_inputs():
-    st.title("PMM Simple Configuration")
     connector_name, trading_pair, leverage, total_amount_quote, position_mode, cooldown_time, executor_refresh_time = get_market_making_general_inputs()
     buy_spread_distributions, sell_spread_distributions, buy_order_amounts_pct, sell_order_amounts_pct = get_executors_distribution_inputs()
     sl, tp, time_limit, ts_ap, ts_delta, take_profit_order_type = get_risk_management_inputs()

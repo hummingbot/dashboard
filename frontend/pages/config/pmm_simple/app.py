@@ -8,6 +8,8 @@ from frontend.components.backtesting import backtesting_section
 from frontend.st_utils import initialize_st_page
 from frontend.visualization.backtesting import create_backtesting_figure
 from frontend.visualization.executors_distribution import create_executors_distribution_traces
+from frontend.visualization.backtesting_metrics import render_backtesting_metrics, render_close_types, \
+    render_accuracy_metrics
 
 # Initialize the Streamlit page
 initialize_st_page(title="PMM Simple", icon="👨‍🏫")
@@ -15,19 +17,23 @@ backend_api_client = BackendAPIClient.get_instance(host=BACKEND_API_HOST, port=B
 
 # Page content
 st.text("This tool will let you create a config for PMM Simple, backtest and upload it to the Backend API.")
-st.write("---")
-
 # Get user inputs
 inputs = user_inputs()
-st.write(inputs)
 fig = create_executors_distribution_traces(inputs)
 st.plotly_chart(fig, use_container_width=True)
 
-st.write("### Backtesting")
 bt_results = backtesting_section(inputs, backend_api_client)
 if bt_results:
+    st.write("---")
     fig = create_backtesting_figure(
         df=bt_results["processed_data"],
         executors=bt_results["executors"],
         config=inputs)
-    st.plotly_chart(fig, use_container_width=True)
+    c1, c2 = st.columns([0.9, 0.1])
+    with c1:
+        render_backtesting_metrics(bt_results["results"])
+        st.plotly_chart(fig, use_container_width=True)
+    with c2:
+        render_accuracy_metrics(bt_results["results"])
+        st.write("---")
+        render_close_types(bt_results["results"])
