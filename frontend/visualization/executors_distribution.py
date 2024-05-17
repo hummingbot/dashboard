@@ -61,6 +61,7 @@ def create_executors_distribution_traces(config):
         yaxis_title="Order Amount (Quote)",
         bargap=0.1,  # Adjust the gap between the bars
         barmode='relative',  # Stack the bars on top of each other
-        showlegend=True
+        showlegend=True,
+        height=600
     )
     return fig
