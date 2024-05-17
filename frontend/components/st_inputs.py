@@ -35,7 +35,7 @@ def distribution_inputs(column, dist_type_name, levels=3):
             scaling_factor = column.number_input(f"{dist_type_name} Scaling Factor", value=2.0,
                                                  key=f"{column}_{dist_type_name.lower()}_scaling")
         elif dist_type == "Arithmetic":
-            step = column.number_input(f"{dist_type_name} Step", value=0.1,
+            step = column.number_input(f"{dist_type_name} Step", value=0.3,
                                        key=f"{column}_{dist_type_name.lower()}_step")
         elif dist_type == "Geometric":
             ratio = column.number_input(f"{dist_type_name} Ratio", value=2.0,
@@ -56,17 +56,19 @@ def distribution_inputs(column, dist_type_name, levels=3):
 
 def get_distribution(dist_type, n_levels, start, base=None, scaling_factor=None, step=None, ratio=None,
                      manual_values=None):
+    distribution = []
     if dist_type == "Manual":
-        return manual_values
+        distribution = manual_values
     elif dist_type == "Linear":
-        return Distributions.linear(n_levels, start, step)
+        distribution = Distributions.linear(n_levels, start, step)
     elif dist_type == "Fibonacci":
-        return Distributions.fibonacci(n_levels, start)
+        distribution = Distributions.fibonacci(n_levels, start)
     elif dist_type == "Logarithmic":
-        return Distributions.logarithmic(n_levels, base, scaling_factor, start)
+        distribution = Distributions.logarithmic(n_levels, base, scaling_factor, start)
     elif dist_type == "Arithmetic":
-        return Distributions.arithmetic(n_levels, start, step)
+        distribution = Distributions.arithmetic(n_levels, start, step)
     elif dist_type == "Geometric":
-        return Distributions.geometric(n_levels, start, ratio)
+        distribution = Distributions.geometric(n_levels, start, ratio)
     elif dist_type == "GeoCustom":
-        return [Decimal("0")] + Distributions.geometric(n_levels - 1, start, ratio)
+        distribution = [Decimal("0")] + Distributions.geometric(n_levels - 1, start, ratio)
+    return [float(val) for val in distribution]
