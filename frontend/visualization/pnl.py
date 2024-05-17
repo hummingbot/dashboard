@@ -10,6 +10,6 @@ def get_pnl_trace(executors):
         x=pd.to_datetime([e.close_timestamp for e in executors], unit="ms"),
         y=cum_pnl,
         mode='lines',
-        line=dict(color='blue', width=2, dash="dash"),
+        line=dict(color='gold', width=2, dash="dash"),
         name='Cumulative PNL'
     )
