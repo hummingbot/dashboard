@@ -1,6 +1,7 @@
 import streamlit as st
 from backend.services.backend_api_client import BackendAPIClient
 from CONFIG import BACKEND_API_HOST, BACKEND_API_PORT
+from frontend.components.save_config import render_save_config
 
 # Import submodules
 from frontend.pages.config.pmm_simple.user_inputs import user_inputs
@@ -24,7 +25,6 @@ st.plotly_chart(fig, use_container_width=True)
 
 bt_results = backtesting_section(inputs, backend_api_client)
 if bt_results:
-    st.write("---")
     fig = create_backtesting_figure(
         df=bt_results["processed_data"],
         executors=bt_results["executors"],
@@ -37,3 +37,5 @@ if bt_results:
         render_accuracy_metrics(bt_results["results"])
         st.write("---")
         render_close_types(bt_results["results"])
+st.write("---")
+render_save_config("pmm_simple", inputs)
