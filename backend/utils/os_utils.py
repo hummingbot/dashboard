@@ -10,6 +10,7 @@ import yaml
 from hummingbot.strategy_v2.controllers.directional_trading_controller_base import DirectionalTradingControllerBase, DirectionalTradingControllerConfigBase
 from hummingbot.strategy_v2.controllers.market_making_controller_base import MarketMakingControllerBase, MarketMakingControllerConfigBase
 
+
 def remove_files_from_directory(directory: str):
     for file in os.listdir(directory):
         os.remove(f"{directory}/{file}")
