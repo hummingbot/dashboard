@@ -59,7 +59,7 @@ class LaunchStrategyV2(Dashboard.Item):
                     "candles_config": [],
                     "controllers_config": self._controller_config_selected,
                     "config_update_interval": 20,
-                    "script_file_name": "v2_generic_with_cash_out.py",
+                    "script_file_name": "v2_with_controllers.py",
                     "time_to_cash_out": None,
                 }
             }
@@ -158,33 +158,3 @@ class LaunchStrategyV2(Dashboard.Item):
                                 disableSelectionOnClick=True,
                                 onSelectionModelChange=self._handle_row_selection,
                             )
-                # with mui.Grid(item=True, xs=8):
-                #     try:
-                #         encoder_decoder = ConfigEncoderDecoder(TradeType, OrderType, PositionMode)
-                #         data = []
-                #         for config in self._controller_configs_available:
-                #             decoded_config = encoder_decoder.yaml_load(config)
-                #             data.append({"id": config.split("/")[-1], "strategy_name": decoded_config["strategy_name"],
-                #                          "exchange": decoded_config["exchange"], "trading_pair": decoded_config["trading_pair"]})
-                #     except json.JSONDecodeError:
-                #         data = self.DEFAULT_ROWS
-
-                # with mui.Paper(key=self._key,
-                #                sx={"display": "flex", "flexDirection": "column", "borderRadius": 3,
-                #                    "overflow": "hidden", "height": 1000},
-                #                elevation=1):
-                #     with self.title_bar(padding="10px 15px 10px 15px", dark_switcher=False):
-                #         mui.icon.ViewCompact()
-                #         mui.Typography("Data grid")
-                #
-                #     with mui.Box(sx={"flex": 1, "minHeight": 3}):
-                #         mui.DataGrid(
-                #             columns=self.DEFAULT_COLUMNS,
-                #             rows=data,
-                #             pageSize=15,
-                #             rowsPerPageOptions=[15],
-                #             checkboxSelection=True,
-                #             disableSelectionOnClick=True,
-                #             onSelectionModelChange=self._handle_row_selection,
-                #         )
-                #
