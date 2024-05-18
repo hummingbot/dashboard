@@ -1,7 +1,6 @@
-def get_default_layout(title, height=800, width=1800):
-    return {
+def get_default_layout(title=None, height=800, width=1800):
+    layout = {
         "template": "plotly_dark",
-        "title": title,
         "plot_bgcolor": 'rgba(0, 0, 0, 0)',  # Transparent background
         "paper_bgcolor": 'rgba(0, 0, 0, 0.1)',  # Lighter shade for the paper
         "font": {"color": 'white', "size": 12},  # Consistent font color and size
@@ -9,7 +8,9 @@ def get_default_layout(title, height=800, width=1800):
         "width": width,
         "margin": {"l": 20, "r": 20, "t": 50, "b": 20}
     }
-
+    if title:
+        layout["title"] = title
+    return layout
 
 def get_color_scheme():
     return {
@@ -33,7 +34,4 @@ def get_color_scheme():
         'cum_amount': '#4682B4',  # Steel Blue
         'stop_loss': '#FF0000',  # Red
         'cum_unrealized_pnl': '#FFA07A'  # Light Salmon
-
     }
-
-
