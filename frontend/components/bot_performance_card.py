@@ -14,8 +14,6 @@ backend_api_client = BackendAPIClient.get_instance(host=BACKEND_API_HOST, port=B
 
 def stop_bot(bot_name):
     backend_api_client.stop_bot(bot_name)
-    backend_api_client.stop_container(bot_name)
-    backend_api_client.remove_container(bot_name)
 
 
 def archive_bot(bot_name):
