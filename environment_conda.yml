@@ -8,7 +8,7 @@ dependencies:
   - pydantic=1.9.*
   - pip
   - pip:
-      - hummingbot
+      - hummingbot==20240129
       - streamlit
       - watchdog
       - plotly
