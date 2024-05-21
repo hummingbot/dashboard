@@ -41,3 +41,42 @@ def get_macd_traces(df, macd_fast, macd_slow, macd_signal):
                marker_color=df[f"MACDh_{macd_fast}_{macd_slow}_{macd_signal}"].apply(lambda x: '#FF6347' if x < 0 else '#32CD32'))
     ]
     return traces
+
+
+def get_supertrend_traces(df, length, multiplier):
+    tech_colors = theme.get_color_scheme()
+    df.ta.supertrend(length=length, multiplier=multiplier, append=True)
+    supertrend_d = f'SUPERTd_{length}_{multiplier}'
+    supertrend = f'SUPERT_{length}_{multiplier}'
+    df = df[df[supertrend] > 0]
+
+    # Create segments for line with different colors
+    segments = []
+    current_segment = {"x": [], "y": [], "color": None}
+
+    for i in range(len(df)):
+        if i == 0 or df[supertrend_d].iloc[i] == df[supertrend_d].iloc[i - 1]:
+            current_segment["x"].append(df.index[i])
+            current_segment["y"].append(df[supertrend].iloc[i])
+            current_segment["color"] = tech_colors['buy'] if df[supertrend_d].iloc[i] == 1 else tech_colors['sell']
+        else:
+            segments.append(current_segment)
+            current_segment = {"x": [df.index[i - 1], df.index[i]],
+                               "y": [df[supertrend].iloc[i - 1], df[supertrend].iloc[i]],
+                               "color": tech_colors['buy'] if df[supertrend_d].iloc[i] == 1 else tech_colors['sell']}
+
+    segments.append(current_segment)
+
+    # Create traces from segments
+    traces = [
+        go.Scatter(
+            x=segment["x"],
+            y=segment["y"],
+            mode='lines',
+            line=dict(color=segment["color"], width=2),
+            name='SuperTrend'
+        ) for segment in segments
+    ]
+
+    return traces
+
