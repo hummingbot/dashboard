@@ -17,7 +17,7 @@ def get_directional_trading_general_inputs():
         with c3:
             leverage = st.number_input("Leverage", value=20,
                                        help="Set the leverage to use for trading (e.g., 20 for 20x leverage). Set it to 1 for spot trading.")
-            interval = st.selectbox("Candles Interval", ("1m", "3m", "5m", "15m", "1h", "4h", "1d"), index=3,
+            interval = st.selectbox("Candles Interval", ("1m", "3m", "5m", "15m", "1h", "4h", "1d"), index=1,
                                     help="Enter the interval for candles (e.g., 1m).")
         with c4:
             total_amount_quote = st.number_input("Total amount of quote", value=1000,
@@ -26,7 +26,7 @@ def get_directional_trading_general_inputs():
             max_executors_per_side = st.number_input("Max Executors Per Side", value=5,
                                                         help="Enter the maximum number of executors per side (e.g., 5).")
         with c6:
-            cooldown_time = st.number_input("Cooldown Time (minutes)", value=15,
+            cooldown_time = st.number_input("Cooldown Time (minutes)", value=10,
                                             help="Specify the cooldown time in minutes (e.g., 60).") * 60
         with c7:
             position_mode = st.selectbox("Position Mode", ("HEDGE", "ONEWAY"), index=0,
