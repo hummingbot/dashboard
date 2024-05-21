@@ -5,7 +5,6 @@ from frontend.visualization import theme
 
 
 def get_candlestick_trace(df):
-    df.index = pd.to_datetime(df.timestamp, unit='ms')
     return go.Candlestick(x=df.index,
                           open=df['open'],
                           high=df['high'],
