@@ -6,11 +6,13 @@ def get_default_layout(title=None, height=800, width=1800):
         "font": {"color": 'white', "size": 12},  # Consistent font color and size
         "height": height,
         "width": width,
-        "margin": {"l": 20, "r": 20, "t": 50, "b": 20}
+        "margin": {"l": 20, "r": 20, "t": 50, "b": 20},
+        "xaxis_rangeslider_visible": False,
     }
     if title:
         layout["title"] = title
     return layout
+
 
 def get_color_scheme():
     return {
@@ -21,8 +23,6 @@ def get_color_scheme():
         'sell_signal': '#FF0000',
         'buy': '#32CD32',  # Green for buy orders
         'sell': '#FF6347',  # Tomato red for sell orders
-        'candlestick_increasing': '#2ECC71',
-        'candlestick_decreasing': '#E74C3C',
         'macd_line': '#FFA500',  # Orange
         'macd_signal': '#800080',  # Purple
         'macd_histogram_positive': '#32CD32',  # Green
@@ -33,5 +33,7 @@ def get_color_scheme():
         'order_amount': '#1E90FF',  # Dodger Blue
         'cum_amount': '#4682B4',  # Steel Blue
         'stop_loss': '#FF0000',  # Red
-        'cum_unrealized_pnl': '#FFA07A'  # Light Salmon
+        'cum_unrealized_pnl': '#FFA07A',  # Light Salmon
+        'volume': '#FFD700',  # Gold
+        'price': '#00008B',  # Dark Blue
     }
