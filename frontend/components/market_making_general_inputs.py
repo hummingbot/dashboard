@@ -5,7 +5,7 @@ def get_market_making_general_inputs():
     with st.expander("General Settings", expanded=True):
         c1, c2, c3, c4, c5, c6, c7 = st.columns(7)
         with c1:
-            connector_name = st.text_input("Connector", value="binance_perpetual",
+            connector_name = st.text_input("Connector", value="kucoin",
                                            help="Enter the name of the exchange to trade on (e.g., binance_perpetual).")
         with c2:
             trading_pair = st.text_input("Trading Pair", value="WLD-USDT",
