@@ -38,7 +38,6 @@ candles = get_candles(connector_name=inputs["candles_connector"], trading_pair=i
 fig = make_subplots(rows=2, cols=1, shared_xaxes=True,
                     vertical_spacing=0.02, subplot_titles=('Candlestick with Bollinger Bands', 'Volume', "MACD"),
                     row_heights=[0.8, 0.2])
-
 add_traces_to_fig(fig, [get_candlestick_trace(candles)], row=1, col=1)
 add_traces_to_fig(fig, get_bbands_traces(candles, inputs["bb_length"], inputs["bb_std"]), row=1, col=1)
 add_traces_to_fig(fig, get_macdbb_v1_signal_traces(df=candles, bb_length=inputs["bb_length"], bb_std=inputs["bb_std"],
