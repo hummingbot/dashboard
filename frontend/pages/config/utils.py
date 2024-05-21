@@ -15,4 +15,7 @@ def get_max_records(days_to_download: int, interval: str) -> int:
 @st.cache_data
 def get_candles(connector_name="binance", trading_pair="BTC-USDT", interval="1m", max_records=5000):
     backend_client = BackendAPIClient(BACKEND_API_HOST, BACKEND_API_PORT)
-    return pd.DataFrame(backend_client.get_real_time_candles(connector_name, trading_pair, interval, max_records))
+    df = pd.DataFrame(backend_client.get_real_time_candles(connector_name, trading_pair, interval, max_records))
+    df.index = pd.to_datetime(df.timestamp, unit='ms')
+    return df
+
