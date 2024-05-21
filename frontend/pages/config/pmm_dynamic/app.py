@@ -1,15 +1,19 @@
 import streamlit as st
+import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
 from backend.services.backend_api_client import BackendAPIClient
 from CONFIG import BACKEND_API_HOST, BACKEND_API_PORT
+from frontend.components.executors_distribution import get_executors_distribution_inputs
 from frontend.components.save_config import render_save_config
 
 # Import submodules
 from frontend.components.backtesting import backtesting_section
+from frontend.pages.config.pmm_dynamic.spread_and_price_multipliers import get_pmm_dynamic_multipliers
 from frontend.pages.config.pmm_dynamic.user_inputs import user_inputs
 from frontend.pages.config.utils import get_max_records, get_candles
 from frontend.st_utils import initialize_st_page
+from frontend.visualization import theme
 from frontend.visualization.backtesting import create_backtesting_figure
 from frontend.visualization.candles import get_candlestick_trace
 from frontend.visualization.executors_distribution import create_executors_distribution_traces
@@ -33,17 +37,35 @@ days_to_visualize = st.number_input("Days to Visualize", min_value=1, max_value=
 max_records = get_max_records(days_to_visualize, inputs["interval"])
 # Load candle data
 candles = get_candles(connector_name=inputs["candles_connector"], trading_pair=inputs["candles_trading_pair"], interval=inputs["interval"], max_records=max_records)
-# Create a subplot with 2 rows
-fig = make_subplots(rows=4, cols=1, shared_xaxes=True,
-                    vertical_spacing=0.02, subplot_titles=('Candlestick with Bollinger Bands', 'Volume', "MACD"),
-                    row_heights=[0.8, 0.2, 0.2, 0.2])
-add_traces_to_fig(fig, [get_candlestick_trace(candles)], row=1, col=1)
-add_traces_to_fig(fig, get_macd_traces(df=candles, macd_fast=inputs["macd_fast"], macd_slow=inputs["macd_slow"], macd_signal=inputs["macd_signal"]), row=2, col=1)
+with st.expander("Visualizing PMM Dynamic Indicators", expanded=True):
+    fig = make_subplots(rows=4, cols=1, shared_xaxes=True,
+                        vertical_spacing=0.02, subplot_titles=('Candlestick with Bollinger Bands', 'MACD', "Price Multiplier", "Spreads Multiplier"),
+                        row_heights=[0.8, 0.2, 0.2, 0.2])
+    add_traces_to_fig(fig, [get_candlestick_trace(candles)], row=1, col=1)
+    add_traces_to_fig(fig, get_macd_traces(df=candles, macd_fast=inputs["macd_fast"], macd_slow=inputs["macd_slow"], macd_signal=inputs["macd_signal"]), row=2, col=1)
+    price_multiplier, spreads_multiplier = get_pmm_dynamic_multipliers(candles, inputs["macd_fast"], inputs["macd_slow"], inputs["macd_signal"], inputs["natr_length"])
+    add_traces_to_fig(fig, [go.Scatter(x=candles.index, y=price_multiplier, name="Price Multiplier", line=dict(color="blue"))], row=3, col=1)
+    add_traces_to_fig(fig, [go.Scatter(x=candles.index, y=spreads_multiplier, name="Spreads Multiplier", line=dict(color="red"))], row=4, col=1)
+    fig.update_layout(**theme.get_default_layout(height=1000))
+    fig.update_yaxes(tickformat=".2%", row=3, col=1)
+    fig.update_yaxes(tickformat=".2%", row=4, col=1)
+    st.plotly_chart(fig, use_container_width=True)
 
-
-
-fig = create_executors_distribution_traces(inputs)
-st.plotly_chart(fig, use_container_width=True)
+st.write("### Executors Distribution")
+st.write("The order distributions are affected by the average NATR. This means that if the first order has a spread of "
+         "1 and the NATR is 0.005, the first order will have a spread of 0.5% of the mid price.")
+buy_spread_distributions, sell_spread_distributions, buy_order_amounts_pct, sell_order_amounts_pct = get_executors_distribution_inputs()
+inputs["buy_spreads"] = [spread * 100 for spread in buy_spread_distributions]
+inputs["sell_spreads"] = [spread * 100 for spread in sell_spread_distributions]
+inputs["buy_amounts_pct"] = buy_order_amounts_pct
+inputs["sell_amounts_pct"] = sell_order_amounts_pct
+with st.expander("Executor Distribution:", expanded=True):
+    natr_avarage = spreads_multiplier.mean()
+    buy_spreads = [spread * natr_avarage for spread in inputs["buy_spreads"]]
+    sell_spreads = [spread * natr_avarage for spread in inputs["sell_spreads"]]
+    st.write(f"Average NATR: {natr_avarage:.2%}")
+    fig = create_executors_distribution_traces(buy_spreads, sell_spreads, inputs["buy_amounts_pct"], inputs["sell_amounts_pct"], inputs["total_amount_quote"])
+    st.plotly_chart(fig, use_container_width=True)
 
 bt_results = backtesting_section(inputs, backend_api_client)
 if bt_results:

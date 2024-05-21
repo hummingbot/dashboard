@@ -7,7 +7,6 @@ from frontend.components.risk_management import get_risk_management_inputs
 
 def user_inputs():
     connector_name, trading_pair, leverage, total_amount_quote, position_mode, cooldown_time, executor_refresh_time, candles_connector, candles_trading_pair, interval = get_market_making_general_inputs(custom_candles=True)
-    buy_spread_distributions, sell_spread_distributions, buy_order_amounts_pct, sell_order_amounts_pct = get_executors_distribution_inputs()
     sl, tp, time_limit, ts_ap, ts_delta, take_profit_order_type = get_risk_management_inputs()
     with st.expander("PMM Dynamic Configuration", expanded=True):
         c1, c2, c3, c4 = st.columns(4)
@@ -29,10 +28,6 @@ def user_inputs():
         "connector_name": connector_name,
         "trading_pair": trading_pair,
         "total_amount_quote": total_amount_quote,
-        "buy_spreads": [100 * spread for spread in buy_spread_distributions],
-        "sell_spreads": [100 * spread for spread in sell_spread_distributions],
-        "buy_amounts_pct": buy_order_amounts_pct,
-        "sell_amounts_pct": sell_order_amounts_pct,
         "executor_refresh_time": executor_refresh_time,
         "cooldown_time": cooldown_time,
         "leverage": leverage,
