@@ -1,5 +1,5 @@
 from plotly.subplots import make_subplots
-from frontend.visualization.candles import get_candlestick_trace
+from frontend.visualization.candles import get_bt_candlestick_trace, get_candlestick_trace
 from frontend.visualization.executors import add_executors_trace
 from frontend.visualization.pnl import get_pnl_trace
 from frontend.visualization.theme import get_default_layout
@@ -12,7 +12,7 @@ def create_backtesting_figure(df, executors, config):
                         row_heights=[0.7, 0.3])
 
     # Add candlestick trace
-    fig.add_trace(get_candlestick_trace(df), row=1, col=1)
+    fig.add_trace(get_bt_candlestick_trace(df), row=1, col=1)
 
     # Add executors trace
     fig = add_executors_trace(fig, executors, row=1, col=1)
