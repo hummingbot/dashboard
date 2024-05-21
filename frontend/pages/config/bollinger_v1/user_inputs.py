@@ -26,7 +26,7 @@ def user_inputs():
         "max_executors_per_side": max_executors_per_side,
         "cooldown_time": cooldown_time,
         "position_mode": position_mode,
-        "candles_connector_name": candles_connector_name,
+        "candles_connector": candles_connector_name,
         "candles_trading_pair": candles_trading_pair,
         "interval": interval,
         "bb_length": bb_length,
@@ -35,9 +35,10 @@ def user_inputs():
         "bb_short_threshold": bb_short_threshold,
         "stop_loss": sl,
         "take_profit": tp,
+        "time_limit": time_limit,
         "trailing_stop": {
             "activation_price": ts_ap,
             "trailing_delta": ts_delta
         },
-        "take_profit_order_type": take_profit_order_type
+        "take_profit_order_type": take_profit_order_type.value
     }
