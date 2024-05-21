@@ -8,6 +8,8 @@ def get_default_layout(title=None, height=800, width=1800):
         "width": width,
         "margin": {"l": 20, "r": 20, "t": 50, "b": 20},
         "xaxis_rangeslider_visible": False,
+        "hovermode": "x unified",
+        "showlegend": False,
     }
     if title:
         layout["title"] = title
