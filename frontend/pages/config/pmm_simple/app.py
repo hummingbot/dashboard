@@ -20,8 +20,10 @@ backend_api_client = BackendAPIClient.get_instance(host=BACKEND_API_HOST, port=B
 st.text("This tool will let you create a config for PMM Simple, backtest and upload it to the Backend API.")
 # Get user inputs
 inputs = user_inputs()
-fig = create_executors_distribution_traces(inputs)
-st.plotly_chart(fig, use_container_width=True)
+
+with st.expander("Executor Distribution:", expanded=True):
+    fig = create_executors_distribution_traces(inputs)
+    st.plotly_chart(fig, use_container_width=True)
 
 bt_results = backtesting_section(inputs, backend_api_client)
 if bt_results:

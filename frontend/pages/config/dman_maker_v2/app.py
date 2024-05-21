@@ -24,7 +24,7 @@ st.write("---")
 
 inputs = user_inputs()
 with st.expander("Executor Distribution:", expanded=True):
-    fig = create_executors_distribution_traces(inputs)
+    fig = create_executors_distribution_traces(inputs["buy_spreads"], inputs["sell_spreads"], inputs["buy_amounts_pct"], inputs["sell_amounts_pct"], inputs["total_amount_quote"])
     st.plotly_chart(fig, use_container_width=True)
 
 dca_inputs = get_dca_distribution_inputs()
