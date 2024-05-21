@@ -1,9 +1,12 @@
 import streamlit as st
 
 
-def get_market_making_general_inputs():
+def get_market_making_general_inputs(custom_candles=False):
     with st.expander("General Settings", expanded=True):
         c1, c2, c3, c4, c5, c6, c7 = st.columns(7)
+        candles_connector = None
+        candles_trading_pair = None
+        interval = None
         with c1:
             connector_name = st.text_input("Connector", value="kucoin",
                                            help="Enter the name of the exchange to trade on (e.g., binance_perpetual).")
@@ -25,4 +28,14 @@ def get_market_making_general_inputs():
         with c7:
             executor_refresh_time = st.number_input("Executor Refresh Time (minutes)", value=60,
                                                     help="Enter the refresh time in minutes for executors (e.g., 60).") * 60
-    return connector_name, trading_pair, leverage, total_amount_quote, position_mode, cooldown_time, executor_refresh_time
+        if custom_candles:
+            with c1:
+                candles_connector = st.text_input("Candles Connector", value="kucoin",
+                                                  help="Enter the name of the exchange to get candles from (e.g., binance_perpetual).")
+            with c2:
+                candles_trading_pair = st.text_input("Candles Trading Pair", value="WLD-USDT",
+                                                   help="Enter the trading pair to get candles for (e.g., WLD-USDT).")
+            with c3:
+                interval = st.selectbox("Candles Interval", ("1m", "3m", "5m", "15m", "1h", "4h", "1d"), index=1,
+                                        help="Enter the interval for candles (e.g., 1m).")
+    return connector_name, trading_pair, leverage, total_amount_quote, position_mode, cooldown_time, executor_refresh_time, candles_connector, candles_trading_pair, interval
