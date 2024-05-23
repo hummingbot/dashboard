@@ -66,4 +66,4 @@ if bt_results:
         st.write("---")
         render_close_types(bt_results["results"])
 st.write("---")
-render_save_config("dman_maker_v2", inputs)
+render_save_config("dman_maker_v2", config)

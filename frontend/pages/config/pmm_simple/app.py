@@ -22,7 +22,7 @@ st.text("This tool will let you create a config for PMM Simple, backtest and upl
 inputs = user_inputs()
 
 with st.expander("Executor Distribution:", expanded=True):
-    fig = create_executors_distribution_traces(inputs)
+    fig = create_executors_distribution_traces(inputs["buy_spreads"], inputs["sell_spreads"], inputs["buy_amounts_pct"], inputs["sell_amounts_pct"], inputs["total_amount_quote"])
     st.plotly_chart(fig, use_container_width=True)
 
 bt_results = backtesting_section(inputs, backend_api_client)

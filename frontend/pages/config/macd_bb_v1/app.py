@@ -29,10 +29,9 @@ backend_api_client = BackendAPIClient.get_instance(host=BACKEND_API_HOST, port=B
 inputs = user_inputs()
 
 st.write("### Visualizing MACD Bollinger Trading Signals")
-days_to_visualize = st.number_input("Days to Visualize", min_value=1, max_value=365, value=7)
-max_records = get_max_records(days_to_visualize, inputs["interval"])
+days_to_visualize = st.number_input("Days to Visualize", min_value=1, max_value=365, value=3)
 # Load candle data
-candles = get_candles(connector_name=inputs["candles_connector"], trading_pair=inputs["candles_trading_pair"], interval=inputs["interval"], max_records=max_records)
+candles = get_candles(connector_name=inputs["candles_connector"], trading_pair=inputs["candles_trading_pair"], interval=inputs["interval"], days=days_to_visualize)
 
 # Create a subplot with 2 rows
 fig = make_subplots(rows=2, cols=1, shared_xaxes=True,

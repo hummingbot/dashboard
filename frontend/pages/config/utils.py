@@ -1,3 +1,5 @@
+import datetime
+
 import streamlit as st
 import pandas as pd
 
@@ -13,9 +15,14 @@ def get_max_records(days_to_download: int, interval: str) -> int:
 
 
 @st.cache_data
-def get_candles(connector_name="binance", trading_pair="BTC-USDT", interval="1m", max_records=5000):
+def get_candles(connector_name="binance", trading_pair="BTC-USDT", interval="1m", days=7):
     backend_client = BackendAPIClient(BACKEND_API_HOST, BACKEND_API_PORT)
-    df = pd.DataFrame(backend_client.get_real_time_candles(connector_name, trading_pair, interval, max_records))
+    end_time = datetime.datetime.now() - datetime.timedelta(minutes=15)
+    start_time = end_time - datetime.timedelta(days=days)
+
+    df = pd.DataFrame(backend_client.get_historical_candles(connector_name, trading_pair, interval,
+                                                            start_time=int(start_time.timestamp() * 1000),
+                                                            end_time=int(end_time.timestamp() * 1000)))
     df.index = pd.to_datetime(df.timestamp, unit='ms')
     return df
 
