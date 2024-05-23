@@ -15,7 +15,7 @@ def add_executors_trace(fig, executors, row, col):
 
         if executor.filled_amount_quote == 0:
             fig.add_trace(go.Scatter(x=[entry_time, exit_time], y=[entry_price, entry_price], mode='lines',
-                                     line=dict(color='blue', width=2, dash="dash"), name=name), row=row, col=col)
+                                     line=dict(color='grey', width=2, dash="dash"), name=name), row=row, col=col)
         else:
             if executor.net_pnl_quote > Decimal(0):
                 fig.add_trace(go.Scatter(x=[entry_time, exit_time], y=[entry_price, exit_price], mode='lines',

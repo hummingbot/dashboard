@@ -1,3 +1,4 @@
+import numpy as np
 import plotly.graph_objects as go
 import frontend.visualization.theme as theme
 
@@ -11,6 +12,10 @@ def create_executors_distribution_traces(buy_spreads, sell_spreads, buy_amounts_
     sell_order_amounts_quote = [amount * total_amount_quote for amount in sell_amounts_pct]
     buy_order_levels = len(buy_spread_distributions)
     sell_order_levels = len(sell_spread_distributions)
+
+    # Calculate total volumes
+    total_buy_volume = sum(buy_order_amounts_quote)
+    total_sell_volume = sum(sell_order_amounts_quote)
 
     # Create the figure with a dark theme and secondary y-axis
     fig = go.Figure()
@@ -37,7 +42,7 @@ def create_executors_distribution_traces(buy_spreads, sell_spreads, buy_amounts_
     for i, value in enumerate(buy_order_amounts_quote):
         fig.add_annotation(
             x=-buy_spread_distributions[i],
-            y=value + 0.01 * max(buy_order_amounts_quote),  # Offset the text slightly above the bar
+            y=value + 0.03 * max(buy_order_amounts_quote),  # Offset the text slightly above the bar
             text=str(round(value, 2)),
             showarrow=False,
             font=dict(color=colors['buy'], size=10)
@@ -47,11 +52,54 @@ def create_executors_distribution_traces(buy_spreads, sell_spreads, buy_amounts_
     for i, value in enumerate(sell_order_amounts_quote):
         fig.add_annotation(
             x=sell_spread_distributions[i],
-            y=value + 0.01 * max(sell_order_amounts_quote),  # Offset the text slightly above the bar
+            y=value + 0.03 * max(sell_order_amounts_quote),  # Offset the text slightly above the bar
             text=str(round(value, 2)),
             showarrow=False,
             font=dict(color=colors['sell'], size=10)
         )
+
+    max_y = max(max(buy_order_amounts_quote), max(sell_order_amounts_quote))
+    # Add annotations for total volumes
+    fig.add_annotation(
+        x=-np.mean(buy_spread_distributions),
+        y=max_y,
+        text=f'Total Buy\n{round(total_buy_volume, 2)}',
+        showarrow=False,
+        font=dict(color=colors['buy'], size=12, family="Arial Black"),
+        align='center'
+    )
+
+    fig.add_annotation(
+        x=np.mean(sell_spread_distributions),
+        y=max_y,
+        text=f'Total Sell\n{round(total_sell_volume, 2)}',
+        showarrow=False,
+        font=dict(color=colors['sell'], size=12, family="Arial Black"),
+        align='center'
+    )
+
+    # Draw circles around the total volume annotations
+    fig.add_shape(
+        type='circle',
+        xref='x',
+        yref='y',
+        x0=-np.mean(buy_spread_distributions) - 0.4,
+        y0=max_y - 0.05 * max_y,
+        x1=-np.mean(buy_spread_distributions) + 0.4,
+        y1=max_y + 0.05 * max_y,
+        line=dict(color=colors['buy'])
+    )
+
+    fig.add_shape(
+        type='circle',
+        xref='x',
+        yref='y',
+        x0=np.mean(sell_spread_distributions) - 0.4,
+        y0=max_y - 0.05 * max_y,
+        x1=np.mean(sell_spread_distributions) + 0.4,
+        y1=max_y + 0.05 * max_y,
+        line=dict(color=colors['sell'])
+    )
 
     # Apply the theme layout
     layout_settings = theme.get_default_layout("Market Maker Order Distribution")

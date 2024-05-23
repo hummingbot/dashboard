@@ -17,11 +17,12 @@ def create_dca_graph(dca_inputs, dca_amount):
     tech_colors = theme.get_color_scheme()
     dca_order_amounts = [amount_dist * dca_amount for amount_dist in dca_inputs["dca_amounts"]]
     n_levels = len(dca_inputs["dca_spreads"])
+    dca_spreads = [spread * 100 for spread in dca_inputs["dca_spreads"]]
 
     break_even_values = []
     take_profit_values = []
     for level in range(n_levels):
-        dca_spreads_normalized = [spread + 0.01 for spread in dca_inputs["dca_spreads"][:level + 1]]
+        dca_spreads_normalized = [spread + 0.01 for spread in dca_spreads[:level + 1]]
         amounts = dca_order_amounts[:level + 1]
         break_even = (sum([spread * amount for spread, amount in zip(dca_spreads_normalized, amounts)]) / sum(
             amounts)) - 0.01
@@ -31,7 +32,7 @@ def create_dca_graph(dca_inputs, dca_amount):
     accumulated_amount = [sum(dca_order_amounts[:i + 1]) for i in range(len(dca_order_amounts))]
 
     # Calculate unrealized PNL
-    cum_unrealized_pnl = calculate_unrealized_pnl(dca_inputs["dca_spreads"], break_even_values, accumulated_amount)
+    cum_unrealized_pnl = calculate_unrealized_pnl(dca_spreads, break_even_values, accumulated_amount)
 
     # Create Plotly figure with secondary y-axis and a dark theme
     fig = make_subplots(specs=[[{"secondary_y": True}]])
@@ -39,7 +40,7 @@ def create_dca_graph(dca_inputs, dca_amount):
 
     # Update the Scatter Plots and Horizontal Lines
     fig.add_trace(
-        go.Scatter(x=list(range(len(dca_inputs["dca_spreads"]))), y=dca_inputs["dca_spreads"], name='Spread (%)',
+        go.Scatter(x=list(range(len(dca_spreads))), y=dca_spreads, name='Spread (%)',
                    mode='lines+markers',
                    line=dict(width=3, color=tech_colors['spread'])), secondary_y=False)
     fig.add_trace(
@@ -99,7 +100,7 @@ def create_dca_graph(dca_inputs, dca_amount):
 
     # Update Annotations for Spread and Break Even
     for i, (spread, be_value, tp_value) in enumerate(
-            zip(dca_inputs["dca_spreads"], break_even_values, take_profit_values)):
+            zip(dca_spreads, break_even_values, take_profit_values)):
         fig.add_annotation(x=i, y=spread, text=f"{spread:.2f}%", showarrow=True, arrowhead=1, yshift=10, xshift=-2,
                            font=dict(color=tech_colors['spread']))
         fig.add_annotation(x=i, y=be_value, text=f"{be_value:.2f}%", showarrow=True, arrowhead=1, yshift=5, xshift=-2,
