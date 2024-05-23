@@ -44,7 +44,7 @@ with st.expander("Visualizing PMM Dynamic Indicators", expanded=True):
     add_traces_to_fig(fig, get_macd_traces(df=candles, macd_fast=inputs["macd_fast"], macd_slow=inputs["macd_slow"], macd_signal=inputs["macd_signal"]), row=2, col=1)
     price_multiplier, spreads_multiplier = get_pmm_dynamic_multipliers(candles, inputs["macd_fast"], inputs["macd_slow"], inputs["macd_signal"], inputs["natr_length"])
     add_traces_to_fig(fig, [go.Scatter(x=candles.index, y=price_multiplier, name="Price Multiplier", line=dict(color="blue"))], row=3, col=1)
-    add_traces_to_fig(fig, [go.Scatter(x=candles.index, y=spreads_multiplier, name="Spreads Multiplier", line=dict(color="red"))], row=4, col=1)
+    add_traces_to_fig(fig, [go.Scatter(x=candles.index, y=spreads_multiplier, name="Base Spread", line=dict(color="red"))], row=4, col=1)
     fig.update_layout(**theme.get_default_layout(height=1000))
     fig.update_yaxes(tickformat=".2%", row=3, col=1)
     fig.update_yaxes(tickformat=".2%", row=4, col=1)

@@ -23,8 +23,8 @@ def get_market_making_general_inputs(custom_candles=False):
             position_mode = st.selectbox("Position Mode", ("HEDGE", "ONEWAY"), index=0,
                                          help="Enter the position mode (HEDGE/ONEWAY).")
         with c6:
-            cooldown_time = st.number_input("Cooldown Time (minutes)", value=60,
-                                            help="Specify the cooldown time in minutes (e.g., 60).") * 60
+            cooldown_time = st.number_input("Stop Loss Cooldown Time (minutes)", value=60,
+                                            help="Specify the cooldown time in minutes after having a stop loss (e.g., 60).") * 60
         with c7:
             executor_refresh_time = st.number_input("Executor Refresh Time (minutes)", value=60,
                                                     help="Enter the refresh time in minutes for executors (e.g., 60).") * 60

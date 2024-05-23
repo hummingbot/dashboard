@@ -27,7 +27,7 @@ def get_directional_trading_general_inputs():
                                                         help="Enter the maximum number of executors per side (e.g., 5).")
         with c6:
             cooldown_time = st.number_input("Cooldown Time (minutes)", value=10,
-                                            help="Specify the cooldown time in minutes (e.g., 60).") * 60
+                                            help="Time between accepting a new signal in minutes (e.g., 60).") * 60
         with c7:
             position_mode = st.selectbox("Position Mode", ("HEDGE", "ONEWAY"), index=0,
                                          help="Enter the position mode (HEDGE/ONEWAY).")
