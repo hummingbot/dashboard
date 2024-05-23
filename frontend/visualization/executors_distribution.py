@@ -78,29 +78,6 @@ def create_executors_distribution_traces(buy_spreads, sell_spreads, buy_amounts_
         align='center'
     )
 
-    # Draw circles around the total volume annotations
-    fig.add_shape(
-        type='circle',
-        xref='x',
-        yref='y',
-        x0=-np.mean(buy_spread_distributions) - 0.4,
-        y0=max_y - 0.05 * max_y,
-        x1=-np.mean(buy_spread_distributions) + 0.4,
-        y1=max_y + 0.05 * max_y,
-        line=dict(color=colors['buy'])
-    )
-
-    fig.add_shape(
-        type='circle',
-        xref='x',
-        yref='y',
-        x0=np.mean(sell_spread_distributions) - 0.4,
-        y0=max_y - 0.05 * max_y,
-        x1=np.mean(sell_spread_distributions) + 0.4,
-        y1=max_y + 0.05 * max_y,
-        line=dict(color=colors['sell'])
-    )
-
     # Apply the theme layout
     layout_settings = theme.get_default_layout("Market Maker Order Distribution")
     fig.update_layout(**layout_settings)

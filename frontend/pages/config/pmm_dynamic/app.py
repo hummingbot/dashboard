@@ -81,4 +81,4 @@ if bt_results:
         st.write("---")
         render_close_types(bt_results["results"])
 st.write("---")
-render_save_config("pmm_simple", inputs)
+render_save_config("pmm_dynamic", inputs)
