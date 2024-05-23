@@ -18,7 +18,7 @@ class LaunchV2WithControllers:
         self._controller_configs_available = self._backend_api_client.get_all_controllers_config()
         self._controller_config_selected = []
         self._bot_name = None
-        self._image_name = "hummingbot/hummingbot:latest"
+        self._image_name = "dardonacci/hummingbot:latest"
         self._credentials = "master_account"
 
     def _set_bot_name(self, bot_name):
@@ -49,7 +49,7 @@ class LaunchV2WithControllers:
             self._backend_api_client.add_script_config(script_config)
             deploy_config = {
                 "instance_name": bot_name,
-                "script": "v2_generic_with_cash_out.py",
+                "script": "v2_with_controllers.py",
                 "script_config": bot_name + ".yml",
                 "image": self._image_name,
                 "credentials_profile": self._credentials,

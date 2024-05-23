@@ -8,7 +8,7 @@ def get_market_making_general_inputs(custom_candles=False):
         candles_trading_pair = None
         interval = None
         with c1:
-            connector_name = st.text_input("Connector", value="kucoin",
+            connector_name = st.text_input("Connector", value="binance",
                                            help="Enter the name of the exchange to trade on (e.g., binance_perpetual).")
         with c2:
             trading_pair = st.text_input("Trading Pair", value="WLD-USDT",
@@ -30,7 +30,7 @@ def get_market_making_general_inputs(custom_candles=False):
                                                     help="Enter the refresh time in minutes for executors (e.g., 60).") * 60
         if custom_candles:
             with c1:
-                candles_connector = st.text_input("Candles Connector", value="kucoin",
+                candles_connector = st.text_input("Candles Connector", value="binance",
                                                   help="Enter the name of the exchange to get candles from (e.g., binance_perpetual).")
             with c2:
                 candles_trading_pair = st.text_input("Candles Trading Pair", value="WLD-USDT",

@@ -50,7 +50,7 @@ def get_dca_distribution_inputs():
                                        help="Enter the trailing stop delta as a percentage (e.g., 0.3 for 0.3%).") / 100
 
     return {
-        "dca_spreads": spreads_normalized,
+        "dca_spreads": [spread /100 for spread in spreads_normalized],
         "dca_amounts": orders_amount_normalized,
         "stop_loss": sl,
         "take_profit": tp,

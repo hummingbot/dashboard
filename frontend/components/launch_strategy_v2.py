@@ -67,7 +67,7 @@ class LaunchStrategyV2(Dashboard.Item):
             self._backend_api_client.add_script_config(script_config)
             deploy_config = {
                 "instance_name": bot_name,
-                "script": "v2_generic_with_cash_out.py",
+                "script": "v2_with_controllers.py",
                 "script_config": bot_name + ".yml",
                 "image": self._image_name,
                 "credentials_profile": self._credentials,
