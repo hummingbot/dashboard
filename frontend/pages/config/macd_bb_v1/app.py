@@ -7,6 +7,7 @@ from plotly.subplots import make_subplots
 from CONFIG import BACKEND_API_HOST, BACKEND_API_PORT
 from backend.services.backend_api_client import BackendAPIClient
 from frontend.components.backtesting import backtesting_section
+from frontend.components.config_loader import get_default_config_loader
 from frontend.components.save_config import render_save_config
 from frontend.pages.config.macd_bb_v1.user_inputs import user_inputs
 from frontend.pages.config.utils import get_candles, get_max_records
@@ -24,9 +25,10 @@ from frontend.visualization.utils import add_traces_to_fig
 initialize_st_page(title="MACD_BB V1", icon="📊", initial_sidebar_state="expanded")
 backend_api_client = BackendAPIClient.get_instance(host=BACKEND_API_HOST, port=BACKEND_API_PORT)
 
-
+get_default_config_loader("macd_bb_v1")
 # User inputs
 inputs = user_inputs()
+st.session_state["default_config"] = inputs
 
 st.write("### Visualizing MACD Bollinger Trading Signals")
 days_to_visualize = st.number_input("Days to Visualize", min_value=1, max_value=365, value=3)
