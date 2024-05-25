@@ -9,7 +9,7 @@ def normalize(values):
     return [val / total for val in values]
 
 
-def distribution_inputs(column, dist_type_name, levels=3):
+def distribution_inputs(column, dist_type_name, levels=3, default_values=None):
     if dist_type_name == "Spread":
         dist_type = column.selectbox(
             f"Type of {dist_type_name} Distribution",
@@ -47,8 +47,13 @@ def distribution_inputs(column, dist_type_name, levels=3):
             step = column.number_input(f"{dist_type_name} End", value=1.0,
                                         key=f"{column}_{dist_type_name.lower()}_end")
     else:
-        manual_values = [column.number_input(f"{dist_type_name} for level {i + 1}", value=i + 1.0,
-                                             key=f"{column}_{dist_type_name.lower()}_{i}") for i in range(levels)]
+        if default_values:
+            manual_values = [column.number_input(f"{dist_type_name} for level {i + 1}", value=value * 100.0,
+                                                 key=f"{column}_{dist_type_name.lower()}_{i}") for i, value in
+                             enumerate(default_values)]
+        else:
+            manual_values = [column.number_input(f"{dist_type_name} for level {i + 1}", value=i + 1.0,
+                                                 key=f"{column}_{dist_type_name.lower()}_{i}") for i, value in range(levels)]
         start = None  # As start is not relevant for Manual type
 
     return dist_type, start, base, scaling_factor, step, ratio, manual_values

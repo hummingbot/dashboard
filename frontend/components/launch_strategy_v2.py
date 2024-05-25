@@ -58,7 +58,7 @@ class LaunchStrategyV2(Dashboard.Item):
                     "markets": {},
                     "candles_config": [],
                     "controllers_config": self._controller_config_selected,
-                    "config_update_interval": 20,
+                    "config_update_interval": 10,
                     "script_file_name": "v2_with_controllers.py",
                     "time_to_cash_out": None,
                 }
