@@ -1,6 +1,7 @@
 import streamlit as st
 from backend.services.backend_api_client import BackendAPIClient
 from CONFIG import BACKEND_API_HOST, BACKEND_API_PORT
+from frontend.components.config_loader import get_default_config_loader
 from frontend.components.save_config import render_save_config
 
 # Import submodules
@@ -18,7 +19,7 @@ backend_api_client = BackendAPIClient.get_instance(host=BACKEND_API_HOST, port=B
 
 # Page content
 st.text("This tool will let you create a config for PMM Simple, backtest and upload it to the Backend API.")
-# Get user inputs
+get_default_config_loader("pmm_simple")
 inputs = user_inputs()
 
 with st.expander("Executor Distribution:", expanded=True):

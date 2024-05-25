@@ -35,5 +35,5 @@ def user_inputs():
             "trailing_delta": ts_delta
         }
     }
-
+    st.session_state["default_config"] = config
     return config
