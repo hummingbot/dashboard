@@ -108,7 +108,8 @@ class BackendAPIClient:
         """Get the status of a bot."""
         url = f"{self.base_url}/get-bot-status/{bot_name}"
         response = requests.get(url)
-        return response.json()
+        if response.status_code == 200:
+            return response.json()["data"]
 
     def get_bot_history(self, bot_name: str):
         """Get the historical data of a bot."""
@@ -204,3 +205,23 @@ class BackendAPIClient:
             "executors": [ExecutorInfo(**executor) for executor in backtesting_results["executors"]],
             "results": backtesting_results["results"]
         }
+
+    def get_all_configs_from_bot(self, bot_name: str):
+        """Get all configurations from a bot."""
+        url = f"{self.base_url}/all-controller-configs/bot/{bot_name}"
+        response = requests.get(url)
+        return response.json()
+
+    def stop_controller_from_bot(self, bot_name: str, controller_id: str):
+        """Stop a controller from a bot."""
+        config = {"manual_kill_switch": True}
+        url = f"{self.base_url}/update-controller-config/bot/{bot_name}/{controller_id}"
+        response = requests.post(url, json=config)
+        return response.json()
+
+    def start_controller_from_bot(self, bot_name: str, controller_id: str):
+        """Start a controller from a bot."""
+        config = {"manual_kill_switch": False}
+        url = f"{self.base_url}/update-controller-config/bot/{bot_name}/{controller_id}"
+        response = requests.post(url, json=config)
+        return response.json()
