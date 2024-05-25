@@ -4,6 +4,7 @@ from plotly.subplots import make_subplots
 from CONFIG import BACKEND_API_HOST, BACKEND_API_PORT
 from backend.services.backend_api_client import BackendAPIClient
 from frontend.components.backtesting import backtesting_section
+from frontend.components.config_loader import get_default_config_loader
 from frontend.components.save_config import render_save_config
 from frontend.pages.config.supertrend_v1.user_inputs import user_inputs
 from frontend.pages.config.utils import get_candles, get_max_records
@@ -13,18 +14,18 @@ from frontend.visualization.backtesting import create_backtesting_figure
 from frontend.visualization.backtesting_metrics import render_backtesting_metrics, render_accuracy_metrics, \
     render_close_types
 from frontend.visualization.candles import get_candlestick_trace
-from frontend.visualization.indicators import get_bbands_traces, get_volume_trace, get_macd_traces, \
-    get_supertrend_traces
-from frontend.visualization.signals import get_macdbb_v1_signal_traces, get_supertrend_v1_signal_traces
+from frontend.visualization.indicators import get_volume_trace, get_supertrend_traces
+from frontend.visualization.signals import get_supertrend_v1_signal_traces
 from frontend.visualization.utils import add_traces_to_fig
 
 # Initialize the Streamlit page
 initialize_st_page(title="SuperTrend V1", icon="📊", initial_sidebar_state="expanded")
 backend_api_client = BackendAPIClient.get_instance(host=BACKEND_API_HOST, port=BACKEND_API_PORT)
 
-
+get_default_config_loader("supertrend_v1")
 # User inputs
 inputs = user_inputs()
+st.session_state["default_config"] = inputs
 
 st.write("### Visualizing Supertrend Trading Signals")
 days_to_visualize = st.number_input("Days to Visualize", min_value=1, max_value=365, value=3)
