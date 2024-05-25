@@ -4,6 +4,7 @@ from plotly.subplots import make_subplots
 
 from backend.services.backend_api_client import BackendAPIClient
 from CONFIG import BACKEND_API_HOST, BACKEND_API_PORT
+from frontend.components.config_loader import get_default_config_loader
 from frontend.components.executors_distribution import get_executors_distribution_inputs
 from frontend.components.save_config import render_save_config
 
@@ -28,6 +29,7 @@ backend_api_client = BackendAPIClient.get_instance(host=BACKEND_API_HOST, port=B
 
 # Page content
 st.text("This tool will let you create a config for PMM Dynamic, backtest and upload it to the Backend API.")
+get_default_config_loader("pmm_dynamic")
 # Get user inputs
 inputs = user_inputs()
 st.write("### Visualizing MACD and NATR indicators for PMM Dynamic")
@@ -53,11 +55,12 @@ with st.expander("Visualizing PMM Dynamic Indicators", expanded=True):
 st.write("### Executors Distribution")
 st.write("The order distributions are affected by the average NATR. This means that if the first order has a spread of "
          "1 and the NATR is 0.005, the first order will have a spread of 0.5% of the mid price.")
-buy_spread_distributions, sell_spread_distributions, buy_order_amounts_pct, sell_order_amounts_pct = get_executors_distribution_inputs()
-inputs["buy_spreads"] = [spread * 100 for spread in buy_spread_distributions]
-inputs["sell_spreads"] = [spread * 100 for spread in sell_spread_distributions]
+buy_spread_distributions, sell_spread_distributions, buy_order_amounts_pct, sell_order_amounts_pct = get_executors_distribution_inputs(default_spreads=[1, 2], default_amounts=[1, 2])
+inputs["buy_spreads"] = buy_spread_distributions
+inputs["sell_spreads"] = sell_spread_distributions
 inputs["buy_amounts_pct"] = buy_order_amounts_pct
 inputs["sell_amounts_pct"] = sell_order_amounts_pct
+st.session_state["default_config"] = inputs
 with st.expander("Executor Distribution:", expanded=True):
     natr_avarage = spreads_multiplier.mean()
     buy_spreads = [spread * natr_avarage for spread in inputs["buy_spreads"]]
