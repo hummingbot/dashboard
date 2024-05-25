@@ -8,6 +8,7 @@ import pandas_ta as ta  # noqa: F401
 from CONFIG import BACKEND_API_HOST, BACKEND_API_PORT
 from backend.services.backend_api_client import BackendAPIClient
 from frontend.components.backtesting import backtesting_section
+from frontend.components.config_loader import get_default_config_loader
 from frontend.components.save_config import render_save_config
 from frontend.pages.config.utils import get_max_records, get_candles
 from frontend.st_utils import initialize_st_page
@@ -29,9 +30,10 @@ backend_api_client = BackendAPIClient.get_instance(host=BACKEND_API_HOST, port=B
 
 
 st.text("This tool will let you create a config for Bollinger V1 and visualize the strategy.")
-st.write("---")
+get_default_config_loader("bollinger_v1")
 
 inputs = user_inputs()
+st.session_state["default_config"] = inputs
 
 st.write("### Visualizing Bollinger Bands and Trading Signals")
 days_to_visualize = st.number_input("Days to Visualize", min_value=1, max_value=365, value=3)
