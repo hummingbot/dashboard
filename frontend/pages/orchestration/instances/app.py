@@ -40,6 +40,7 @@ def update_active_bots(api_client, active_instances_board):
 
         st.session_state.active_instances_board.bot_cards.sort(key=lambda x: x[1])  # Sort by bot name
 
+
 initialize_st_page(title="Instances", icon="🦅")
 api_client = BackendAPIClient.get_instance(host=BACKEND_API_HOST, port=BACKEND_API_PORT)
 
@@ -48,19 +49,23 @@ if not api_client.is_docker_running():
     st.stop()
 
 if "active_instances_board" not in st.session_state:
-    active_bots_response = api_client.get_active_bots_status()
-    active_bots = active_bots_response.get("data")
-    bot_cards = []
-    active_instances_board = Dashboard()
-    if active_bots:
-        positions = get_grid_positions(len(active_bots), NUM_CARD_COLS, CARD_WIDTH, CARD_HEIGHT)
-        for (bot, bot_info), (x, y) in zip(active_bots.items(), positions):
-            card = BotPerformanceCardV2(active_instances_board, x, y, CARD_WIDTH, CARD_HEIGHT)
-            bot_cards.append((card, bot))
-    st.session_state.active_instances_board = SimpleNamespace(
-        dashboard=active_instances_board,
-        bot_cards=bot_cards,
-    )
+    try:
+        active_bots_response = api_client.get_active_bots_status()
+        active_bots = active_bots_response.get("data")
+        bot_cards = []
+        board = Dashboard()
+        if active_bots:
+            positions = get_grid_positions(len(active_bots), NUM_CARD_COLS, CARD_WIDTH, CARD_HEIGHT)
+            for (bot, bot_info), (x, y) in zip(active_bots.items(), positions):
+                card = BotPerformanceCardV2(board, x, y, CARD_WIDTH, CARD_HEIGHT)
+                bot_cards.append((card, bot))
+            st.session_state.active_instances_board = SimpleNamespace(
+                dashboard=board,
+                bot_cards=bot_cards,
+            )
+    except Exception as e:
+        st.error(f"Error fetching active bots, reload the page if persists: {e}")
+        st.rerun()
 else:
     active_instances_board = st.session_state.active_instances_board
     update_active_bots(api_client, active_instances_board)
