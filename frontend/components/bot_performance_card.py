@@ -21,7 +21,6 @@ def archive_bot(bot_name):
     backend_api_client.remove_container(bot_name)
 
 
-
 class BotPerformanceCardV2(Dashboard.Item):
     DEFAULT_COLUMNS = [
         {"field": 'id', "headerName": 'ID', "width": WIDE_COL_WIDTH},
@@ -58,7 +57,7 @@ class BotPerformanceCardV2(Dashboard.Item):
             controller_configs = backend_api_client.get_all_configs_from_bot(bot_name)
             bot_status = backend_api_client.get_bot_status(bot_name)
             is_running = False
-            if len(bot_status) > 0:
+            if bot_status and len(bot_status) > 0:
                 # Controllers Table
                 active_controllers_list = []
                 stopped_controllers_list = []
@@ -86,7 +85,7 @@ class BotPerformanceCardV2(Dashboard.Item):
                         "open_order_volume": open_order_volume,
                         "imbalance": imbalance,
                     }
-                    if any([value != 0 for value in controller_info.values() if value != controller_info["id"]]):
+                    if len(controller_info) > 0:
                         is_running = True
                     if kill_switch_status:
                         stopped_controllers_list.append(controller_info)
