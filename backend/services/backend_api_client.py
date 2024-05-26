@@ -109,7 +109,9 @@ class BackendAPIClient:
         url = f"{self.base_url}/get-bot-status/{bot_name}"
         response = requests.get(url)
         if response.status_code == 200:
-            return response.json()["data"]
+            return response.json()
+        else:
+            return {"status": "error", "data": "Bot not found"}
 
     def get_bot_history(self, bot_name: str):
         """Get the historical data of a bot."""
@@ -127,7 +129,7 @@ class BackendAPIClient:
         if response.status_code == 200:
             return response.json()  # Successful request
         else:
-            return response.json()  # Handle errors or no data found
+            return {"status": "error", "data": "No active bots found"}
 
     def get_all_controllers_config(self):
         """Get all controller configurations."""

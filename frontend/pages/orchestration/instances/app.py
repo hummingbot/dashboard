@@ -21,7 +21,7 @@ def get_grid_positions(n_cards: int, cols: int = NUM_CARD_COLS, card_width: int 
     return sorted(x_y, key=lambda x: (x[1], x[0]))
 
 
-def update_active_bots(api_client, active_instances_board):
+def update_active_bots(api_client):
     active_bots_response = api_client.get_active_bots_status()
     if active_bots_response.get("status") == "success":
         current_active_bots = active_bots_response.get("data")
@@ -29,16 +29,12 @@ def update_active_bots(api_client, active_instances_board):
 
         new_bots = set(current_active_bots.keys()) - set(stored_bots.keys())
         removed_bots = set(stored_bots.keys()) - set(current_active_bots.keys())
-
-        for bot in new_bots:
-            x, y = get_grid_positions(1)[0]  # Get a new position
-            card = BotPerformanceCardV2(active_instances_board, x, y, CARD_WIDTH, CARD_HEIGHT)
-            st.session_state.active_instances_board.bot_cards.append((card, bot))
-
         for bot in removed_bots:
             st.session_state.active_instances_board.bot_cards = [card for card in st.session_state.active_instances_board.bot_cards if card[1] != bot]
-
-        st.session_state.active_instances_board.bot_cards.sort(key=lambda x: x[1])  # Sort by bot name
+        positions = get_grid_positions(len(current_active_bots), NUM_CARD_COLS, CARD_WIDTH, CARD_HEIGHT)
+        for bot, (x, y) in zip(new_bots, positions[:len(new_bots)]):
+            card = BotPerformanceCardV2(st.session_state.active_instances_board.dashboard, x, y, CARD_WIDTH, CARD_HEIGHT)
+            st.session_state.active_instances_board.bot_cards.append((card, bot))
 
 
 initialize_st_page(title="Instances", icon="🦅")
@@ -49,26 +45,23 @@ if not api_client.is_docker_running():
     st.stop()
 
 if "active_instances_board" not in st.session_state:
-    try:
-        active_bots_response = api_client.get_active_bots_status()
-        active_bots = active_bots_response.get("data")
-        bot_cards = []
-        board = Dashboard()
-        if active_bots:
-            positions = get_grid_positions(len(active_bots), NUM_CARD_COLS, CARD_WIDTH, CARD_HEIGHT)
-            for (bot, bot_info), (x, y) in zip(active_bots.items(), positions):
-                card = BotPerformanceCardV2(board, x, y, CARD_WIDTH, CARD_HEIGHT)
-                bot_cards.append((card, bot))
-            st.session_state.active_instances_board = SimpleNamespace(
-                dashboard=board,
-                bot_cards=bot_cards,
-            )
-    except Exception as e:
-        st.error(f"Error fetching active bots, reload the page if persists: {e}")
-        st.rerun()
+    active_bots_response = api_client.get_active_bots_status()
+    bot_cards = []
+    board = Dashboard()
+    st.session_state.active_instances_board = SimpleNamespace(
+        dashboard=board,
+        bot_cards=bot_cards,
+    )
+    active_bots = active_bots_response.get("data")
+    number_of_bots = len(active_bots)
+    if number_of_bots > 0:
+        positions = get_grid_positions(number_of_bots, NUM_CARD_COLS, CARD_WIDTH, CARD_HEIGHT)
+        for (bot, bot_info), (x, y) in zip(active_bots.items(), positions):
+            bot_status = api_client.get_bot_status(bot)
+            card = BotPerformanceCardV2(board, x, y, CARD_WIDTH, CARD_HEIGHT)
+            st.session_state.active_instances_board.bot_cards.append((card, bot))
 else:
-    active_instances_board = st.session_state.active_instances_board
-    update_active_bots(api_client, active_instances_board)
+    update_active_bots(api_client)
 
 with elements("active_instances_board"):
     with mui.Paper(sx={"padding": "2rem"}, variant="outlined"):
@@ -76,7 +69,3 @@ with elements("active_instances_board"):
         for card, bot in st.session_state.active_instances_board.bot_cards:
             with st.session_state.active_instances_board.dashboard():
                 card(bot)
-
-while True:
-    time.sleep(2)
-    st.rerun()
