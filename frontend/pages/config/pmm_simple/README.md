@@ -1,19 +1,49 @@
-# D-Man Maker V2
+# PMM Simple Configuration Tool
+
+Welcome to the PMM Simple Configuration Tool! This tool allows you to create, modify, visualize, backtest, and save configurations for the PMM Simple trading strategy. Here’s how you can make the most out of it.
 
 ## Features
-- **Interactive Configuration**: Configure market making parameters such as spreads, amounts, and order levels through an intuitive web interface.
-- **Visual Feedback**: Visualize order spread and amount distributions using dynamic Plotly charts.
-- **Backend Integration**: Save and deploy configurations directly to a backend system for active management and execution.
 
-### Using the Tool
-1. **Configure Parameters**: Use the Streamlit interface to input parameters such as connector type, trading pair, and leverage.
-2. **Set Distributions**: Define distributions for buy and sell orders, including spread and amount, either manually or through predefined distribution types like Geometric or Fibonacci.
-3. **Visualize Orders**: View the configured order distributions on a Plotly graph, which illustrates the relationship between spread and amount.
-4. **Export Configuration**: Once the configuration is set, export it as a YAML file or directly upload it to the Backend API.
-5. **Upload**: Use the "Upload Config to BackendAPI" button to send your configuration to the backend system. Then can be used to deploy a new bot.
+- **Start from Default Configurations**: Begin with a default configuration or use the values from an existing configuration.
+- **Modify Configuration Values**: Change various parameters of the configuration to suit your trading strategy.
+- **Visualize Results**: See the impact of your changes through visual charts.
+- **Backtest Your Strategy**: Run backtests to evaluate the performance of your strategy.
+- **Save and Deploy**: Once satisfied, save the configuration to deploy it later.
 
-## Troubleshooting
-- **UI Not Loading**: Ensure all Python dependencies are installed and that the Streamlit server is running correctly.
-- **API Errors**: Check the console for any error messages that may indicate issues with the backend connection.
+## How to Use
 
-For more detailed documentation on the backend API and additional configurations, please refer to the project's documentation or contact the development team.
+### 1. Load Default Configuration
+
+Start by loading the default configuration for the PMM Simple strategy. This provides a baseline setup that you can customize to fit your needs.
+
+### 2. User Inputs
+
+Input various parameters for the strategy configuration. These parameters include:
+
+- **Connector Name**: Select the trading platform or exchange.
+- **Trading Pair**: Choose the cryptocurrency trading pair.
+- **Leverage**: Set the leverage ratio. (Note: if you are using spot trading, set the leverage to 1)
+- **Total Amount (Quote Currency)**: Define the total amount you want to allocate for trading.
+- **Position Mode**: Choose between different position modes.
+- **Cooldown Time**: Set the cooldown period between trades.
+- **Executor Refresh Time**: Define how often the executors refresh.
+- **Buy/Sell Spread Distributions**: Configure the distribution of buy and sell spreads.
+- **Order Amounts**: Specify the percentages for buy and sell order amounts.
+- **Risk Management**: Set parameters for stop loss, take profit, time limit, and trailing stop settings.
+
+### 3. Executor Distribution Visualization
+
+Visualize the distribution of your trading executors. This helps you understand how your buy and sell orders are spread across different price levels and amounts.
+
+### 4. Backtesting
+
+Run backtests to evaluate the performance of your configured strategy. The backtesting section allows you to:
+
+- **Process Data**: Analyze historical trading data.
+- **Visualize Results**: See performance metrics and charts.
+- **Evaluate Accuracy**: Assess the accuracy of your strategy’s predictions and trades.
+- **Understand Close Types**: Review different types of trade closures and their frequencies.
+
+### 5. Save Configuration
+
+Once you are satisfied with your configuration and backtest results, save the configuration for future use in the Deploy tab. This allows you to deploy the same strategy later without having to reconfigure it from scratch.

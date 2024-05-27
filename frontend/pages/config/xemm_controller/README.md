@@ -1,19 +1,60 @@
-# D-Man Maker V2
+# XEMM Configuration Tool
+
+Welcome to the XEMM Configuration Tool! This tool allows you to create, modify, visualize, backtest, and save configurations for the XEMM (Cross-Exchange Market Making) strategy. Here’s how you can make the most out of it.
 
 ## Features
-- **Interactive Configuration**: Configure market making parameters such as spreads, amounts, and order levels through an intuitive web interface.
-- **Visual Feedback**: Visualize order spread and amount distributions using dynamic Plotly charts.
-- **Backend Integration**: Save and deploy configurations directly to a backend system for active management and execution.
 
-### Using the Tool
-1. **Configure Parameters**: Use the Streamlit interface to input parameters such as connector type, trading pair, and leverage.
-2. **Set Distributions**: Define distributions for buy and sell orders, including spread and amount, either manually or through predefined distribution types like Geometric or Fibonacci.
-3. **Visualize Orders**: View the configured order distributions on a Plotly graph, which illustrates the relationship between spread and amount.
-4. **Export Configuration**: Once the configuration is set, export it as a YAML file or directly upload it to the Backend API.
-5. **Upload**: Use the "Upload Config to BackendAPI" button to send your configuration to the backend system. Then can be used to deploy a new bot.
+- **Start from Default Configurations**: Begin with a default configuration or use the values from an existing configuration.
+- **Modify Configuration Values**: Change various parameters of the configuration to suit your trading strategy.
+- **Visualize Results**: See the impact of your changes through visual charts.
+- **Backtest Your Strategy**: Run backtests to evaluate the performance of your strategy.
+- **Save and Deploy**: Once satisfied, save the configuration to deploy it later.
 
-## Troubleshooting
-- **UI Not Loading**: Ensure all Python dependencies are installed and that the Streamlit server is running correctly.
-- **API Errors**: Check the console for any error messages that may indicate issues with the backend connection.
+## How to Use
 
-For more detailed documentation on the backend API and additional configurations, please refer to the project's documentation or contact the development team.
+### 1. Load Default Configuration
+
+Start by loading the default configuration for the XEMM strategy. This provides a baseline setup that you can customize to fit your needs.
+
+### 2. User Inputs
+
+Input various parameters for the strategy configuration. These parameters include:
+
+- **Maker Connector**: Select the maker trading platform or exchange where limit orders will be placed.
+- **Maker Trading Pair**: Choose the trading pair on the maker exchange.
+- **Taker Connector**: Select the taker trading platform or exchange where market orders will be executed to hedge the imbalance.
+- **Taker Trading Pair**: Choose the trading pair on the taker exchange.
+- **Min Profitability**: Set the minimum profitability percentage at which orders will be refreshed to avoid risking liquidity.
+- **Max Profitability**: Set the maximum profitability percentage at which orders will be refreshed to avoid being too far from the mid-price.
+- **Buy Maker Levels**: Specify the number of buy maker levels.
+- **Buy Targets and Amounts**: Define the target profitability and amounts for each buy maker level.
+- **Sell Maker Levels**: Specify the number of sell maker levels.
+- **Sell Targets and Amounts**: Define the target profitability and amounts for each sell maker level.
+
+### 3. Visualize Order Distribution
+
+Visualize the order distribution with profitability targets using Plotly charts. This helps you understand how your buy and sell orders are distributed across different profitability levels.
+
+### Min and Max Profitability
+
+The XEMM strategy uses min and max profitability bounds to manage the placement of limit orders:
+
+- **Min Profitability**: If the expected profitability of a limit order drops below this value, the order will be refreshed to avoid risking liquidity.
+- **Max Profitability**: If the expected profitability of a limit order exceeds this value, the order will be refreshed to avoid being too far from the mid-price.
+
+### Combining Profitability Targets and Order Amounts
+
+- **Buy Orders**: Configure the target profitability and amounts for each buy maker level. The orders will be refreshed if they fall outside the min and max profitability bounds.
+- **Sell Orders**: Similarly, configure the target profitability and amounts for each sell maker level, with orders being refreshed based on the profitability bounds.
+
+### 4. Save and Download Configuration
+
+Once you have configured your strategy, you can save and download the configuration as a YAML file. This allows you to deploy the strategy later without having to reconfigure it from scratch.
+
+### 5. Upload Configuration to Backend API
+
+You can also upload the configuration directly to the Backend API for immediate deployment. This ensures that your strategy is ready to be executed in real-time.
+
+## Conclusion
+
+By following these steps, you can efficiently configure your XEMM strategy, visualize its potential performance, and deploy it for trading. Feel free to experiment with different configurations to find the optimal setup for your trading needs. Happy trading!
