@@ -69,3 +69,7 @@ with elements("active_instances_board"):
         for card, bot in st.session_state.active_instances_board.bot_cards:
             with st.session_state.active_instances_board.dashboard():
                 card(bot)
+
+while True:
+    time.sleep(5)
+    st.rerun()
