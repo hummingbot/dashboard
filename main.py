@@ -23,7 +23,7 @@ def main_page():
             Page("frontend/pages/config/macd_bb_v1/app.py", "MACD_BB V1", "📊"),
             Page("frontend/pages/config/supertrend_v1/app.py", "SuperTrend V1", "👨‍🔬"),
             Page("frontend/pages/config/xemm_controller/app.py", "XEMM Controller", "⚡️"),
-            Page("frontend/pages/config/position_builder/app.py", "Position Builder", "🔭"),
+            # Page("frontend/pages/config/position_builder/app.py", "Position Builder", "🔭"),
             Section("Data", "💾"),
             Page("frontend/pages/data/download_candles/app.py", "Download Candles", "💹"),
             # Page("pages/create/create.py", "Create", "⚔️"),
