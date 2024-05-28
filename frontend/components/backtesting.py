@@ -29,5 +29,10 @@ def backtesting_section(inputs, backend_api_client):
             trade_cost=trade_cost / 100,
             config=inputs,
         )
-
+        if len(backtesting_results["processed_data"]) == 0:
+            st.error("No trades were executed during the backtesting period.")
+            return None
+        if len(backtesting_results["executors"]) == 0:
+            st.error("No executors were found during the backtesting period.")
+            return None
         return backtesting_results
