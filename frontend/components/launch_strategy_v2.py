@@ -92,10 +92,10 @@ class LaunchStrategyV2(Dashboard.Item):
                         "The new instance will contain the credentials configured in the following base instance:",
                         severity="info")
                 with mui.Grid(item=True, xs=4):
-                    available_credentials = self._backend_api_client.get_available_credentials()
+                    available_credentials = self._backend_api_client.get_accounts()
                     with mui.FormControl(variant="standard", sx={"width": "100%"}):
                         mui.FormHelperText("Credentials")
-                        with mui.Select(label="Credentials", defaultValue=available_credentials[0],
+                        with mui.Select(label="Credentials", defaultValue="master_account",
                                         variant="standard", onChange=lazy(self._set_credentials)):
                             for master_config in available_credentials:
                                 mui.MenuItem(master_config, value=master_config)
@@ -106,7 +106,7 @@ class LaunchStrategyV2(Dashboard.Item):
                     available_images = self._backend_api_client.get_available_images("hummingbot")
                     with mui.FormControl(variant="standard", sx={"width": "100%"}):
                         mui.FormHelperText("Available Images")
-                        with mui.Select(label="Hummingbot Image", defaultValue="hummingbot/hummingbot:latest",
+                        with mui.Select(label="Hummingbot Image", defaultValue="dardonacci/hummingbot:latest",
                                         variant="standard", onChange=lazy(self._set_image_name)):
                             for image in available_images:
                                 mui.MenuItem(image, value=image)

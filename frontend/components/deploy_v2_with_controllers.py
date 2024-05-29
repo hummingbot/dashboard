@@ -102,7 +102,7 @@ class LaunchV2WithControllers:
             self._image_name = st.selectbox("Hummingbot Image", available_images,
                                             index=available_images.index("hummingbot/hummingbot:latest"))
         with c3:
-            available_credentials = self._backend_api_client.get_available_credentials()
+            available_credentials = self._backend_api_client.get_accounts()
             self._credentials = st.selectbox("Credentials", available_credentials, index=0)
         with c4:
             deploy_button = st.button("Deploy Bot")
