@@ -13,6 +13,8 @@ def main_page():
             Section("Bot Orchestration", "🐙"),
             Page("frontend/pages/orchestration/instances/app.py", "Instances", "🦅"),
             Page("frontend/pages/orchestration/launch_bot_v2/app.py", "Deploy", "🚀"),
+            Page("frontend/pages/orchestration/credentials/app.py", "Credentials", "🔑"),
+            Page("frontend/pages/orchestration/portfolio/app.py", "Portfolio", "💰"),
             # Page("frontend/pages/orchestration/launch_bot_v2_st/app.py", "Deploy ST", "🙌"),
             # Page("pages/file_manager/app.py", "File Explorer", "🗂"),
             Section("Config Generator", "🎛️"),
