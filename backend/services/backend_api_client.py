@@ -137,12 +137,6 @@ class BackendAPIClient:
         response = requests.get(url)
         return response.json()
 
-    def get_available_credentials(self):
-        """Get available credentials."""
-        url = f"{self.base_url}/list-credentials"
-        response = requests.get(url)
-        return response.json()
-
     def get_available_images(self, image_name: str = "hummingbot"):
         """Get available images."""
         url = f"{self.base_url}/available-images/{image_name}"
@@ -226,4 +220,58 @@ class BackendAPIClient:
         config = {"manual_kill_switch": False}
         url = f"{self.base_url}/update-controller-config/bot/{bot_name}/{controller_id}"
         response = requests.post(url, json=config)
+        return response.json()
+
+    def get_connector_config_map(self, connector_name: str):
+        """Get connector configuration map."""
+        url = f"{self.base_url}/connector-config-map/{connector_name}"
+        response = requests.get(url)
+        return response.json()
+
+    def get_all_connectors_config_map(self):
+        """Get all connector configuration maps."""
+        url = f"{self.base_url}/all-connectors-config-map"
+        response = requests.get(url)
+        return response.json()
+
+    def add_account(self, account_name: str):
+        """Add a new account."""
+        url = f"{self.base_url}/add-account"
+        response = requests.post(url, params={"account_name": account_name})
+        return response.json()
+
+    def delete_account(self, account_name: str):
+        """Delete an account."""
+        url = f"{self.base_url}/delete-account/"
+        response = requests.post(url, params={"account_name": account_name})
+        return response.json()
+
+    def delete_credential(self, account_name: str, connector_name: str):
+        """Delete credentials."""
+        url = f"{self.base_url}/delete-credential/{account_name}/{connector_name}"
+        response = requests.post(url)
+        return response.json()
+
+    def add_connector_keys(self, account_name: str, connector_name: str, connector_config: dict):
+        """Add connector keys."""
+        url = f"{self.base_url}/add-connector-keys/{account_name}/{connector_name}"
+        response = requests.post(url, json=connector_config)
+        return response.json()
+
+    def get_accounts(self):
+        """Get available credentials."""
+        url = f"{self.base_url}/list-accounts"
+        response = requests.get(url)
+        return response.json()
+
+    def get_credentials(self, account_name: str):
+        """Get available credentials."""
+        url = f"{self.base_url}/list-credentials/{account_name}"
+        response = requests.get(url)
+        return response.json()
+
+    def get_all_balances(self):
+        """Get all balances."""
+        url = f"{self.base_url}/get-all-balances"
+        response = requests.get(url)
         return response.json()
