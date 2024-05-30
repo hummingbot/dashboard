@@ -51,7 +51,7 @@ with c3:
 # Fetch and process data
 candle_data = get_candles(connector_name, trading_pair, interval, max_records)
 df = pd.DataFrame(candle_data)
-df.index = pd.to_datetime(df['timestamp'], unit='ms')
+df.index = pd.to_datetime(df['timestamp'], unit='s')
 df = add_indicators(df, macd_fast, macd_slow, macd_signal, diff_lookback)
 
 # Prepare data for signals

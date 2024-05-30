@@ -91,7 +91,7 @@ with c2:
 # Load candle data
 candle_data = get_candles(connector_name=candles_connector, trading_pair=candles_trading_pair, interval=interval, max_records=max_records)
 df = pd.DataFrame(candle_data)
-df.index = pd.to_datetime(df['timestamp'], unit='ms')
+df.index = pd.to_datetime(df['timestamp'], unit='s')
 candles_processed = add_indicators(df, observation_covariance, transition_covariance)
 
 

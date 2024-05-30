@@ -35,7 +35,7 @@ if get_data_button:
     )
 
     candles_df = pd.DataFrame(candles)
-    candles_df.index = pd.to_datetime(candles_df["timestamp"], unit='ms')
+    candles_df.index = pd.to_datetime(candles_df["timestamp"], unit='s')
 
     # Plotting the candlestick chart
     fig = go.Figure(data=[go.Candlestick(

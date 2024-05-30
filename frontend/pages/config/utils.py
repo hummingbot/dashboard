@@ -23,6 +23,6 @@ def get_candles(connector_name="binance", trading_pair="BTC-USDT", interval="1m"
     df = pd.DataFrame(backend_client.get_historical_candles(connector_name, trading_pair, interval,
                                                             start_time=int(start_time.timestamp() * 1000),
                                                             end_time=int(end_time.timestamp() * 1000)))
-    df.index = pd.to_datetime(df.timestamp, unit='ms')
+    df.index = pd.to_datetime(df.timestamp, unit='s')
     return df
 
