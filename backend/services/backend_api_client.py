@@ -196,8 +196,12 @@ class BackendAPIClient:
         }
         response = requests.post(url, json=payload)
         backtesting_results = response.json()
+        if "processed_data" not in backtesting_results:
+            data = None
+        else:
+            data = pd.DataFrame(backtesting_results["processed_data"])
         return {
-            "processed_data": pd.DataFrame(backtesting_results["processed_data"]),
+            "processed_data": data,
             "executors": [ExecutorInfo(**executor) for executor in backtesting_results["executors"]],
             "results": backtesting_results["results"]
         }
