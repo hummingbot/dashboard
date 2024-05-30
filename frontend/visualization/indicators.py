@@ -23,7 +23,7 @@ def get_bbands_traces(df, bb_length, bb_std):
 
 
 def get_volume_trace(df):
-    df.index = pd.to_datetime(df.timestamp, unit='ms')
+    df.index = pd.to_datetime(df.timestamp, unit='s')
     return go.Bar(x=df.index, y=df['volume'], name="Volume", marker_color=theme.get_color_scheme()["volume"], opacity=0.7)
 
 def get_macd_traces(df, macd_fast, macd_slow, macd_signal):

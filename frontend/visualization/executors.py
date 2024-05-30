@@ -7,9 +7,9 @@ from hummingbot.connector.connector_base import TradeType
 
 def add_executors_trace(fig, executors, row, col):
     for executor in executors:
-        entry_time = pd.to_datetime(executor.timestamp, unit='ms')
+        entry_time = pd.to_datetime(executor.timestamp, unit='s')
         entry_price = executor.custom_info["current_position_average_price"]
-        exit_time = pd.to_datetime(executor.close_timestamp, unit='ms')
+        exit_time = pd.to_datetime(executor.close_timestamp, unit='s')
         exit_price = executor.custom_info["close_price"]
         name = "Buy Executor" if executor.config.side == TradeType.BUY else "Sell Executor"
 
