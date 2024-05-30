@@ -5,7 +5,7 @@ import pandas as pd
 
 
 def triple_barrier_method(df, tp=1.0, sl=1.0, tl=5, std_span: Optional[int] = 100, trade_cost=0.0006,  max_executors: int = 1):
-    df.index = pd.to_datetime(df.timestamp, unit="ms")
+    df.index = pd.to_datetime(df.timestamp, unit="s")
     if std_span:
         df["target"] = df["close"].rolling(std_span).std() / df["close"]
     else:
