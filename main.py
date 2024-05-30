@@ -3,7 +3,7 @@ from st_pages import Page, Section, show_pages
 from streamlit_authenticator import Authenticate
 
 from CONFIG import AUTH_SYSTEM_ENABLED
-from utils.os_utils import read_yaml_file, dump_dict_to_yaml
+from backend.utils.os_utils import read_yaml_file, dump_dict_to_yaml
 
 
 def main_page():
@@ -11,21 +11,30 @@ def main_page():
         [
             Page("main.py", "Hummingbot Dashboard", "📊"),
             Section("Bot Orchestration", "🐙"),
-            Page("pages/master_conf/app.py", "Credentials", "🗝️"),
-            Page("pages/bot_orchestration/app.py", "Instances", "🦅"),
-            Page("pages/file_manager/app.py", "File Explorer", "🗂"),
-            Page("pages/position_builder/app.py", "Position Builder", "🔭"),
-            Section("Backtest Manager", "⚙️"),
-            Page("pages/backtest_get_data/app.py", "Get Data", "💾"),
-            Page("pages/backtest_create/create.py", "Create", "⚔️"),
-            Page("pages/backtest_optimize/optimize.py", "Optimize", "🧪"),
-            Page("pages/backtest_analyze/analyze.py", "Analyze", "🔬"),
-            Page("pages/launch_bot/app.py", "Deploy", "🙌"),
+            Page("frontend/pages/orchestration/instances/app.py", "Instances", "🦅"),
+            Page("frontend/pages/orchestration/launch_bot_v2/app.py", "Deploy", "🚀"),
+            Page("frontend/pages/orchestration/credentials/app.py", "Credentials", "🔑"),
+            Page("frontend/pages/orchestration/portfolio/app.py", "Portfolio", "💰"),
+            # Page("frontend/pages/orchestration/launch_bot_v2_st/app.py", "Deploy ST", "🙌"),
+            # Page("pages/file_manager/app.py", "File Explorer", "🗂"),
+            Section("Config Generator", "🎛️"),
+            Page("frontend/pages/config/pmm_simple/app.py", "PMM Simple", "👨‍🏫"),
+            Page("frontend/pages/config/pmm_dynamic/app.py", "PMM Dynamic", "👩‍🏫"),
+            Page("frontend/pages/config/dman_maker_v2/app.py", "D-Man Maker V2", "🤖"),
+            Page("frontend/pages/config/bollinger_v1/app.py", "Bollinger V1", "📈"),
+            Page("frontend/pages/config/macd_bb_v1/app.py", "MACD_BB V1", "📊"),
+            Page("frontend/pages/config/supertrend_v1/app.py", "SuperTrend V1", "👨‍🔬"),
+            Page("frontend/pages/config/xemm_controller/app.py", "XEMM Controller", "⚡️"),
+            # Page("frontend/pages/config/position_builder/app.py", "Position Builder", "🔭"),
+            Section("Data", "💾"),
+            Page("frontend/pages/data/download_candles/app.py", "Download Candles", "💹"),
+            # Page("pages/create/create.py", "Create", "⚔️"),
+            # Page("pages/optimize/optimize.py", "Optimize", "🧪"),
+            # Page("pages/analyze/analyze.py", "Analyze", "🔬"),
             Section("Community Pages", "👨‍👩‍👧‍👦"),
-            Page("pages/strategy_performance/app.py", "Strategy Performance", "🚀"),
-            Page("pages/db_inspector/app.py", "DB Inspector", "🔍"),
-            Page("pages/token_spreads/app.py", "Token Spreads", "🧙"),
-            Page("pages/tvl_vs_mcap/app.py", "TVL vs Market Cap", "🦉"),
+            # Page("frontend/pages/performance/strategy_performance/app.py", "Strategy Performance", "🚀"),
+            Page("frontend/pages/data/token_spreads/app.py", "Token Spreads", "🧙"),
+            Page("frontend/pages/data/tvl_vs_mcap/app.py", "TVL vs Market Cap", "🦉"),
         ]
     )
 
@@ -86,42 +95,40 @@ def main_page():
 
     st.header("Feedback and Issues")
 
-    st.write(
-        "Please give us feedback in the **#dashboard** channel of the [Hummingbot Discord](https://discord.gg/hummingbot)! 🙏")
+    st.write("Please give us feedback in the **#dashboard** channel of the [Hummingbot Discord](https://discord.gg/hummingbot)! 🙏")
 
-    st.write(
-        "If you encounter any bugs or have suggestions for improvement, please create an issue in the [Hummingbot Dashboard Github](https://github.com/hummingbot/dashboard).")
+    st.write("If you encounter any bugs or have suggestions for improvement, please create an issue in the [Hummingbot Dashboard Github](https://github.com/hummingbot/dashboard).")
 
 
-config = read_yaml_file("credentials.yml")
+# config = read_yaml_file("credentials.yml")
+#
+# if "authenticator" not in st.session_state:
+#     st.session_state.authenticator = Authenticate(
+#         config['credentials'],
+#         config['cookie']['name'],
+#         config['cookie']['key'],
+#         config['cookie']['expiry_days'],
+#         config['preauthorized']
+#     )
 
-if "authenticator" not in st.session_state:
-    st.session_state.authenticator = Authenticate(
-        config['credentials'],
-        config['cookie']['name'],
-        config['cookie']['key'],
-        config['cookie']['expiry_days'],
-        config['preauthorized']
-    )
-
-if not AUTH_SYSTEM_ENABLED:
-    main_page()
-elif st.session_state["authentication_status"]:
-    config["credentials"] = st.session_state.authenticator.credentials
-    dump_dict_to_yaml(config, "credentials.yml")
-    with st.sidebar:
-        st.write(f'Welcome {st.session_state["name"]}!')
-    st.session_state.authenticator.logout(location='sidebar')  # Updated logout call
-    main_page()
-else:
-    show_pages([
-        Page("main.py", "Hummingbot Dashboard", "📊"),
-    ])
-    name, authentication_status, username = st.session_state.authenticator.login(location='main')  # Updated login call
-    if st.session_state["authentication_status"] == False:
-        st.error('Username/password is incorrect')
-    elif st.session_state["authentication_status"] == None:
-        st.warning('Please enter your username and password')
-    st.write("---")
-    st.write("If you are pre-authorized, you can login with your pre-authorized mail!")
-    st.session_state.authenticator.register_user(location='main')  # Updated register user call
+# if not AUTH_SYSTEM_ENABLED:
+main_page()
+# elif st.session_state["authentication_status"]:
+#     config["credentials"] = st.session_state.authenticator_handler.credentials
+#     dump_dict_to_yaml(config, "credentials.yml")
+#     with st.sidebar:
+#         st.write(f'Welcome {st.session_state["name"]}!')
+#     st.session_state.authenticator.logout(location='sidebar')  # Updated logout call
+#     main_page()
+# else:
+#     show_pages([
+#         Page("main.py", "Hummingbot Dashboard", "📊"),
+#     ])
+#     name, authentication_status, username = st.session_state.authenticator.login(location='main')  # Updated login call
+#     if st.session_state["authentication_status"] == False:
+#         st.error('Username/password is incorrect')
+#     elif st.session_state["authentication_status"] == None:
+#         st.warning('Please enter your username and password')
+#     st.write("---")
+#     st.write("If you are pre-authorized, you can login with your pre-authorized mail!")
+#     st.session_state.authenticator.register_user(location='main')  # Updated register user call

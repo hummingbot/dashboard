@@ -4,13 +4,13 @@ channels:
   - conda-forge
 dependencies:
   - python=3.10
-  - sqlalchemy
-  - pydantic=1.9.*
+  - sqlalchemy=1.4
   - pip
   - pip:
       - hummingbot
-      - streamlit
+      - streamlit==1.33.0
       - watchdog
+      - python-dotenv
       - plotly
       - pycoingecko
       - glom
@@ -18,14 +18,11 @@ dependencies:
       - statsmodels
       - pandas_ta==0.3.14b
       - pyyaml
-      - commlib-py
       - jupyter
       - optuna
       - optuna-dashboard
       - pathlib
-      - streamlit-ace
       - st-pages
       - streamlit-elements==0.1.*
       - streamlit-authenticator
-      - git+https://github.com/hummingbot/hbot-remote-client-py.git
-      - git+https://github.com/hummingbot/docker-manager.git
+      - pydantic==1.10.4

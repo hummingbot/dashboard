@@ -1,19 +1,19 @@
 .ONESHELL:
 .PHONY: run
-.PHONY: conda_remove
-.PHONY: conda_create
+.PHONY: uninstall
+.PHONY: install
 
 run:
 	streamlit run main.py
 
-env_remove:
+uninstall:
 	conda env remove -n dashboard
 
-env_create:
+install:
 	conda env create -f environment_conda.yml
 
 docker_build:
-	docker build -t dashboard:latest .
+	docker build -t hummingbot/dashboard:latest .
 
 docker_run:
 	docker run -p 8501:8501 dashboard:latest
