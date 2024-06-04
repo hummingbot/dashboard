@@ -28,7 +28,8 @@ backend_api_client = BackendAPIClient.get_instance(host=BACKEND_API_HOST, port=B
 get_default_config_loader("macd_bb_v1")
 # User inputs
 inputs = user_inputs()
-st.session_state["default_config"] = inputs
+st.session_state["default_config"].update(inputs)
+
 
 st.write("### Visualizing MACD Bollinger Trading Signals")
 days_to_visualize = st.number_input("Days to Visualize", min_value=1, max_value=365, value=3)
@@ -64,4 +65,5 @@ if bt_results:
         st.write("---")
         render_close_types(bt_results["results"])
 st.write("---")
-render_save_config("bollinger_v1", inputs)
+render_save_config(st.session_state["default_config"]["id"], st.session_state["default_config"])
+
