@@ -55,9 +55,9 @@ with st.expander("Visualizing PMM Dynamic Indicators", expanded=True):
 st.write("### Executors Distribution")
 st.write("The order distributions are affected by the average NATR. This means that if the first order has a spread of "
          "1 and the NATR is 0.005, the first order will have a spread of 0.5% of the mid price.")
-buy_spread_distributions, sell_spread_distributions, buy_order_amounts_pct, sell_order_amounts_pct = get_executors_distribution_inputs(default_spreads=[1, 2], default_amounts=[1, 2])
-inputs["buy_spreads"] = buy_spread_distributions
-inputs["sell_spreads"] = sell_spread_distributions
+buy_spread_distributions, sell_spread_distributions, buy_order_amounts_pct, sell_order_amounts_pct = get_executors_distribution_inputs()
+inputs["buy_spreads"] = [spread * 100 for spread in buy_spread_distributions]
+inputs["sell_spreads"] = [spread * 100 for spread in sell_spread_distributions]
 inputs["buy_amounts_pct"] = buy_order_amounts_pct
 inputs["sell_amounts_pct"] = sell_order_amounts_pct
 st.session_state["default_config"] = inputs
