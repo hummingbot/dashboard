@@ -33,7 +33,7 @@ st.text("This tool will let you create a config for Bollinger V1 and visualize t
 get_default_config_loader("bollinger_v1")
 
 inputs = user_inputs()
-st.session_state["default_config"] = inputs
+st.session_state["default_config"].update(inputs)
 
 st.write("### Visualizing Bollinger Bands and Trading Signals")
 days_to_visualize = st.number_input("Days to Visualize", min_value=1, max_value=365, value=3)
@@ -68,4 +68,4 @@ if bt_results:
         st.write("---")
         render_close_types(bt_results["results"])
 st.write("---")
-render_save_config("bollinger_v1", inputs)
+render_save_config(st.session_state["default_config"]["id"], st.session_state["default_config"])
