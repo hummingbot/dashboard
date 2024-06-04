@@ -159,6 +159,12 @@ class BackendAPIClient:
         response = requests.post(url, json=config)
         return response.json()
 
+    def delete_controller_config(self, controller_name: str):
+        """Delete a controller configuration."""
+        url = f"{self.base_url}/delete-controller-config"
+        response = requests.post(url, params={"config_name": controller_name})
+        return response.json()
+
     def get_real_time_candles(self, connector: str, trading_pair: str, interval: str, max_records: int):
         """Get candles data."""
         url = f"{self.base_url}/real-time-candles"
