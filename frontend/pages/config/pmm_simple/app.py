@@ -17,11 +17,14 @@ from frontend.visualization.backtesting_metrics import render_backtesting_metric
 initialize_st_page(title="PMM Simple", icon="👨‍🏫")
 backend_api_client = BackendAPIClient.get_instance(host=BACKEND_API_HOST, port=BACKEND_API_PORT)
 
+
 # Page content
 st.text("This tool will let you create a config for PMM Simple, backtest and upload it to the Backend API.")
 get_default_config_loader("pmm_simple")
+
 inputs = user_inputs()
 
+st.session_state["default_config"].update(inputs)
 with st.expander("Executor Distribution:", expanded=True):
     fig = create_executors_distribution_traces(inputs["buy_spreads"], inputs["sell_spreads"], inputs["buy_amounts_pct"], inputs["sell_amounts_pct"], inputs["total_amount_quote"])
     st.plotly_chart(fig, use_container_width=True)
@@ -41,4 +44,4 @@ if bt_results:
         st.write("---")
         render_close_types(bt_results["results"])
 st.write("---")
-render_save_config("pmm_simple", inputs)
+render_save_config(st.session_state["default_config"]["id"], st.session_state["default_config"])
