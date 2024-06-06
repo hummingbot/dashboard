@@ -26,7 +26,7 @@ class BackendAPIClient:
         """Check if Docker is running."""
         url = f"{self.base_url}/is-docker-running"
         response = requests.get(url)
-        return response.json()
+        return response.json()["is_docker_running"]
 
     def pull_image(self, image_name: str):
         """Pull a Docker image."""
