@@ -2,10 +2,16 @@ import streamlit as st
 from frontend.components.st_inputs import get_distribution, normalize, distribution_inputs
 
 
-def get_executors_distribution_inputs(default_spreads=[0.01, 0.02], default_amounts=[0.2, 0.8]):
+def get_executors_distribution_inputs(use_custom_spread_units=False):
+    default_amounts = [0.2, 0.8]
     default_config = st.session_state.get("default_config", {})
-    buy_spreads = default_config.get("buy_spreads", default_spreads)
-    sell_spreads = default_config.get("sell_spreads", default_spreads)
+    if use_custom_spread_units:
+        buy_spreads = [spread / 100 for spread in default_config.get("buy_spreads", [1, 2])]
+        sell_spreads = [spread / 100 for spread in default_config.get("sell_spreads", [1, 2])]
+    else:
+        buy_spreads = default_config.get("buy_spreads", [0.01, 0.02])
+        sell_spreads = default_config.get("sell_spreads", [0.01, 0.02])
+
     buy_amounts_pct = default_config.get("buy_amounts_pct", default_amounts)
     sell_amounts_pct = default_config.get("sell_amounts_pct", default_amounts)
     buy_order_levels_def = len(buy_spreads)
