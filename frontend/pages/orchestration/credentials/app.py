@@ -70,15 +70,16 @@ with c2:
     all_connectors = list(all_connector_config_map.keys())
     binance_perpetual_index = all_connectors.index("binance_perpetual") if "binance_perpetual" in all_connectors else None
     connector_name = st.selectbox("Select Connector", options=all_connectors, index=binance_perpetual_index)
-if account_name and account_name != "No accounts available" and connector_name:
-    st.write(f"Configuration Map for {connector_name}:")
     config_map = all_connector_config_map[connector_name]
-    config_inputs = {}
-    cols = st.columns(NUM_COLUMNS)
-    for i, config in enumerate(config_map):
-        with cols[i % (NUM_COLUMNS - 1)]:
-            config_inputs[config] = st.text_input(config)
-    with cols[NUM_COLUMNS - 1]:
-        if st.button("Submit Credentials"):
-            response = client.add_connector_keys(account_name, connector_name, config_inputs)
-            st.write(response)
+
+st.write(f"Configuration Map for {connector_name}:")
+config_inputs = {}
+cols = st.columns(NUM_COLUMNS)
+for i, config in enumerate(config_map):
+    with cols[i % (NUM_COLUMNS - 1)]:
+        config_inputs[config] = st.text_input(config, type="password", key=f"{connector_name}_{config}")
+
+if st.button("Submit Credentials"):
+    response = client.add_connector_keys(account_name, connector_name, config_inputs)
+    st.rerun()
+
