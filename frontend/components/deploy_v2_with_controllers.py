@@ -4,6 +4,7 @@ import pandas as pd
 
 from CONFIG import BACKEND_API_HOST, BACKEND_API_PORT
 from backend.services.backend_api_client import BackendAPIClient
+from frontend.st_utils import get_backend_api_client
 
 
 class LaunchV2WithControllers:
@@ -14,7 +15,7 @@ class LaunchV2WithControllers:
     ]
 
     def __init__(self):
-        self._backend_api_client = BackendAPIClient.get_instance(host=BACKEND_API_HOST, port=BACKEND_API_PORT)
+        self._backend_api_client = get_backend_api_client()
         self._controller_configs_available = self._backend_api_client.get_all_controllers_config()
         self._controller_config_selected = []
         self._bot_name = None

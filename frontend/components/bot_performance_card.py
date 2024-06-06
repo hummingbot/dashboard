@@ -6,12 +6,13 @@ from CONFIG import BACKEND_API_HOST, BACKEND_API_PORT
 from frontend.components.dashboard import Dashboard
 
 from backend.services.backend_api_client import BackendAPIClient
+from frontend.st_utils import get_backend_api_client
 
 TRADES_TO_SHOW = 5
 WIDE_COL_WIDTH = 250
 MEDIUM_COL_WIDTH = 170
 SMALL_COL_WIDTH = 100
-backend_api_client = BackendAPIClient.get_instance(host=BACKEND_API_HOST, port=BACKEND_API_PORT)
+backend_api_client = get_backend_api_client()
 
 
 def stop_bot(bot_name):
@@ -38,7 +39,7 @@ class BotPerformanceCardV2(Dashboard.Item):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._backend_api_client = BackendAPIClient.get_instance(host=BACKEND_API_HOST, port=BACKEND_API_PORT)
+        self._backend_api_client = get_backend_api_client()
 
     def _handle_stopped_row_selection(self, params, _):
         self._stopped_controller_config_selected = params

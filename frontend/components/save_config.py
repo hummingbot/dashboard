@@ -2,11 +2,12 @@ import streamlit as st
 
 from CONFIG import BACKEND_API_HOST, BACKEND_API_PORT
 from backend.services.backend_api_client import BackendAPIClient
+from frontend.st_utils import get_backend_api_client
 
 
 def render_save_config(config_base_default: str, config_data: dict):
     st.write("### Upload Config to BackendAPI")
-    backend_api_client = BackendAPIClient.get_instance(host=BACKEND_API_HOST, port=BACKEND_API_PORT)
+    backend_api_client = get_backend_api_client()
     all_configs = backend_api_client.get_all_controllers_config()
     config_bases = set(config_name["id"].split("_")[0] for config_name in all_configs)
     config_base = config_base_default.split("_")[0]
@@ -25,7 +26,6 @@ def render_save_config(config_base_default: str, config_data: dict):
         upload_config_to_backend = st.button("Upload")
     if upload_config_to_backend:
         config_data["id"] = f"{config_base}_{config_tag}"
-        backend_api_client = BackendAPIClient.get_instance(host=BACKEND_API_HOST, port=BACKEND_API_PORT)
         backend_api_client.add_controller_config(config_data)
         st.session_state["default_config"] = None
         st.success("Config uploaded successfully!")
