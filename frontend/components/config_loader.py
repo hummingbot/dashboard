@@ -1,10 +1,9 @@
 import streamlit as st
-from CONFIG import BACKEND_API_HOST, BACKEND_API_PORT
 
-from backend.services.backend_api_client import BackendAPIClient
+from frontend.st_utils import get_backend_api_client
 from frontend.utils import generate_random_name
 
-backend_api_client = BackendAPIClient.get_instance(host=BACKEND_API_HOST, port=BACKEND_API_PORT)
+backend_api_client = get_backend_api_client()
 
 
 def get_default_config_loader(controller_name: str):

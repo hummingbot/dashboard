@@ -6,6 +6,7 @@ from streamlit_elements import mui, lazy
 from CONFIG import BACKEND_API_HOST, BACKEND_API_PORT
 from backend.services.backend_api_client import BackendAPIClient
 from .dashboard import Dashboard
+from ..st_utils import get_backend_api_client
 
 
 class LaunchStrategyV2(Dashboard.Item):
@@ -27,7 +28,7 @@ class LaunchStrategyV2(Dashboard.Item):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._backend_api_client = BackendAPIClient.get_instance(host=BACKEND_API_HOST, port=BACKEND_API_PORT)
+        self._backend_api_client = get_backend_api_client()
         self._controller_configs_available = self._backend_api_client.get_all_controllers_config()
         self._controller_config_selected = None
         self._bot_name = None
