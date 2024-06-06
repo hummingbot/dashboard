@@ -44,7 +44,7 @@ Currently, Dashboard should be installed from source via the process below. In t
 
 3. **Create Conda Environment and Install Dependencies**:
     ```bash
-    make env_create
+    make install
     ```
 
 4. **Activate the Isolated 'conda' Environment**:

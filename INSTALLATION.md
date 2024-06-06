@@ -21,7 +21,7 @@ cd dashboard
 
 3 - Create `conda` environment and install dependencies
 ```bash
-make env_create
+make install
 ```
 
 4 - Activate the isolated 'conda' environment
@@ -116,8 +116,8 @@ streamlit run main.py
 
 To update the `dashboard` environment for changes to dependencies defined in `environment.yml`, remove the environment and re-create it:
 ```
-make env_remove
-make env_create
+make uninstall
+make install
 ```
 
 To updated the `dashboard` source for latest version, run:
