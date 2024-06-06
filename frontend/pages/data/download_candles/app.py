@@ -3,12 +3,11 @@ from datetime import datetime, time
 import pandas as pd
 import plotly.graph_objects as go
 
-from backend.services.backend_api_client import BackendAPIClient
-from frontend.st_utils import initialize_st_page
+from frontend.st_utils import initialize_st_page, get_backend_api_client
 
 # Initialize Streamlit page
 initialize_st_page(title="Download Candles", icon="💾")
-backend_api_client = BackendAPIClient.get_instance()
+backend_api_client = get_backend_api_client()
 
 c1, c2, c3, c4 = st.columns([2, 2, 2, 0.5])
 with c1:

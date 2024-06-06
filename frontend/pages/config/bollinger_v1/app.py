@@ -11,7 +11,7 @@ from frontend.components.backtesting import backtesting_section
 from frontend.components.config_loader import get_default_config_loader
 from frontend.components.save_config import render_save_config
 from frontend.pages.config.utils import get_max_records, get_candles
-from frontend.st_utils import initialize_st_page
+from frontend.st_utils import initialize_st_page, get_backend_api_client
 from frontend.pages.config.bollinger_v1.user_inputs import user_inputs
 from plotly.subplots import make_subplots
 
@@ -26,7 +26,7 @@ from frontend.visualization.utils import add_traces_to_fig
 
 # Initialize the Streamlit page
 initialize_st_page(title="Bollinger V1", icon="📈", initial_sidebar_state="expanded")
-backend_api_client = BackendAPIClient.get_instance(host=BACKEND_API_HOST, port=BACKEND_API_PORT)
+backend_api_client = get_backend_api_client()
 
 
 st.text("This tool will let you create a config for Bollinger V1 and visualize the strategy.")

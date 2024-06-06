@@ -8,7 +8,7 @@ from CONFIG import BACKEND_API_HOST, BACKEND_API_PORT
 from frontend.components.bot_performance_card import BotPerformanceCardV2
 from frontend.components.dashboard import Dashboard
 from backend.services.backend_api_client import BackendAPIClient
-from frontend.st_utils import initialize_st_page
+from frontend.st_utils import initialize_st_page, get_backend_api_client
 
 # Constants for UI layout
 CARD_WIDTH = 12
@@ -38,7 +38,7 @@ def update_active_bots(api_client):
 
 
 initialize_st_page(title="Instances", icon="🦅")
-api_client = BackendAPIClient.get_instance(host=BACKEND_API_HOST, port=BACKEND_API_PORT)
+api_client = get_backend_api_client()
 
 if not api_client.is_docker_running():
     st.warning("Docker is not running. Please start Docker and refresh the page.")

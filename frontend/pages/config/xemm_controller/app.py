@@ -4,7 +4,7 @@ import yaml
 
 from CONFIG import BACKEND_API_HOST, BACKEND_API_PORT
 from backend.services.backend_api_client import BackendAPIClient
-from frontend.st_utils import initialize_st_page
+from frontend.st_utils import initialize_st_page, get_backend_api_client
 
 # Initialize the Streamlit page
 initialize_st_page(title="XEMM Multiple Levels", icon="⚡️")
@@ -135,6 +135,6 @@ with c3:
 
 
 if upload_config_to_backend:
-    backend_api_client = BackendAPIClient.get_instance(host=BACKEND_API_HOST, port=BACKEND_API_PORT)
+    backend_api_client = get_backend_api_client()
     backend_api_client.add_controller_config(config)
     st.success("Config uploaded successfully!")
