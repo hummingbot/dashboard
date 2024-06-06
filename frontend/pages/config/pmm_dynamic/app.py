@@ -13,7 +13,7 @@ from frontend.components.backtesting import backtesting_section
 from frontend.pages.config.pmm_dynamic.spread_and_price_multipliers import get_pmm_dynamic_multipliers
 from frontend.pages.config.pmm_dynamic.user_inputs import user_inputs
 from frontend.pages.config.utils import get_max_records, get_candles
-from frontend.st_utils import initialize_st_page
+from frontend.st_utils import initialize_st_page, get_backend_api_client
 from frontend.visualization import theme
 from frontend.visualization.backtesting import create_backtesting_figure
 from frontend.visualization.candles import get_candlestick_trace
@@ -25,7 +25,7 @@ from frontend.visualization.utils import add_traces_to_fig
 
 # Initialize the Streamlit page
 initialize_st_page(title="PMM Dynamic", icon="👩‍🏫")
-backend_api_client = BackendAPIClient.get_instance(host=BACKEND_API_HOST, port=BACKEND_API_PORT)
+backend_api_client = get_backend_api_client()
 
 # Page content
 st.text("This tool will let you create a config for PMM Dynamic, backtest and upload it to the Backend API.")

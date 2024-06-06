@@ -7,7 +7,7 @@ from frontend.components.config_loader import get_default_config_loader
 from frontend.components.dca_distribution import get_dca_distribution_inputs
 from frontend.components.save_config import render_save_config
 from frontend.pages.config.dman_maker_v2.user_inputs import user_inputs
-from frontend.st_utils import initialize_st_page
+from frontend.st_utils import initialize_st_page, get_backend_api_client
 from frontend.visualization.backtesting import create_backtesting_figure
 from frontend.visualization.backtesting_metrics import render_backtesting_metrics, render_accuracy_metrics, \
     render_close_types
@@ -16,7 +16,7 @@ from frontend.visualization.executors_distribution import create_executors_distr
 
 # Initialize the Streamlit page
 initialize_st_page(title="D-Man Maker V2", icon="🧙‍♂️")
-backend_api_client = BackendAPIClient.get_instance(host=BACKEND_API_HOST, port=BACKEND_API_PORT)
+backend_api_client = get_backend_api_client()
 
 
 # Page content

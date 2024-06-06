@@ -7,7 +7,7 @@ from frontend.components.save_config import render_save_config
 # Import submodules
 from frontend.pages.config.pmm_simple.user_inputs import user_inputs
 from frontend.components.backtesting import backtesting_section
-from frontend.st_utils import initialize_st_page
+from frontend.st_utils import initialize_st_page, get_backend_api_client
 from frontend.visualization.backtesting import create_backtesting_figure
 from frontend.visualization.executors_distribution import create_executors_distribution_traces
 from frontend.visualization.backtesting_metrics import render_backtesting_metrics, render_close_types, \
@@ -15,7 +15,7 @@ from frontend.visualization.backtesting_metrics import render_backtesting_metric
 
 # Initialize the Streamlit page
 initialize_st_page(title="PMM Simple", icon="👨‍🏫")
-backend_api_client = BackendAPIClient.get_instance(host=BACKEND_API_HOST, port=BACKEND_API_PORT)
+backend_api_client = get_backend_api_client()
 
 
 # Page content
