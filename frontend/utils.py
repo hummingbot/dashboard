@@ -5,14 +5,14 @@ def generate_random_name(existing_names_list):
     # Convert the list to a set for efficient lookup
     existing_names = set(existing_names_list)
 
-    money_related = ["Dollar", "Coin", "Credit", "Wealth", "Fortune", "Cash", "Gold", "Profit", "Rich", "Value"]
-    trading_related = ["Market", "Trade", "Exchange", "Broker", "Stock", "Bond", "Option", "Margin", "Future", "Index"]
-    algorithm_related = ["Algo", "Bot", "Code", "Script", "Logic", "Matrix", "Compute", "Sequence", "Data", "Binary"]
-    science_related = ["Quantum", "Neuron", "Atom", "Fusion", "Gravity", "Particle", "Genome", "Spectrum", "Theory",
-                       "Experiment"]
-    space_related = ["Galaxy", "Nebula", "Star", "Planet", "Orbit", "Cosmos", "Asteroid", "Comet", "Blackhole",
-                     "Eclipse"]
-    bird_related = ["Falcon", "Eagle", "Hawk", "Sparrow", "Robin", "Swallow", "Owl", "Raven", "Dove", "Phoenix"]
+    money_related = ["dollar", "coin", "credit", "wealth", "fortune", "cash", "gold", "profit", "rich", "value"]
+    trading_related = ["market", "trade", "exchange", "broker", "stock", "bond", "option", "margin", "future", "index"]
+    algorithm_related = ["algo", "bot", "code", "script", "logic", "matrix", "compute", "sequence", "data", "binary"]
+    science_related = ["quantum", "neuron", "atom", "fusion", "gravity", "particle", "genome", "spectrum", "theory",
+                       "experiment"]
+    space_related = ["galaxy", "nebula", "star", "planet", "orbit", "cosmos", "asteroid", "comet", "blackhole",
+                     "eclipse"]
+    bird_related = ["falcon", "eagle", "hawk", "sparrow", "robin", "swallow", "owl", "raven", "dove", "phoenix"]
 
     categories = [money_related, trading_related, algorithm_related, science_related, space_related, bird_related]
 
