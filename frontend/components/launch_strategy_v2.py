@@ -11,7 +11,8 @@ from .dashboard import Dashboard
 class LaunchStrategyV2(Dashboard.Item):
     DEFAULT_ROWS = []
     DEFAULT_COLUMNS = [
-        {"field": 'id', "headerName": 'ID', "minWidth": 230, "editable": False, },
+        {"field": 'config_base', "headerName": 'Config Base', "minWidth": 160, "editable": False, },
+        {"field": 'version', "headerName": 'Version', "minWidth": 100, "editable": False, },
         {"field": 'controller_name', "headerName": 'Controller Name', "width": 150, "editable": False, },
         {"field": 'controller_type', "headerName": 'Controller Type', "width": 150, "editable": False, },
         {"field": 'connector_name', "headerName": 'Connector', "width": 150, "editable": False, },
@@ -125,17 +126,16 @@ class LaunchStrategyV2(Dashboard.Item):
                     take_profit = config.get("take_profit", 0)
                     trailing_stop = config.get("trailing_stop", {"activation_price": 0, "trailing_delta": 0})
                     time_limit = config.get("time_limit", 0)
-                    data.append({"id": config["id"], "controller_name": config["controller_name"],
-                                 "controller_type": config["controller_type"],
-                                 "connector_name": connector_name,
-                                 "trading_pair": trading_pair,
-                                 "total_amount_quote": total_amount_quote,
-                                 "max_loss_quote": total_amount_quote * stop_loss / 2,
-                                 "stop_loss": stop_loss,
-                                 "take_profit": take_profit,
-                                 "trailing_stop": str(trailing_stop["activation_price"]) + " / " +
-                                                  str(trailing_stop["trailing_delta"]),
-                                 "time_limit": time_limit})
+                    config_base, version = config["id"].split("_")
+                    data.append({
+                        "id": config["id"], "config_base": config_base, "version": version,
+                        "controller_name": config["controller_name"], "controller_type": config["controller_type"],
+                        "connector_name": connector_name, "trading_pair": trading_pair,
+                        "total_amount_quote": total_amount_quote, "max_loss_quote": total_amount_quote * stop_loss / 2,
+                        "stop_loss": stop_loss, "take_profit": take_profit,
+                        "trailing_stop": str(trailing_stop["activation_price"]) + " / " +
+                                         str(trailing_stop["trailing_delta"]),
+                        "time_limit": time_limit})
 
                 with mui.Grid(item=True, xs=12):
                     with mui.Paper(key=self._key,
