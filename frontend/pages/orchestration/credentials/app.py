@@ -81,5 +81,4 @@ for i, config in enumerate(config_map):
 
 if st.button("Submit Credentials"):
     response = client.add_connector_keys(account_name, connector_name, config_inputs)
-    st.rerun()
 
