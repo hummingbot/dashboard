@@ -1,5 +1,6 @@
 import pandas as pd
 import requests
+import streamlit as st
 from hummingbot.strategy_v2.models.executors_info import ExecutorInfo
 
 
@@ -266,6 +267,9 @@ class BackendAPIClient:
         """Add connector keys."""
         url = f"{self.base_url}/add-connector-keys/{account_name}/{connector_name}"
         response = requests.post(url, json=connector_config)
+        if response.status_code == 400:
+            st.error(response.json()["detail"])
+            return
         return response.json()
 
     def get_accounts(self):
