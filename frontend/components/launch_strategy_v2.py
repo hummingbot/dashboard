@@ -127,7 +127,13 @@ class LaunchStrategyV2(Dashboard.Item):
                     take_profit = config.get("take_profit", 0)
                     trailing_stop = config.get("trailing_stop", {"activation_price": 0, "trailing_delta": 0})
                     time_limit = config.get("time_limit", 0)
-                    config_base, version = config["id"].split("_")
+                    config_version = config["id"].split("_")
+                    if len(config_version) > 1:
+                        config_base = config_version[0]
+                        version = config_version[1]
+                    else:
+                        config_base = config["id"]
+                        version = "NaN"
                     data.append({
                         "id": config["id"], "config_base": config_base, "version": version,
                         "controller_name": config["controller_name"], "controller_type": config["controller_type"],
