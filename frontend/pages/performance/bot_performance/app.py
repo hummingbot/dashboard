@@ -121,36 +121,49 @@ def custom_sort(row):
 async def main():
     initialize_st_page(title="Bot Performance", icon="🚀")
     backend_api = BackendAPIClient()
-    st.subheader("🔫 Data source")
-    uploaded_db = st.file_uploader("Select a Hummingbot SQLite Database", type=["sqlite", "db"])
-    if uploaded_db is not None:
-        file_contents = uploaded_db.read()
-        with open(os.path.join("data/uploaded", uploaded_db.name), "wb") as f:
-            f.write(file_contents)
-        st.success("File uploaded and saved successfully!")
-        selected_db = HummingbotDatabase(uploaded_db.name)
     db_orchestrator = DatabasesAggregator()
-    healthy_dbs = [db.db_path for db in db_orchestrator.healthy_dbs]
-    with st.expander("📊 Databases status"):
-        st.dataframe(db_orchestrator.status_report, use_container_width=True)
-    selected_dbs = st.multiselect("SQLite databases", healthy_dbs)
-    if len(selected_dbs) != 0:
-        st.markdown("#### Load databases")
-        clean_tables_before = st.checkbox("Clean tables before loading", False)
-        if st.button("Process data"):
-            etl = ETLPerformance(db_path="data/hummingbot.sqlite")
-            tables_dict = db_orchestrator.get_tables(selected_dbs)
-            etl.create_tables()
-            if clean_tables_before:
-                etl.clean_tables()
-            etl.insert_data(tables_dict)
-            st.success("Data loaded successfully!")
-    else:
-        st.warning("No databases selected. Please select at least one database.")
 
+    st.subheader("🔫 Data source")
+    with st.expander("ETL Tool"):
+        st.markdown("""In this tool, you can upload and merge different databases.
+        
+- Drag and drop or upload your databases
+- Select those you want to analyze
+- Merge databases
+    - If you want to start a new analysis or discard previous results, clean tables before loading""")
+        st.markdown("#### 1) Upload a new Hummingbot SQLite Database")
+        uploaded_db = st.file_uploader("Upload a new Hummingbot SQLite Database", type=["sqlite", "db"],
+                                       label_visibility="collapsed")
+        if uploaded_db is not None:
+            load_database(uploaded_db)
+        if len(db_orchestrator.healthy_dbs) == 0:
+            st.warning("Oops, there are no databases here. If you uploaded a file and it's not available, you can "
+                       "check the status report.")
+            if st.button("Status report"):
+                if len(db_orchestrator.dbs) == 0:
+                    st.write("Nothing here, check if there is any file in dashboard/data/uploaded path.")
+                else:
+                    st.dataframe(db_orchestrator.status_report, use_container_width=True)
+        else:
+            healthy_dbs = [db.db_path for db in db_orchestrator.healthy_dbs]
+            st.markdown("#### 2) Select databases to merge")
+            selected_dbs = st.multiselect("Select databases to merge", healthy_dbs, label_visibility="collapsed")
+            if len(selected_dbs) == 0:
+                st.warning("No databases selected. Please select at least one database.")
+            else:
+                st.markdown("#### 3) Merge databases")
+                clean_tables_before = st.checkbox("Clean tables before loading", False)
+                if st.button("Start"):
+                    etl = ETLPerformance(db_path="data/hummingbot.sqlite")
+                    tables_dict = db_orchestrator.get_tables(selected_dbs)
+                    etl.create_tables()
+                    if clean_tables_before:
+                        etl.clean_tables()
+                    etl.insert_data(tables_dict)
+                    st.success("Data loaded successfully!")
 
     if not os.path.exists("data/hummingbot.sqlite"):
-        st.warning("No database uploaded. Please upload a database to continue.")
+        st.warning("No database detected. Please upload and merge a database to continue.")
         st.stop()
     etl = ETLPerformance(db_path="data/hummingbot.sqlite")
     executors = etl.read_executors()
@@ -417,6 +430,14 @@ async def main():
     with st.expander("📈 Executors"):
         st.write(executors)
         download_csv_button(executors, "executors", "download-executors")
+
+
+def load_database(uploaded_db, root_path: str = "data/uploaded"):
+    file_contents = uploaded_db.read()
+    with open(os.path.join(root_path, uploaded_db.name), "wb") as f:
+        f.write(file_contents)
+    st.success("File uploaded and saved successfully!")
+
 
 if __name__ == "__main__":
     asyncio.run(main())
