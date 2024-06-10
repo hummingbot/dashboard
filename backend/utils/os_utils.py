@@ -105,26 +105,14 @@ def load_controllers(path):
     return controllers
 
 
-def get_bots_data_paths():
-    root_directory = "hummingbot_files/bots"
-    bots_data_paths = {"General / Uploaded data": "data"}
-    reserved_word = "hummingbot-"
-    # Walk through the directory tree
-    for dirpath, dirnames, filenames in os.walk(root_directory):
-        for dirname in dirnames:
-            if dirname == "data":
-                parent_folder = os.path.basename(dirpath)
-                if parent_folder.startswith(reserved_word):
-                    bots_data_paths[parent_folder] = os.path.join(dirpath, dirname)
-            if "dashboard" in bots_data_paths:
-                del bots_data_paths["dashboard"]
-    data_sources = {key: value for key, value in bots_data_paths.items() if value is not None}
-    return data_sources
+def get_bots_data_paths(root_path: str):
+    dbs = {"uploaded": os.path.join(root_path, "uploaded")}
+    return {key: value for key, value in dbs.items() if value is not None}
 
 
-def get_databases():
+def get_local_dbs(root_path: str = "data"):
     databases = {}
-    bots_data_paths = get_bots_data_paths()
+    bots_data_paths = get_bots_data_paths(root_path)
     for source_name, source_path in bots_data_paths.items():
         sqlite_files = {}
         for db_name in os.listdir(source_path):
@@ -133,8 +121,7 @@ def get_databases():
         databases[source_name] = sqlite_files
     if len(databases) > 0:
         return {key: value for key, value in databases.items() if value}
-    else:
-        return None
+    return None
 
 
 def get_function_from_file(file_path: str, function_name: str):

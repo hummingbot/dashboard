@@ -32,7 +32,7 @@ def main_page():
             # Page("pages/optimize/optimize.py", "Optimize", "🧪"),
             # Page("pages/analyze/analyze.py", "Analyze", "🔬"),
             Section("Community Pages", "👨‍👩‍👧‍👦"),
-            # Page("frontend/pages/performance/strategy_performance/app.py", "Strategy Performance", "🚀"),
+            Page("frontend/pages/performance/bot_performance/app.py", "Bot Performance", "🚀"),
             Page("frontend/pages/data/token_spreads/app.py", "Token Spreads", "🧙"),
             Page("frontend/pages/data/tvl_vs_mcap/app.py", "TVL vs Market Cap", "🦉"),
         ]
