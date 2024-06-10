@@ -5,9 +5,9 @@ from frontend.visualization.pnl import get_pnl_trace
 from frontend.visualization.theme import get_default_layout
 
 
-def create_backtesting_figure(df, executors, config):
+def create_backtesting_figure(df, executors, config, rows=2):
     # Create subplots
-    fig = make_subplots(rows=2, cols=1, shared_xaxes=True,
+    fig = make_subplots(rows=rows, cols=1, shared_xaxes=True,
                         vertical_spacing=0.02, subplot_titles=('Candlestick', 'PNL Quote'),
                         row_heights=[0.7, 0.3])
 
