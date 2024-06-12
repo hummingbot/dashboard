@@ -36,7 +36,7 @@ else:
 
 st.markdown("---")
 
-c1, c2 = st.columns([1, 1])
+c1, c2, c3 = st.columns([1, 1, 1])
 with c1:
     # Section to create a new account
     st.header("Create a New Account")
@@ -55,7 +55,20 @@ with c2:
     if st.button("Delete Account"):
         if delete_account_name and delete_account_name != "No accounts available":
             response = client.delete_account(delete_account_name)
-            st.write(response)
+            st.warning(response)
+        else:
+            st.write("Please select a valid account.")
+
+with c3:
+    # Section to delete a credential from an existing account
+    st.header("Delete Credential")
+    delete_account_cred_name = st.selectbox("Select the credentials account", options=accounts if accounts else ["No accounts available"],)
+    creds_for_account = [credential.split(".")[0] for credential in client.get_credentials(delete_account_cred_name)]
+    delete_cred_name = st.selectbox("Select a Credential to Delete", options=creds_for_account if creds_for_account else ["No credentials available"])
+    if st.button("Delete Credential"):
+        if (delete_account_cred_name and delete_account_cred_name != "No accounts available") and (delete_cred_name and delete_cred_name != "No credentials available"):
+            response = client.delete_credential(delete_account_cred_name, delete_cred_name)
+            st.warning(response)
         else:
             st.write("Please select a valid account.")
 
@@ -79,6 +92,7 @@ for i, config in enumerate(config_map):
     with cols[i % (NUM_COLUMNS - 1)]:
         config_inputs[config] = st.text_input(config, type="password", key=f"{connector_name}_{config}")
 
-if st.button("Submit Credentials"):
-    response = client.add_connector_keys(account_name, connector_name, config_inputs)
+with cols[-1]:
+    if st.button("Submit Credentials"):
+        response = client.add_connector_keys(account_name, connector_name, config_inputs)
 
