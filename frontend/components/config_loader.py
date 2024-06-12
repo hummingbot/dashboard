@@ -8,7 +8,7 @@ backend_api_client = get_backend_api_client()
 
 def get_default_config_loader(controller_name: str):
     all_configs = backend_api_client.get_all_controllers_config()
-    existing_configs = [config["id"].split("-")[0] for config in all_configs]
+    existing_configs = [config["id"].split("_")[0] for config in all_configs]
     default_dict = {"id": generate_random_name(existing_configs)}
     default_config = st.session_state.get("default_config")
     config_controller_name = st.session_state.get("controller_name", controller_name)
@@ -22,7 +22,11 @@ def get_default_config_loader(controller_name: str):
         with c2:
             if not use_default_config:
                 configs = [config for config in all_configs if config["controller_name"] == controller_name]
-                default_config = st.selectbox("Select a config", [config["id"] for config in configs])
-                st.session_state["default_config"] = next((config for config in all_configs if config["id"] == default_config), None)
-                st.session_state["default_config"]["id"] = st.session_state["default_config"]["id"].split("_")[0]
+                if len(configs) > 0:
+                    default_config = st.selectbox("Select a config", [config["id"] for config in configs])
+                    st.session_state["default_config"] = next((config for config in all_configs if config["id"] == default_config), None)
+                    st.session_state["default_config"]["id"] = st.session_state["default_config"]["id"].split("_")[0]
+                else:
+                    st.warning("No existing configs found for this controller.")
+
 
