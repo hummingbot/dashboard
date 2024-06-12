@@ -1,3 +1,5 @@
+from typing import Optional, Dict
+
 import pandas as pd
 import requests
 import streamlit as st
@@ -13,7 +15,7 @@ class BackendAPIClient:
     _shared_instance = None
 
     @classmethod
-    def get_instance(cls, *args, **kwargs) -> "MarketsRecorder":
+    def get_instance(cls, *args, **kwargs) -> "BackendAPIClient":
         if cls._shared_instance is None:
             cls._shared_instance = BackendAPIClient(*args, **kwargs)
         return cls._shared_instance
@@ -23,102 +25,112 @@ class BackendAPIClient:
         self.port = port
         self.base_url = f"http://{self.host}:{self.port}"
 
+    def post(self, endpoint: str, payload: Optional[Dict] = None, params: Optional[Dict] = None):
+        """
+        Post request to the backend API.
+        :param params:
+        :param endpoint:
+        :param payload:
+        :return:
+        """
+        url = f"{self.base_url}/{endpoint}"
+        response = requests.post(url, json=payload, params=params)
+        return self._process_response(response)
+
+    def get(self, endpoint: str):
+        """
+        Get request to the backend API.
+        :param endpoint:
+        :return:
+        """
+        url = f"{self.base_url}/{endpoint}"
+        response = requests.get(url)
+        return self._process_response(response)
+
+    @staticmethod
+    def _process_response(response):
+        if response.status_code == 400:
+            st.error(response.json()["detail"])
+            return
+        return response.json()
+
     def is_docker_running(self):
         """Check if Docker is running."""
-        url = f"{self.base_url}/is-docker-running"
-        response = requests.get(url)
-        return response.json()["is_docker_running"]
+        endpoint = "is-docker-running"
+        return self.get(endpoint)["is_docker_running"]
 
     def pull_image(self, image_name: str):
         """Pull a Docker image."""
-        url = f"{self.base_url}/pull-image/"
-        payload = {"image_name": image_name}
-        response = requests.post(url, json=payload)
-        return response.json()
+        endpoint = "pull-image"
+        return self.post(endpoint, payload={"image_name": image_name})
 
     def list_available_images(self, image_name: str):
         """List available images by name."""
-        url = f"{self.base_url}/available-images/{image_name}"
-        response = requests.get(url)
-        return response.json()
+        endpoint = f"available-images/{image_name}"
+        return self.get(endpoint)
 
     def list_active_containers(self):
         """List all active containers."""
-        url = f"{self.base_url}/active-containers"
-        response = requests.get(url)
-        return response.json()
+        endpoint = "active-containers"
+        return self.get(endpoint)
 
     def list_exited_containers(self):
         """List all exited containers."""
-        url = f"{self.base_url}/exited-containers"
-        response = requests.get(url)
-        return response.json()
+        endpoint = "exited-containers"
+        return self.get(endpoint)
 
     def clean_exited_containers(self):
         """Clean up exited containers."""
-        url = f"{self.base_url}/clean-exited-containers"
-        response = requests.post(url)
-        return response.json()
+        endpoint = "clean-exited-containers"
+        return self.post(endpoint, payload=None)
 
     def remove_container(self, container_name: str, archive_locally: bool = True, s3_bucket: str = None):
         """Remove a specific container."""
-        url = f"{self.base_url}/remove-container/{container_name}"
+        endpoint = f"remove-container/{container_name}"
         params = {"archive_locally": archive_locally}
         if s3_bucket:
             params["s3_bucket"] = s3_bucket
-        response = requests.post(url, params=params)
-        return response.json()
+        return self.post(endpoint, params=params)
 
     def stop_container(self, container_name: str):
         """Stop a specific container."""
-        url = f"{self.base_url}/stop-container/{container_name}"
-        response = requests.post(url)
-        return response.json()
+        endpoint = f"stop-container/{container_name}"
+        return self.post(endpoint)
 
     def start_container(self, container_name: str):
         """Start a specific container."""
-        url = f"{self.base_url}/start-container/{container_name}"
-        response = requests.post(url)
-        return response.json()
+        endpoint = f"start-container/{container_name}"
+        return self.post(endpoint)
 
     def create_hummingbot_instance(self, instance_config: dict):
         """Create a new Hummingbot instance."""
-        url = f"{self.base_url}/create-hummingbot-instance"
-        response = requests.post(url, json=instance_config)
-        return response.json()
+        endpoint = "create-hummingbot-instance"
+        return self.post(endpoint, payload=instance_config)
 
     def start_bot(self, start_bot_config: dict):
         """Start a Hummingbot bot."""
-        url = f"{self.base_url}/start-bot"
-        response = requests.post(url, json=start_bot_config)
-        return response.json()
+        endpoint = "start-bot"
+        return self.post(endpoint, payload=start_bot_config)
 
     def stop_bot(self, bot_name: str, skip_order_cancellation: bool = False, async_backend: bool = True):
         """Stop a Hummingbot bot."""
-        url = f"{self.base_url}/stop-bot"
-        response = requests.post(url, json={"bot_name": bot_name, "skip_order_cancellation": skip_order_cancellation, "async_backend": async_backend})
-        return response.json()
+        endpoint = "stop-bot"
+        return self.post(endpoint, payload={"bot_name": bot_name, "skip_order_cancellation": skip_order_cancellation, "async_backend": async_backend})
 
     def import_strategy(self, strategy_config: dict):
         """Import a trading strategy to a bot."""
-        url = f"{self.base_url}/import-strategy"
-        response = requests.post(url, json=strategy_config)
-        return response.json()
+        endpoint = "import-strategy"
+        return self.post(endpoint, payload=strategy_config)
 
     def get_bot_status(self, bot_name: str):
         """Get the status of a bot."""
-        url = f"{self.base_url}/get-bot-status/{bot_name}"
-        response = requests.get(url)
-        if response.status_code == 200:
-            return response.json()
-        else:
-            return {"status": "error", "data": "Bot not found"}
+        endpoint = f"get-bot-status/{bot_name}"
+        self.get(endpoint)
 
     def get_bot_history(self, bot_name: str):
         """Get the historical data of a bot."""
-        url = f"{self.base_url}/get-bot-history/{bot_name}"
-        response = requests.get(url)
-        return response.json()
+        endpoint = f"get-bot-history/{bot_name}"
+        return self.get(endpoint)
 
     def get_active_bots_status(self):
         """
@@ -286,8 +298,8 @@ class BackendAPIClient:
         response = requests.get(url)
         return response.json()
 
-    def get_all_balances(self):
+    def get_accounts_state(self):
         """Get all balances."""
-        url = f"{self.base_url}/get-all-balances"
+        url = f"{self.base_url}/accounts-state"
         response = requests.get(url)
         return response.json()
