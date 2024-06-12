@@ -10,9 +10,11 @@ initialize_st_page(title="Portfolio", icon="💰")
 client = get_backend_api_client()
 NUM_COLUMNS = 4
 
+
 @st.cache_data
 def get_all_balances():
     return client.get_all_balances()
+
 
 # Fetch all balances
 balances = get_all_balances()
@@ -25,6 +27,7 @@ def balances_to_df(balances):
             for token, amount in tokens.items():
                 data.append({"Account": account, "Exchange": exchange, "Token": token, "Amount": amount})
     return pd.DataFrame(data)
+
 
 df_balances = balances_to_df(balances)
 c1, c2 = st.columns([1, 1])
