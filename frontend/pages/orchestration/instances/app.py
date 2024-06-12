@@ -71,5 +71,5 @@ with elements("active_instances_board"):
                 card(bot)
 
 while True:
-    time.sleep(5)
+    time.sleep(10)
     st.rerun()
