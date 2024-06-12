@@ -295,7 +295,7 @@ class BotPerformanceCardV2(Dashboard.Item):
                                     mui.Typography("Error Logs")
                                 with mui.AccordionDetails(sx={"display": "flex", "flexDirection": "column"}):
                                     if len(error_logs) > 0:
-                                        for log in error_logs:
+                                        for log in error_logs[:50]:
                                             timestamp = log.get("timestamp")
                                             message = log.get("msg")
                                             logger_name = log.get("logger_name")
@@ -307,7 +307,7 @@ class BotPerformanceCardV2(Dashboard.Item):
                                     mui.Typography("General Logs")
                                 with mui.AccordionDetails(sx={"display": "flex", "flexDirection": "column"}):
                                     if len(general_logs) > 0:
-                                        for log in general_logs:
+                                        for log in general_logs[:50]:
                                             timestamp = pd.to_datetime(int(log.get("timestamp")), unit="s")
                                             message = log.get("msg")
                                             logger_name = log.get("logger_name")
