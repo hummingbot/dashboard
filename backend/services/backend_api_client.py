@@ -125,7 +125,7 @@ class BackendAPIClient:
     def get_bot_status(self, bot_name: str):
         """Get the status of a bot."""
         endpoint = f"get-bot-status/{bot_name}"
-        self.get(endpoint)
+        return self.get(endpoint)
 
     def get_bot_history(self, bot_name: str):
         """Get the historical data of a bot."""
