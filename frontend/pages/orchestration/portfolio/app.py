@@ -11,16 +11,6 @@ client = get_backend_api_client()
 NUM_COLUMNS = 4
 
 
-@st.cache_data
-def get_accounts_state():
-    return client.get_accounts_state()
-
-
-@st.cache_data
-def get_account_state_history():
-    return client.get_account_state_history()
-
-
 # Convert balances to a DataFrame for easier manipulation
 def account_state_to_df(account_state):
     data = []
@@ -61,8 +51,8 @@ def account_history_to_df(history):
 
 
 # Fetch account state from the backend
-account_state = get_accounts_state()
-account_history = get_account_state_history()
+account_state = client.get_accounts_state()
+account_history = client.get_account_state_history()
 
 
 # Display the accounts available
@@ -84,7 +74,8 @@ for account in accounts:
         if exchange in account_state[account]:
             tokens_available += [info["token"] for info in account_state[account][exchange]]
 
-tokens_available = st.multiselect("Select Tokens", set(tokens_available), set(tokens_available))
+token_options = set(tokens_available)
+tokens_available = st.multiselect("Select Tokens", token_options, token_options)
 
 
 st.write("---")
