@@ -263,7 +263,7 @@ class BackendAPIClient:
 
     def add_connector_keys(self, account_name: str, connector_name: str, connector_config: dict):
         """Add connector keys."""
-        endpoint = f"{self.base_url}/add-connector-keys/{account_name}/{connector_name}"
+        endpoint = f"add-connector-keys/{account_name}/{connector_name}"
         return self.post(endpoint, payload=connector_config)
 
     def get_accounts(self):
