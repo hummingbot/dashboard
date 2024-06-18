@@ -22,13 +22,18 @@ def backtesting_section(inputs, backend_api_client):
     if run_backtesting:
         start_datetime = datetime.combine(start_date, datetime.min.time())
         end_datetime = datetime.combine(end_date, datetime.max.time())
-        backtesting_results = backend_api_client.run_backtesting(
-            start_time=int(start_datetime.timestamp()) * 1000,
-            end_time=int(end_datetime.timestamp()) * 1000,
-            backtesting_resolution=backtesting_resolution,
-            trade_cost=trade_cost / 100,
-            config=inputs,
-        )
+        try:
+            backtesting_results = backend_api_client.run_backtesting(
+                start_time=int(start_datetime.timestamp()) * 1000,
+                end_time=int(end_datetime.timestamp()) * 1000,
+                backtesting_resolution=backtesting_resolution,
+                trade_cost=trade_cost / 100,
+                config=inputs,
+            )
+        except Exception as e:
+            st.error(e)
+            return None
+            
         if len(backtesting_results["processed_data"]) == 0:
             st.error("No trades were executed during the backtesting period.")
             return None

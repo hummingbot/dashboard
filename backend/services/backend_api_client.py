@@ -196,6 +196,8 @@ class BackendAPIClient:
         }
         response = requests.post(url, json=payload)
         backtesting_results = response.json()
+        if "error" in backtesting_results:
+            raise Exception(backtesting_results["error"])
         if "processed_data" not in backtesting_results:
             data = None
         else:
