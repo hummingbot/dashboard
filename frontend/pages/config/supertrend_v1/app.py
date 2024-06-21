@@ -8,7 +8,7 @@ from frontend.components.config_loader import get_default_config_loader
 from frontend.components.save_config import render_save_config
 from frontend.pages.config.supertrend_v1.user_inputs import user_inputs
 from frontend.pages.config.utils import get_candles, get_max_records
-from frontend.st_utils import initialize_st_page
+from frontend.st_utils import initialize_st_page, get_backend_api_client
 from frontend.visualization import theme
 from frontend.visualization.backtesting import create_backtesting_figure
 from frontend.visualization.backtesting_metrics import render_backtesting_metrics, render_accuracy_metrics, \
@@ -20,12 +20,12 @@ from frontend.visualization.utils import add_traces_to_fig
 
 # Initialize the Streamlit page
 initialize_st_page(title="SuperTrend V1", icon="📊", initial_sidebar_state="expanded")
-backend_api_client = BackendAPIClient.get_instance(host=BACKEND_API_HOST, port=BACKEND_API_PORT)
+backend_api_client = get_backend_api_client()
 
 get_default_config_loader("supertrend_v1")
 # User inputs
 inputs = user_inputs()
-st.session_state["default_config"] = inputs
+st.session_state["default_config"].update(inputs)
 
 st.write("### Visualizing Supertrend Trading Signals")
 days_to_visualize = st.number_input("Days to Visualize", min_value=1, max_value=365, value=3)
@@ -61,4 +61,4 @@ if bt_results:
         st.write("---")
         render_close_types(bt_results["results"])
 st.write("---")
-render_save_config("bollinger_v1", inputs)
+render_save_config(st.session_state["default_config"]["id"], st.session_state["default_config"])
