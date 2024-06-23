@@ -1,8 +1,14 @@
+import json
+
+from hummingbot.strategy_v2.models.base import RunnableStatus
+from hummingbot.strategy_v2.models.executors import CloseType
 from sqlalchemy import create_engine, delete, insert, text, MetaData, Table, Column, VARCHAR, INT, FLOAT, TIMESTAMP,  Integer, String, Float, DateTime
 from sqlalchemy.orm import sessionmaker
-
 import pandas as pd
 import os
+
+
+from hummingbot.strategy_v2.models.executors_info import ExecutorInfo
 
 
 class ETLPerformance:
@@ -35,8 +41,9 @@ class ETLPerformance:
                      MetaData(),
                      Column('id', String),
                      Column('type', String),
-                     Column('close_type', String),
+                     Column('close_type', Integer),
                      Column('level_id', String),
+                     Column('timestamp', Integer),
                      Column('close_timestamp', Integer),
                      Column('status', String),
                      Column('config', String),
@@ -50,8 +57,6 @@ class ETLPerformance:
                      Column('controller_id', String),
                      Column('datetime', DateTime),
                      Column('close_datetime', DateTime),
-                     Column('cum_net_pnl_quote', Float),
-                     Column('cum_filled_amount_quote', Float),
                      Column('trading_pair', String),
                      Column('exchange', String),
                      Column('side', String),
@@ -177,6 +182,7 @@ class ETLPerformance:
                     type=row["type"],
                     close_type=row["close_type"],
                     level_id=row["level_id"],
+                    timestamp=row["timestamp"],
                     close_timestamp=row["close_timestamp"],
                     status=row["status"],
                     config=row["config"],
@@ -190,8 +196,6 @@ class ETLPerformance:
                     controller_id=row["controller_id"],
                     datetime=row["datetime"],
                     close_datetime=row["close_datetime"],
-                    cum_net_pnl_quote=row["cum_net_pnl_quote"],
-                    cum_filled_amount_quote=row["cum_filled_amount_quote"],
                     trading_pair=row["trading_pair"],
                     exchange=row["exchange"],
                     side=row["side"],
@@ -211,8 +215,46 @@ class ETLPerformance:
             query = "SELECT * FROM executors"
             executors = pd.read_sql_query(text(query), session.connection())
             executors["close_datetime"] = pd.to_datetime(executors["close_datetime"])
-            executors["datetime"] = pd.to_datetime(executors["datetime"])
+            executors["datetime"] = pd.to_datetime(executors["timestamp"], unit="s")
+            executors["close_type"] = executors["close_type"].apply(lambda x: self.get_enum_by_value(CloseType, int(x)))
+            executors["close_type_name"] = executors["close_type"].apply(lambda x: x.name)
+            executors["status"] = executors["status"].apply(lambda x: self.get_enum_by_value(RunnableStatus, int(x)))
             return executors
+
+    @staticmethod
+    def get_enum_by_value(enum_class, value):
+        for member in enum_class:
+            if member.value == value:
+                return member
+        raise ValueError(f"No enum member with value {value}")
+
+    @staticmethod
+    def _parse_executors(executors):
+        """
+        ExecutorInfo(id='2Qd1k5ALefhJ9kfeHYEE4THCG2HpX9ETvogg6rebpYfB', timestamp=1717763580.0, type='position_executor', close_timestamp=1717767240.0, close_type=<CloseType.TAKE_PROFIT: 3>, status=<RunnableStatus.TERMINATED: 4>, config=PositionExecutorConfig(id='2Qd1k5ALefhJ9kfeHYEE4THCG2HpX9ETvogg6rebpYfB', type='position_executor', timestamp=1717763580.0, controller_id='main', trading_pair='WLD-USDT', connector_name='kucoin', side=<TradeType.BUY: 1>, entry_price=Decimal('4.8345'), amount=Decimal('41.36932464577516'), triple_barrier_config=TripleBarrierConfig(stop_loss=Decimal('0.05'), take_profit=Decimal('0.02'), time_limit=43200, trailing_stop=TrailingStop(activation_price=Decimal('0.018'), trailing_delta=Decimal('0.002')), open_order_type=<OrderType.MARKET: 1>, take_profit_order_type=<OrderType.LIMIT: 2>, stop_loss_order_type=<OrderType.MARKET: 1>, time_limit_order_type=<OrderType.MARKET: 1>), leverage=20, activation_bounds=None, level_id=None), net_pnl_pct=Decimal('0.02072603164753395'), net_pnl_quote=Decimal('4.14520632950679'), cum_fees_quote=Decimal('0.1'), filled_amount_quote=Decimal('200'), is_active=False, is_trading=False, custom_info={'close_price': 4.9347, 'level_id': None, 'side': 1, 'current_position_average_price': 4.8345}, controller_id=None)
+        """
+        executor_values = []
+        for _, row in executors.iterrows():
+            executor_values.append(ExecutorInfo(
+                id=row["id"],
+                timestamp=row["timestamp"],
+                type=row["type"],
+                close_timestamp=row["close_timestamp"],
+                close_type=row["close_type"],
+                status=row["status"],
+                config=json.loads(row["config"]),
+                net_pnl_pct=row["net_pnl_pct"],
+                net_pnl_quote=row["net_pnl_quote"],
+                cum_fees_quote=row["cum_fees_quote"],
+                filled_amount_quote=row["filled_amount_quote"],
+                is_active=row["is_active"],
+                is_trading=row["is_trading"],
+                custom_info=json.loads(row["custom_info"]),
+                controller_id=row["controller_id"]
+            ))
+        return executor_values
+
+
 
     def insert_market_data(self, market_data):
         market_data.reset_index(inplace=True)

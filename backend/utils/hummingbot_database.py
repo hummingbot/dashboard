@@ -4,18 +4,7 @@ import pandas as pd
 from enum import Enum
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
-
-
-class CloseType(Enum):
-    TIME_LIMIT = 1
-    STOP_LOSS = 2
-    TAKE_PROFIT = 3
-    EXPIRED = 4
-    EARLY_STOP = 5
-    TRAILING_STOP = 6
-    INSUFFICIENT_BALANCE = 7
-    FAILED = 8
-    COMPLETED = 9
+from hummingbot.strategy_v2.models.executors_info import CloseType
 
 
 class HummingbotDatabase:
@@ -183,20 +172,16 @@ class HummingbotDatabase:
         with self.session_maker() as session:
             query = self._get_executors_query(start_date, end_date)
             executors = pd.read_sql_query(text(query), session.connection())
-            executors.set_index("timestamp", inplace=True)
-            executors = executors[executors["close_type"].isin([1, 2, 3, 5, 6, 9])]
-            executors["datetime"] = pd.to_datetime(executors.index, unit="s")
+            executors["datetime"] = pd.to_datetime(executors.timestamp, unit="s")
             executors["close_datetime"] = pd.to_datetime(executors["close_timestamp"], unit="s")
-            executors["cum_net_pnl_quote"] = executors["net_pnl_quote"].cumsum()
-            executors["cum_filled_amount_quote"] = executors["filled_amount_quote"].cumsum()
             executors["trading_pair"] = executors["config"].apply(lambda x: json.loads(x)["trading_pair"])
             executors["exchange"] = executors["config"].apply(lambda x: json.loads(x)["connector_name"])
             executors["side"] = executors["config"].apply(lambda x: json.loads(x)["side"])
-            executors["level_id"] = executors["config"].apply(lambda x: json.loads(x).get("level_id"))
+            executors["level_id"] = executors["config"].apply(lambda x: json.loads(x).get("level_id") if json.loads(x).get("level_id") is not None else 0)
             executors["bep"] = executors["custom_info"].apply(lambda x: json.loads(x)["current_position_average_price"])
             executors["close_price"] = executors["custom_info"].apply(lambda x: json.loads(x)["close_price"])
-            executors["close_type"] = executors["close_type"].apply(lambda x: CloseType(x).name)
             executors["sl"] = executors["config"].apply(lambda x: json.loads(x)["stop_loss"]).fillna(0)
             executors["tp"] = executors["config"].apply(lambda x: json.loads(x)["take_profit"]).fillna(0)
             executors["tl"] = executors["config"].apply(lambda x: json.loads(x)["time_limit"]).fillna(0)
+            executors = executors[~executors["close_timestamp"].isna()]
         return executors
