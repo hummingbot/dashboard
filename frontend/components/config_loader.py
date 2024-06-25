@@ -10,8 +10,8 @@ def get_default_config_loader(controller_name: str):
     all_configs = backend_api_client.get_all_controllers_config()
     existing_configs = [config["id"].split("_")[0] for config in all_configs]
     default_dict = {"id": generate_random_name(existing_configs)}
-    default_config = st.session_state.get("default_config")
-    config_controller_name = default_config.get("controller_name", controller_name)
+    default_config = st.session_state.get("default_config", default_dict)
+    config_controller_name = default_config.get("controller_name")
     if default_config is None or controller_name != config_controller_name:
         st.session_state["default_config"] = default_dict
     with st.expander("Configurations", expanded=True):
