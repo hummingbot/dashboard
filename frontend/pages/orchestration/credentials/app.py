@@ -43,7 +43,13 @@ with c1:
     new_account_name = st.text_input("New Account Name")
     if st.button("Create Account"):
         if new_account_name:
-            response = client.add_account(new_account_name)
+            if new_account_name in accounts:
+                st.warning(f"Account {new_account_name} already exists.")
+                st.stop()
+            elif new_account_name == "":
+                st.warning("Please enter a valid account name.")
+                st.stop()
+            response = client.add_account(new_account_name.strip())
             st.write(response)
         else:
             st.write("Please enter an account name.")
