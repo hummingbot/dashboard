@@ -47,7 +47,7 @@ with c1:
             if new_account_name in accounts:
                 st.warning(f"Account {new_account_name} already exists.")
                 st.stop()
-            elif new_account_name == "":
+            elif new_account_name == "" or all(char == "_" for char in new_account_name):
                 st.warning("Please enter a valid account name.")
                 st.stop()
             response = client.add_account(new_account_name)
