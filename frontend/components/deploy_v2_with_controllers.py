@@ -19,7 +19,7 @@ class LaunchV2WithControllers:
         self._controller_configs_available = self._backend_api_client.get_all_controllers_config()
         self._controller_config_selected = []
         self._bot_name = None
-        self._image_name = "dardonacci/hummingbot:latest"
+        self._image_name = "hummingbot/hummingbot:latest"
         self._credentials = "master_account"
 
     def _set_bot_name(self, bot_name):
