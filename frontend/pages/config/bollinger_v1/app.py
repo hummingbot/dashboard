@@ -30,7 +30,7 @@ inputs = user_inputs()
 st.session_state["default_config"].update(inputs)
 
 st.write("### Visualizing Bollinger Bands and Trading Signals")
-days_to_visualize = st.number_input("Days to Visualize", min_value=1, max_value=365, value=30)
+days_to_visualize = st.number_input("Days to Visualize", min_value=1, max_value=365, value=7)
 # Load candle data
 candles = get_candles(connector_name=inputs["candles_connector"], trading_pair=inputs["candles_trading_pair"], interval=inputs["interval"], days=days_to_visualize)
 
