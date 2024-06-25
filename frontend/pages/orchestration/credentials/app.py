@@ -42,7 +42,7 @@ with c1:
     st.header("Create a New Account")
     new_account_name = st.text_input("New Account Name")
     if st.button("Create Account"):
-        new_account_name = new_account_name.strip()
+        new_account_name = new_account_name.replace(" ", "_")
         if new_account_name:
             if new_account_name in accounts:
                 st.warning(f"Account {new_account_name} already exists.")
