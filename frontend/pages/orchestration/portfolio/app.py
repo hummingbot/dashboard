@@ -67,6 +67,10 @@ if len(accounts) == 0:
 exchanges_available = []
 for account in accounts:
     exchanges_available += account_state[account].keys()
+
+if len(exchanges_available) == 0:
+    st.warning("No exchanges found.")
+    st.stop()
 exchanges = st.multiselect("Select Exchanges", exchanges_available, exchanges_available)
 
 # Display the tokens available
