@@ -42,7 +42,14 @@ with c1:
     st.header("Create a New Account")
     new_account_name = st.text_input("New Account Name")
     if st.button("Create Account"):
+        new_account_name = new_account_name.replace(" ", "_")
         if new_account_name:
+            if new_account_name in accounts:
+                st.warning(f"Account {new_account_name} already exists.")
+                st.stop()
+            elif new_account_name == "" or all(char == "_" for char in new_account_name):
+                st.warning("Please enter a valid account name.")
+                st.stop()
             response = client.add_account(new_account_name)
             st.write(response)
         else:
@@ -95,4 +102,5 @@ for i, config in enumerate(config_map):
 with cols[-1]:
     if st.button("Submit Credentials"):
         response = client.add_connector_keys(account_name, connector_name, config_inputs)
-
+        if response:
+            st.success(response)

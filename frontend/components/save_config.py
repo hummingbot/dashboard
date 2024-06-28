@@ -27,5 +27,5 @@ def render_save_config(config_base_default: str, config_data: dict):
     if upload_config_to_backend:
         config_data["id"] = f"{config_base}_{config_tag}"
         backend_api_client.add_controller_config(config_data)
-        st.session_state["default_config"] = None
+        st.session_state.pop("default_config")
         st.success("Config uploaded successfully!")

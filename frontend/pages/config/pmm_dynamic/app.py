@@ -2,8 +2,6 @@ import streamlit as st
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-from backend.services.backend_api_client import BackendAPIClient
-from CONFIG import BACKEND_API_HOST, BACKEND_API_PORT
 from frontend.components.config_loader import get_default_config_loader
 from frontend.components.executors_distribution import get_executors_distribution_inputs
 from frontend.components.save_config import render_save_config
@@ -12,7 +10,7 @@ from frontend.components.save_config import render_save_config
 from frontend.components.backtesting import backtesting_section
 from frontend.pages.config.pmm_dynamic.spread_and_price_multipliers import get_pmm_dynamic_multipliers
 from frontend.pages.config.pmm_dynamic.user_inputs import user_inputs
-from frontend.pages.config.utils import get_max_records, get_candles
+from frontend.pages.config.utils import get_candles
 from frontend.st_utils import initialize_st_page, get_backend_api_client
 from frontend.visualization import theme
 from frontend.visualization.backtesting import create_backtesting_figure
@@ -35,7 +33,7 @@ inputs = user_inputs()
 st.write("### Visualizing MACD and NATR indicators for PMM Dynamic")
 st.text("The MACD is used to shift the mid price and the NATR to make the spreads dynamic. "
         "In the order distributions graph, we are going to see the values of the orders affected by the average NATR")
-days_to_visualize = st.number_input("Days to Visualize", min_value=1, max_value=365, value=3)
+days_to_visualize = st.number_input("Days to Visualize", min_value=1, max_value=365, value=7)
 # Load candle data
 candles = get_candles(connector_name=inputs["candles_connector"], trading_pair=inputs["candles_trading_pair"], interval=inputs["interval"], days=days_to_visualize)
 with st.expander("Visualizing PMM Dynamic Indicators", expanded=True):

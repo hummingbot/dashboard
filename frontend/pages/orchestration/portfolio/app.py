@@ -53,7 +53,9 @@ def account_history_to_df(history):
 # Fetch account state from the backend
 account_state = client.get_accounts_state()
 account_history = client.get_account_state_history()
-
+if len(account_state) == 0:
+    st.warning("No accounts found.")
+    st.stop()
 
 # Display the accounts available
 accounts = st.multiselect("Select Accounts", list(account_state.keys()), list(account_state.keys()))
@@ -65,6 +67,10 @@ if len(accounts) == 0:
 exchanges_available = []
 for account in accounts:
     exchanges_available += account_state[account].keys()
+
+if len(exchanges_available) == 0:
+    st.warning("No exchanges found.")
+    st.stop()
 exchanges = st.multiselect("Select Exchanges", exchanges_available, exchanges_available)
 
 # Display the tokens available

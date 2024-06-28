@@ -253,7 +253,7 @@ class BackendAPIClient:
 
     def delete_account(self, account_name: str):
         """Delete an account."""
-        endpoint = "delete-account/"
+        endpoint = "delete-account"
         return self.post(endpoint, params={"account_name": account_name})
 
     def delete_credential(self, account_name: str, connector_name: str):
