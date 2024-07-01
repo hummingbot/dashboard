@@ -58,6 +58,7 @@ def render_close_types(summary_results):
     st.write("#### Close Types")
     close_types = summary_results.get('close_types', {})
     st.metric(label="TAKE PROFIT", value=f"{close_types.get('TAKE_PROFIT', 0)}")
+    st.metric(label="TRAILING STOP", value=f"{close_types.get('TRAILING_STOP', 0)}")
     st.metric(label="STOP LOSS", value=f"{close_types.get('STOP_LOSS', 0)}")
     st.metric(label="TIME LIMIT", value=f"{close_types.get('TIME_LIMIT', 0)}")
     st.metric(label="EARLY STOP", value=f"{close_types.get('EARLY_STOP', 0)}")
