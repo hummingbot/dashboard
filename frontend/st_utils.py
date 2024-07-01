@@ -66,3 +66,18 @@ def style_metric_cards(
         unsafe_allow_html=True,
     )
 
+
+def get_backend_api_client():
+    from CONFIG import BACKEND_API_HOST, BACKEND_API_PORT
+    from backend.services.backend_api_client import BackendAPIClient
+    backend_api_client = BackendAPIClient.get_instance(host=BACKEND_API_HOST, port=BACKEND_API_PORT)
+    is_docker_running = False
+    try:
+        is_docker_running = backend_api_client.is_docker_running()
+    except Exception as e:
+        st.error(f"There was an error trying to connect to the Backend API: \n\n{str(e)} \n\nPlease make sure the Backend API is running.")
+        st.stop()
+    if not is_docker_running:
+        st.error("Docker is not running. Please make sure Docker is running.")
+        st.stop()
+    return backend_api_client

@@ -1,13 +1,13 @@
 from CONFIG import BACKEND_API_HOST, BACKEND_API_PORT
 from backend.services.backend_api_client import BackendAPIClient
-from frontend.st_utils import initialize_st_page
+from frontend.st_utils import initialize_st_page, get_backend_api_client
 import streamlit as st
 
 
 initialize_st_page(title="Credentials", icon="🔑")
 
 # Page content
-client = BackendAPIClient.get_instance(host=BACKEND_API_HOST, port=BACKEND_API_PORT)
+client = get_backend_api_client()
 NUM_COLUMNS = 4
 
 
@@ -36,13 +36,20 @@ else:
 
 st.markdown("---")
 
-c1, c2 = st.columns([1, 1])
+c1, c2, c3 = st.columns([1, 1, 1])
 with c1:
     # Section to create a new account
     st.header("Create a New Account")
     new_account_name = st.text_input("New Account Name")
     if st.button("Create Account"):
+        new_account_name = new_account_name.replace(" ", "_")
         if new_account_name:
+            if new_account_name in accounts:
+                st.warning(f"Account {new_account_name} already exists.")
+                st.stop()
+            elif new_account_name == "" or all(char == "_" for char in new_account_name):
+                st.warning("Please enter a valid account name.")
+                st.stop()
             response = client.add_account(new_account_name)
             st.write(response)
         else:
@@ -55,7 +62,20 @@ with c2:
     if st.button("Delete Account"):
         if delete_account_name and delete_account_name != "No accounts available":
             response = client.delete_account(delete_account_name)
-            st.write(response)
+            st.warning(response)
+        else:
+            st.write("Please select a valid account.")
+
+with c3:
+    # Section to delete a credential from an existing account
+    st.header("Delete Credential")
+    delete_account_cred_name = st.selectbox("Select the credentials account", options=accounts if accounts else ["No accounts available"],)
+    creds_for_account = [credential.split(".")[0] for credential in client.get_credentials(delete_account_cred_name)]
+    delete_cred_name = st.selectbox("Select a Credential to Delete", options=creds_for_account if creds_for_account else ["No credentials available"])
+    if st.button("Delete Credential"):
+        if (delete_account_cred_name and delete_account_cred_name != "No accounts available") and (delete_cred_name and delete_cred_name != "No credentials available"):
+            response = client.delete_credential(delete_account_cred_name, delete_cred_name)
+            st.warning(response)
         else:
             st.write("Please select a valid account.")
 
@@ -70,15 +90,17 @@ with c2:
     all_connectors = list(all_connector_config_map.keys())
     binance_perpetual_index = all_connectors.index("binance_perpetual") if "binance_perpetual" in all_connectors else None
     connector_name = st.selectbox("Select Connector", options=all_connectors, index=binance_perpetual_index)
-if account_name and account_name != "No accounts available" and connector_name:
-    st.write(f"Configuration Map for {connector_name}:")
     config_map = all_connector_config_map[connector_name]
-    config_inputs = {}
-    cols = st.columns(NUM_COLUMNS)
-    for i, config in enumerate(config_map):
-        with cols[i % (NUM_COLUMNS - 1)]:
-            config_inputs[config] = st.text_input(config)
-    with cols[NUM_COLUMNS - 1]:
-        if st.button("Submit Credentials"):
-            response = client.add_connector_keys(account_name, connector_name, config_inputs)
-            st.write(response)
+
+st.write(f"Configuration Map for {connector_name}:")
+config_inputs = {}
+cols = st.columns(NUM_COLUMNS)
+for i, config in enumerate(config_map):
+    with cols[i % (NUM_COLUMNS - 1)]:
+        config_inputs[config] = st.text_input(config, type="password", key=f"{connector_name}_{config}")
+
+with cols[-1]:
+    if st.button("Submit Credentials"):
+        response = client.add_connector_keys(account_name, connector_name, config_inputs)
+        if response:
+            st.success(response)

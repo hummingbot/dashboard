@@ -4,7 +4,7 @@ import yaml
 
 from CONFIG import BACKEND_API_HOST, BACKEND_API_PORT
 from backend.services.backend_api_client import BackendAPIClient
-from frontend.st_utils import initialize_st_page
+from frontend.st_utils import initialize_st_page, get_backend_api_client
 
 # Initialize the Streamlit page
 initialize_st_page(title="XEMM Multiple Levels", icon="⚡️")
@@ -104,11 +104,11 @@ st.plotly_chart(sell_order_fig, use_container_width=True)
 # Display in Streamlit
 c1, c2, c3 = st.columns([2, 2, 1])
 with c1:
-    config_base = st.text_input("Config Base", value=f"xemm_{maker_connector}_{taker_connector}-{maker_trading_pair.split('-')[0]}")
+    config_base = st.text_input("Config Base", value=f"xemm-{maker_connector}-{taker_connector}-{maker_trading_pair.split('-')[0]}")
 with c2:
     config_tag = st.text_input("Config Tag", value="1.1")
 
-id = f"{config_base}-{config_tag}"
+id = f"{config_base}_{config_tag}"
 config = {
         "id": id.lower(),
         "controller_name": "xemm_multiple_levels",
@@ -125,16 +125,10 @@ config = {
 yaml_config = yaml.dump(config, default_flow_style=False)
 
 with c3:
-    download_config = st.download_button(
-        label="Download YAML",
-        data=yaml_config,
-        file_name=f'{id.lower()}.yml',
-        mime='text/yaml'
-    )
     upload_config_to_backend = st.button("Upload Config to BackendAPI")
 
 
 if upload_config_to_backend:
-    backend_api_client = BackendAPIClient.get_instance(host=BACKEND_API_HOST, port=BACKEND_API_PORT)
+    backend_api_client = get_backend_api_client()
     backend_api_client.add_controller_config(config)
     st.success("Config uploaded successfully!")

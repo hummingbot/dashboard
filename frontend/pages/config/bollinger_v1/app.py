@@ -1,17 +1,11 @@
-from datetime import datetime
-
 import streamlit as st
-import pandas as pd
-import yaml
 import pandas_ta as ta  # noqa: F401
 
-from CONFIG import BACKEND_API_HOST, BACKEND_API_PORT
-from backend.services.backend_api_client import BackendAPIClient
 from frontend.components.backtesting import backtesting_section
 from frontend.components.config_loader import get_default_config_loader
 from frontend.components.save_config import render_save_config
-from frontend.pages.config.utils import get_max_records, get_candles
-from frontend.st_utils import initialize_st_page
+from frontend.pages.config.utils import get_candles
+from frontend.st_utils import initialize_st_page, get_backend_api_client
 from frontend.pages.config.bollinger_v1.user_inputs import user_inputs
 from plotly.subplots import make_subplots
 
@@ -26,17 +20,17 @@ from frontend.visualization.utils import add_traces_to_fig
 
 # Initialize the Streamlit page
 initialize_st_page(title="Bollinger V1", icon="📈", initial_sidebar_state="expanded")
-backend_api_client = BackendAPIClient.get_instance(host=BACKEND_API_HOST, port=BACKEND_API_PORT)
+backend_api_client = get_backend_api_client()
 
 
 st.text("This tool will let you create a config for Bollinger V1 and visualize the strategy.")
 get_default_config_loader("bollinger_v1")
 
 inputs = user_inputs()
-st.session_state["default_config"] = inputs
+st.session_state["default_config"].update(inputs)
 
 st.write("### Visualizing Bollinger Bands and Trading Signals")
-days_to_visualize = st.number_input("Days to Visualize", min_value=1, max_value=365, value=3)
+days_to_visualize = st.number_input("Days to Visualize", min_value=1, max_value=365, value=7)
 # Load candle data
 candles = get_candles(connector_name=inputs["candles_connector"], trading_pair=inputs["candles_trading_pair"], interval=inputs["interval"], days=days_to_visualize)
 
@@ -68,4 +62,4 @@ if bt_results:
         st.write("---")
         render_close_types(bt_results["results"])
 st.write("---")
-render_save_config("bollinger_v1", inputs)
+render_save_config(st.session_state["default_config"]["id"], st.session_state["default_config"])
