@@ -1,9 +1,9 @@
 import streamlit as st
+import yaml
 from st_pages import Page, Section, show_pages
-from streamlit_authenticator import Authenticate
-
+from yaml import SafeLoader
+import streamlit_authenticator as stauth
 from CONFIG import AUTH_SYSTEM_ENABLED
-from backend.utils.os_utils import read_yaml_file, dump_dict_to_yaml
 
 
 def main_page():
@@ -100,35 +100,26 @@ def main_page():
     st.write("If you encounter any bugs or have suggestions for improvement, please create an issue in the [Hummingbot Dashboard Github](https://github.com/hummingbot/dashboard).")
 
 
-# config = read_yaml_file("credentials.yml")
-#
-# if "authenticator" not in st.session_state:
-#     st.session_state.authenticator = Authenticate(
-#         config['credentials'],
-#         config['cookie']['name'],
-#         config['cookie']['key'],
-#         config['cookie']['expiry_days'],
-#         config['preauthorized']
-#     )
-
-# if not AUTH_SYSTEM_ENABLED:
-main_page()
-# elif st.session_state["authentication_status"]:
-#     config["credentials"] = st.session_state.authenticator_handler.credentials
-#     dump_dict_to_yaml(config, "credentials.yml")
-#     with st.sidebar:
-#         st.write(f'Welcome {st.session_state["name"]}!')
-#     st.session_state.authenticator.logout(location='sidebar')  # Updated logout call
-#     main_page()
-# else:
-#     show_pages([
-#         Page("main.py", "Hummingbot Dashboard", "📊"),
-#     ])
-#     name, authentication_status, username = st.session_state.authenticator.login(location='main')  # Updated login call
-#     if st.session_state["authentication_status"] == False:
-#         st.error('Username/password is incorrect')
-#     elif st.session_state["authentication_status"] == None:
-#         st.warning('Please enter your username and password')
-#     st.write("---")
-#     st.write("If you are pre-authorized, you can login with your pre-authorized mail!")
-#     st.session_state.authenticator.register_user(location='main')  # Updated register user call
+if not AUTH_SYSTEM_ENABLED:
+    main_page()
+else:
+    with open('credentials.yml') as file:
+        config = yaml.load(file, Loader=SafeLoader)
+    authenticator = stauth.Authenticate(
+        config['credentials'],
+        config['cookie']['name'],
+        config['cookie']['key'],
+        config['cookie']['expiry_days'],
+        config['pre-authorized']
+    )
+    authenticator.login()
+    if st.session_state["authentication_status"]:
+        authenticator.logout(location="sidebar")
+        st.sidebar.write(f'Welcome *{st.session_state["name"]}*')
+        main_page()
+    else:
+        show_pages([Page("main.py", "Hummingbot Dashboard", "📊"),])
+        if st.session_state["authentication_status"] is False:
+            st.error('Username/password is incorrect')
+        elif st.session_state["authentication_status"] is None:
+            st.warning('Please enter your username and password')
