@@ -1,11 +1,17 @@
 import os.path
 
+import streamlit_authenticator as stauth
 import pandas as pd
 from pathlib import Path
 import inspect
 
 import streamlit as st
-from st_pages import add_page_title
+import yaml
+from st_pages import add_page_title, show_pages
+from yaml import SafeLoader
+
+from CONFIG import AUTH_SYSTEM_ENABLED
+from frontend.pages.permissions import main_page, private_pages, public_pages
 
 
 def initialize_st_page(title: str, icon: str, layout="wide", initial_sidebar_state="expanded"):
@@ -81,3 +87,32 @@ def get_backend_api_client():
         st.error("Docker is not running. Please make sure Docker is running.")
         st.stop()
     return backend_api_client
+
+
+def auth_system():
+    if not AUTH_SYSTEM_ENABLED:
+        show_pages(main_page() + private_pages() + public_pages())
+    else:
+        with open('credentials.yml') as file:
+            config = yaml.load(file, Loader=SafeLoader)
+        if "authenticator" not in st.session_state:
+            st.session_state.authenticator = stauth.Authenticate(
+                config['credentials'],
+                config['cookie']['name'],
+                config['cookie']['key'],
+                config['cookie']['expiry_days'],
+                config['pre-authorized']
+            )
+            st.session_state.authenticator.login()
+        if st.session_state["authentication_status"]:
+            st.session_state.authenticator.logout(location="sidebar")
+            st.sidebar.write(f'Welcome *{st.session_state["name"]}*')
+            show_pages(main_page() + private_pages() + public_pages())
+
+        else:
+            show_pages(main_page() + public_pages())
+            st.session_state.authenticator.login()
+            if st.session_state["authentication_status"] is False:
+                st.error('Username/password is incorrect')
+            elif st.session_state["authentication_status"] is None:
+                st.warning('Please enter your username and password')
