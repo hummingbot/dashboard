@@ -14,5 +14,6 @@ def main():
     st.write("Please give us feedback in the **#dashboard** channel of the [hummingbot discord](https://discord.gg/hummingbot)! 🙏")
     st.write("If you encounter any bugs or have suggestions for improvement, please create an issue in the [hummingbot dashboard github](https://github.com/hummingbot/dashboard).")
 
+
 auth_system()
 main()
