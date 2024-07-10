@@ -1,4 +1,4 @@
-from typing import Optional, Dict
+from typing import Optional, Dict, List
 
 import pandas as pd
 import requests
@@ -184,7 +184,7 @@ class BackendAPIClient:
         """Get historical candles data."""
         endpoint = "historical-candles"
         payload = {
-            "connector": connector,
+            "connector_name": connector,
             "trading_pair": trading_pair,
             "interval": interval,
             "start_time": start_time,
@@ -217,6 +217,44 @@ class BackendAPIClient:
             "processed_data": data,
             "executors": executors,
             "results": backtesting_results["results"]
+        }
+
+    def get_performance_results(self, executors: List[dict]):
+        """Get performance results."""
+        if not isinstance(executors, list):
+            raise ValueError("Executors must be a list of dictionaries")
+
+        endpoint = "get-performance-results"
+
+        performance_results = self.post(endpoint, payload=executors)
+        if "error" in performance_results:
+            raise Exception(performance_results["error"])
+        if "detail" in performance_results:
+            raise Exception(performance_results["detail"])
+        return performance_results.get("results")
+
+    def get_performance_results_with_config(self, executors: list, config: dict):
+        """Run performance."""
+        endpoint = "get-performance-results-with-config"
+        payload = {
+            "executors": executors,
+            "config": config
+        }
+        performance_results = self.post(endpoint, payload=payload)
+        if "error" in performance_results:
+            raise Exception(performance_results["error"])
+        if "processed_data" not in performance_results:
+            data = None
+        else:
+            data = pd.DataFrame(performance_results["processed_data"])
+        if "executors" not in performance_results:
+            executors = []
+        else:
+            executors = [ExecutorInfo(**executor) for executor in performance_results["executors"]]
+        return {
+            "processed_data": data,
+            "executors": executors,
+            "results": performance_results["results"]
         }
 
     def get_all_configs_from_bot(self, bot_name: str):
@@ -285,3 +323,33 @@ class BackendAPIClient:
         """Get account state history."""
         endpoint = "account-state-history"
         return self.get(endpoint)
+
+    def list_databases(self, full_path: bool = False):
+        """Get databases list."""
+        endpoint = "list-databases"
+        config = {"full_path": full_path}
+        return self.post(endpoint, payload=config)
+
+    def read_databases(self):
+        """Read databases."""
+        endpoint = "read-databases"
+        return self.get(endpoint)
+
+    def create_checkpoint(self, db_names: List[str]):
+        """Create a checkpoint."""
+        endpoint = "create-checkpoint"
+        config = {"db_names": db_names}
+        return self.post(endpoint, payload=config)
+
+    def list_checkpoints(self, full_path: bool = True):
+        """List checkpoints."""
+        endpoint = "list-checkpoints"
+        params = {"full_path": full_path}
+        return self.post(endpoint, params=params)
+
+    def load_checkpoint(self, checkpoint_path: str):
+        """Load a checkpoint."""
+        endpoint = "load-checkpoint"
+        params = {"checkpoint_path": checkpoint_path}
+        return self.post(endpoint, params=params)
+
