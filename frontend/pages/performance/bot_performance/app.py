@@ -8,7 +8,7 @@ import pandas as pd
 from backend.services.backend_api_client import BackendAPIClient
 from backend.utils.etl_performance import ETLPerformance
 from frontend.visualization.backtesting import create_backtesting_figure
-from frontend.st_utils import initialize_st_page, style_metric_cards
+from frontend.st_utils import initialize_st_page
 from frontend.visualization.backtesting_metrics import render_backtesting_metrics, render_accuracy_metrics, \
     render_close_types
 from frontend.visualization.dca_builder import create_dca_graph
@@ -36,9 +36,7 @@ async def main():
     checkpoint_data = display_etl_section(backend_api)
     etl_performance = ETLPerformance(checkpoint_data)
 
-    # TODO: This should return a controller_id list
     executors_df = display_and_select_bots(etl_performance.executors,
-                                           etl_performance.orders,
                                            etl_performance.executors_with_orders)
 
     display_global_results(executors_df, backend_api, etl_performance)
@@ -48,15 +46,11 @@ async def main():
     display_tables_section(etl_performance)
 
 
-def display_and_select_bots(executors, orders, executors_with_orders):
-    # TODO: Replace botperformance class approach with current standard
+def display_and_select_bots(executors, executors_with_orders):
     st.subheader("📊 Overview")
 
     selection, grouped_executors = display_performance_summary_table(executors, executors_with_orders)
     filtered_executors = filter_all_executors(executors, selection)
-
-    selected_bots = BotPerformance(filtered_executors, orders)
-    # selected_bots.display_performance_metrics()
 
     return filtered_executors
 
@@ -97,7 +91,7 @@ def display_execution_analysis(executors_df, orders, backend_api, etl):
         config_executors = executors[executors["controller_id"] == config["id"]]
         bot = BotPerformance(config_executors, orders)
 
-        performance_tab, backtesting_tab, comparison_tab, dca_tab, directional_tab = st.tabs(["Real Performance", "Backtesting", "Gap Analysis", "DCA Config", "Directional Config"])
+        performance_tab, backtesting_tab, dca_tab, directional_tab = st.tabs(["Real Performance", "Backtesting", "DCA Config", "Directional Config"])
 
         with performance_tab:
             with st.spinner(f"Loading market data from {connector}..."):
@@ -105,8 +99,8 @@ def display_execution_analysis(executors_df, orders, backend_api, etl):
                     "connector": connector,
                     "trading_pair": trading_pair,
                     "interval": interval,
-                    "start_time": int(executors["timestamp"].min()),
-                    "end_time": int(executors["close_timestamp"].max())
+                    "start_time": int(config_executors["timestamp"].min()),
+                    "end_time": int(config_executors["close_timestamp"].max())
                 }
                 market_data = backend_api.get_historical_candles(**params)
 
@@ -174,8 +168,6 @@ def display_execution_analysis(executors_df, orders, backend_api, etl):
                     st.error(e)
                     return None
 
-        with comparison_tab:
-            st.write("hi")
         if config_type == "dca":
             with dca_tab:
                 col1, col2 = st.columns([0.75, 0.25])
