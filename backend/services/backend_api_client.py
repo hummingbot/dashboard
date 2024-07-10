@@ -324,24 +324,22 @@ class BackendAPIClient:
         endpoint = "account-state-history"
         return self.get(endpoint)
 
-    def list_databases(self, full_path: bool = False):
+    def list_databases(self, full_path: bool):
         """Get databases list."""
         endpoint = "list-databases"
-        config = {"full_path": full_path}
-        return self.post(endpoint, payload=config)
+        return self.post(endpoint, payload=full_path)
 
     def read_databases(self):
         """Read databases."""
         endpoint = "read-databases"
-        return self.get(endpoint)
+        return self.post(endpoint)
 
     def create_checkpoint(self, db_names: List[str]):
         """Create a checkpoint."""
         endpoint = "create-checkpoint"
-        config = {"db_names": db_names}
-        return self.post(endpoint, payload=config)
+        return self.post(endpoint, payload=db_names)
 
-    def list_checkpoints(self, full_path: bool = True):
+    def list_checkpoints(self, full_path: bool):
         """List checkpoints."""
         endpoint = "list-checkpoints"
         params = {"full_path": full_path}
