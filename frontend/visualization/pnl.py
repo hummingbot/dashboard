@@ -19,6 +19,8 @@ def get_pnl_trace(executors):
 
 def get_pnl_bar_fig(executors: pd.DataFrame):
     color_scheme = get_color_scheme()
+    executors.sort_values("close_timestamp", inplace=True)
+    executors["cum_net_pnl_quote"] = executors["net_pnl_quote"].cumsum()
     bar_traces = go.Bar(name="Cum Realized PnL",
                         x=[x + 1 for x in range(len(executors))],
                         y=executors["cum_net_pnl_quote"],
