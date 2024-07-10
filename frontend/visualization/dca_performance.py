@@ -1,9 +1,12 @@
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
+from backend.services.backend_api_client import BackendAPIClient
+
+backend_api = BackendAPIClient()
 
 
-def render_dca_performance(executors: pd.DataFrame):
+def display_dca_performance(executors: pd.DataFrame):
     col1, col2, col3 = st.columns(3)
     with col1:
         level_id_data = executors.groupby("level_id").agg({"id": "count"}).reset_index()
