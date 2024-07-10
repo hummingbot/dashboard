@@ -105,38 +105,6 @@ def load_controllers(path):
     return controllers
 
 
-def get_bots_data_paths():
-    root_directory = "hummingbot_files/bots"
-    bots_data_paths = {"General / Uploaded data": "data"}
-    reserved_word = "hummingbot-"
-    # Walk through the directory tree
-    for dirpath, dirnames, filenames in os.walk(root_directory):
-        for dirname in dirnames:
-            if dirname == "data":
-                parent_folder = os.path.basename(dirpath)
-                if parent_folder.startswith(reserved_word):
-                    bots_data_paths[parent_folder] = os.path.join(dirpath, dirname)
-            if "dashboard" in bots_data_paths:
-                del bots_data_paths["dashboard"]
-    data_sources = {key: value for key, value in bots_data_paths.items() if value is not None}
-    return data_sources
-
-
-def get_databases():
-    databases = {}
-    bots_data_paths = get_bots_data_paths()
-    for source_name, source_path in bots_data_paths.items():
-        sqlite_files = {}
-        for db_name in os.listdir(source_path):
-            if db_name.endswith(".sqlite"):
-                sqlite_files[db_name] = os.path.join(source_path, db_name)
-        databases[source_name] = sqlite_files
-    if len(databases) > 0:
-        return {key: value for key, value in databases.items() if value}
-    else:
-        return None
-
-
 def get_function_from_file(file_path: str, function_name: str):
     # Create a module specification from the file path and load it
     spec = importlib.util.spec_from_file_location("module.name", file_path)

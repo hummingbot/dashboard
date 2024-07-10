@@ -1,7 +1,7 @@
 import streamlit as st
 
 
-def render_backtesting_metrics(summary_results):
+def render_backtesting_metrics(summary_results, title: str = "Backtesting Metrics"):
     net_pnl = summary_results.get('net_pnl', 0)
     net_pnl_quote = summary_results.get('net_pnl_quote', 0)
     total_volume = summary_results.get('total_volume', 0)
@@ -13,7 +13,7 @@ def render_backtesting_metrics(summary_results):
     profit_factor = summary_results.get('profit_factor', 0)
 
     # Displaying KPIs in Streamlit
-    st.write("### Backtesting Metrics")
+    st.write(f"### {title}")
     col1, col2, col3, col4, col5, col6 = st.columns(6)
     col1.metric(label="Net PNL (Quote)", value=f"{net_pnl_quote:.2f}", delta=f"{net_pnl:.2%}")
     col2.metric(label="Max Drawdown (USD)", value=f"{max_drawdown_usd:.2f}", delta=f"{max_drawdown_pct:.2%}")
@@ -23,7 +23,7 @@ def render_backtesting_metrics(summary_results):
     col6.metric(label="Total Executors with Position", value=total_executors_with_position)
 
 
-def render_accuracy_metrics(summary_results):
+def render_accuracy_metrics(summary_results, mode="v"):
     accuracy = summary_results.get('accuracy', 0)
     total_long = summary_results.get('total_long', 0)
     total_short = summary_results.get('total_short', 0)
@@ -31,34 +31,60 @@ def render_accuracy_metrics(summary_results):
     accuracy_short = summary_results.get('accuracy_short', 0)
 
     st.write("#### Accuracy Metrics")
-    # col1, col2, col3, col4, col5 = st.columns(5)
-    st.metric(label="Global Accuracy", value=f"{accuracy:.2%}")
-    st.metric(label="Total Long", value=total_long)
-    st.metric(label="Total Short", value=total_short)
-    st.metric(label="Accuracy Long", value=f"{accuracy_long:.2%}")
-    st.metric(label="Accuracy Short", value=f"{accuracy_short:.2%}")
+    if mode == "v":
+        st.metric(label="Global Accuracy", value=f"{accuracy:.2%}")
+        st.metric(label="Total Long", value=total_long)
+        st.metric(label="Total Short", value=total_short)
+        st.metric(label="Accuracy Long", value=f"{accuracy_long:.2%}")
+        st.metric(label="Accuracy Short", value=f"{accuracy_short:.2%}")
+    elif mode == "h":
+        col1, col2, col3, col4, col5 = st.columns(5)
+        with col1:
+            st.metric(label="Global Accuracy", value=f"{accuracy:.2%}")
+        with col2:
+            st.metric(label="Total Long", value=total_long)
+        with col3:
+            st.metric(label="Total Short", value=total_short)
+        with col4:
+            st.metric(label="Accuracy Long", value=f"{accuracy_long:.2%}")
+        with col5:
+            st.metric(label="Accuracy Short", value=f"{accuracy_short:.2%}")
+    elif mode == "t":
+        st.write(f"""
+        - Global Accuracy: {accuracy:.2%}
+        - Total Long: {total_long}
+        - Total Short: {total_short}
+        - Accuracy Long: {accuracy_long:.2%}
+        - Accuracy Short: {accuracy_short:.2%}
+        """)
+    else:
+        raise ValueError("Invalid mode. Possible values are 'v', 'h' and 't'.")
 
-def render_accuracy_metrics2(summary_results):
-    accuracy = summary_results.get('accuracy', 0)
-    total_long = summary_results.get('total_long', 0)
-    total_short = summary_results.get('total_short', 0)
-    accuracy_long = summary_results.get('accuracy_long', 0)
-    accuracy_short = summary_results.get('accuracy_short', 0)
 
-    st.write("#### Accuracy Metrics")
-    col1, col2, col3, col4, col5 = st.columns(5)
-    col1.metric(label="Global Accuracy", value=f"{accuracy}:.2%")
-    col2.metric(label="Total Long", value=total_long)
-    col3.metric(label="Total Short", value=total_short)
-    col4.metric(label="Accuracy Long", value=f"{accuracy_long:.2%}")
-    col5.metric(label="Accuracy Short", value=f"{accuracy_short:.2%}")
-
-
-def render_close_types(summary_results):
+def render_close_types(summary_results, mode="v"):
     st.write("#### Close Types")
     close_types = summary_results.get('close_types', {})
-    st.metric(label="TAKE PROFIT", value=f"{close_types.get('TAKE_PROFIT', 0)}")
-    st.metric(label="TRAILING STOP", value=f"{close_types.get('TRAILING_STOP', 0)}")
-    st.metric(label="STOP LOSS", value=f"{close_types.get('STOP_LOSS', 0)}")
-    st.metric(label="TIME LIMIT", value=f"{close_types.get('TIME_LIMIT', 0)}")
-    st.metric(label="EARLY STOP", value=f"{close_types.get('EARLY_STOP', 0)}")
+    if mode == "v":
+        st.metric(label="TAKE PROFIT", value=f"{close_types.get('TAKE_PROFIT', 0)}")
+        st.metric(label="STOP LOSS", value=f"{close_types.get('STOP_LOSS', 0)}")
+        st.metric(label="TIME LIMIT", value=f"{close_types.get('TIME_LIMIT', 0)}")
+        st.metric(label="EARLY STOP", value=f"{close_types.get('EARLY_STOP', 0)}")
+    elif mode == "h":
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            st.metric(label="TAKE PROFIT", value=f"{close_types.get('TAKE_PROFIT', 0)}")
+        with col2:
+            st.metric(label="STOP LOSS", value=f"{close_types.get('STOP_LOSS', 0)}")
+        with col3:
+            st.metric(label="TIME LIMIT", value=f"{close_types.get('TIME_LIMIT', 0)}")
+        with col4:
+            st.metric(label="EARLY STOP", value=f"{close_types.get('EARLY_STOP', 0)}")
+    elif mode == "t":
+        st.write(f"""
+        - Take Profit: {close_types.get('TAKE_PROFIT', 0)}
+        - Stop Loss: {close_types.get('STOP_LOSS', 0)}
+        - Time Limit: {close_types.get('TIME_LIMIT', 0)}
+        - Early Stop: {close_types.get('EARLY_STOP', 0)}
+        """)
+    else:
+        raise ValueError("Invalid mode. Possible values are 'v', 'h' and 't'.")

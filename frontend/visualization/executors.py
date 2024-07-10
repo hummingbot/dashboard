@@ -1,11 +1,15 @@
 import plotly.graph_objects as go
 import pandas as pd
+import streamlit as st
 from decimal import Decimal
 
 from hummingbot.connector.connector_base import TradeType
 
 
 def add_executors_trace(fig, executors, row, col):
+    if len(executors) == 0:
+        st.warning("No executors found.")
+        return fig
     for executor in executors:
         entry_time = pd.to_datetime(executor.timestamp, unit='s')
         entry_price = executor.custom_info["current_position_average_price"]

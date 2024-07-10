@@ -29,8 +29,8 @@ if get_data_button:
         connector=connector,
         trading_pair=trading_pair,
         interval=interval,
-        start_time=int(start_datetime.timestamp()) * 1000,
-        end_time=int(end_datetime.timestamp()) * 1000
+        start_time=int(start_datetime.timestamp()),
+        end_time=int(end_datetime.timestamp())
     )
 
     candles_df = pd.DataFrame(candles)

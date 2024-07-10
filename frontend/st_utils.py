@@ -25,10 +25,10 @@ def initialize_st_page(title: str, icon: str, layout="wide", initial_sidebar_sta
         st.write(readme_path.read_text())
 
 
-def download_csv_button(df: pd.DataFrame, filename: str, key: str):
+def download_csv_button(df: pd.DataFrame, filename: str, key: str, label: str = "Download CSV"):
     csv = df.to_csv(index=False).encode('utf-8')
     return st.download_button(
-                label="Download CSV",
+                label=label,
                 data=csv,
                 file_name=f"{filename}.csv",
                 mime="text/csv",
