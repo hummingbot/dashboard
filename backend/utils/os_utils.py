@@ -105,25 +105,6 @@ def load_controllers(path):
     return controllers
 
 
-def get_bots_data_paths(root_path: str):
-    dbs = {"uploaded": os.path.join(root_path, "uploaded")}
-    return {key: value for key, value in dbs.items() if value is not None}
-
-
-def get_local_dbs(root_path: str = "data"):
-    databases = {}
-    bots_data_paths = get_bots_data_paths(root_path)
-    for source_name, source_path in bots_data_paths.items():
-        sqlite_files = {}
-        for db_name in os.listdir(source_path):
-            if db_name.endswith(".sqlite"):
-                sqlite_files[db_name] = os.path.join(source_path, db_name)
-        databases[source_name] = sqlite_files
-    if len(databases) > 0:
-        return {key: value for key, value in databases.items() if value}
-    return None
-
-
 def get_function_from_file(file_path: str, function_name: str):
     # Create a module specification from the file path and load it
     spec = importlib.util.spec_from_file_location("module.name", file_path)
