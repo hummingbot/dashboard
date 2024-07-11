@@ -4,10 +4,8 @@ import streamlit as st
 from streamlit_elements import elements, mui
 from types import SimpleNamespace
 
-from CONFIG import BACKEND_API_HOST, BACKEND_API_PORT
 from frontend.components.bot_performance_card import BotPerformanceCardV2
 from frontend.components.dashboard import Dashboard
-from backend.services.backend_api_client import BackendAPIClient
 from frontend.st_utils import initialize_st_page, get_backend_api_client
 
 # Constants for UI layout
