@@ -1,8 +1,5 @@
-from CONFIG import BACKEND_API_HOST, BACKEND_API_PORT
-from backend.services.backend_api_client import BackendAPIClient
 from frontend.st_utils import initialize_st_page, get_backend_api_client
 import streamlit as st
-
 
 initialize_st_page(title="Credentials", icon="🔑")
 
