@@ -24,8 +24,8 @@ def backtesting_section(inputs, backend_api_client):
         end_datetime = datetime.combine(end_date, datetime.max.time())
         try:
             backtesting_results = backend_api_client.run_backtesting(
-                start_time=int(start_datetime.timestamp()) * 1000,
-                end_time=int(end_datetime.timestamp()) * 1000,
+                start_time=int(start_datetime.timestamp()),
+                end_time=int(end_datetime.timestamp()),
                 backtesting_resolution=backtesting_resolution,
                 trade_cost=trade_cost / 100,
                 config=inputs,
