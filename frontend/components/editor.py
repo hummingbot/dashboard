@@ -1,8 +1,10 @@
 from functools import partial
+
 import streamlit as st
-from streamlit_elements import mui, editor, sync, lazy, event
+from streamlit_elements import editor, event, lazy, mui, sync
 
 from backend.utils.os_utils import save_file
+
 from .dashboard import Dashboard
 
 
@@ -37,7 +39,7 @@ class Editor(Dashboard.Item):
     @property
     def tabs(self):
         return self._tabs
-    
+
     def update_content(self, label, content):
         self._tabs[label]["content"] = content
 
@@ -54,7 +56,9 @@ class Editor(Dashboard.Item):
         return self._tabs[label]["content"]
 
     def __call__(self):
-        with mui.Paper(key=self._key, sx={"display": "flex", "flexDirection": "column", "borderRadius": 3, "overflow": "hidden"}, elevation=1):
+        with mui.Paper(key=self._key,
+                       sx={"display": "flex", "flexDirection": "column", "borderRadius": 3, "overflow": "hidden"},
+                       elevation=1):
 
             with self.title_bar("0px 15px 0px 15px"):
                 with mui.Grid(container=True, spacing=4, sx={"display": "flex", "alignItems": "center"}):
