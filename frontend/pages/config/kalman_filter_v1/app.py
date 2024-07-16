@@ -1,13 +1,14 @@
-import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
+import streamlit as st
 import yaml
 from hummingbot.connector.connector_base import OrderType
+from plotly.subplots import make_subplots
 from pykalman import KalmanFilter
 
-from CONFIG import BACKEND_API_HOST, BACKEND_API_PORT
 from backend.services.backend_api_client import BackendAPIClient
-from frontend.st_utils import initialize_st_page, get_backend_api_client
+from CONFIG import BACKEND_API_HOST, BACKEND_API_PORT
+from frontend.st_utils import get_backend_api_client, initialize_st_page
 
 # Initialize the Streamlit page
 initialize_st_page(title="Kalman Filter V1", icon="📈", initial_sidebar_state="expanded")
@@ -17,6 +18,7 @@ initialize_st_page(title="Kalman Filter V1", icon="📈", initial_sidebar_state=
 def get_candles(connector_name="binance", trading_pair="BTC-USDT", interval="1m", max_records=5000):
     backend_client = BackendAPIClient(BACKEND_API_HOST, BACKEND_API_PORT)
     return backend_client.get_real_time_candles(connector_name, trading_pair, interval, max_records)
+
 
 @st.cache_data
 def add_indicators(df, observation_covariance=1, transition_covariance=0.01, initial_state_covariance=0.001):
@@ -61,7 +63,6 @@ with c3:
 with c4:
     max_records = st.number_input("Max Records", min_value=100, max_value=10000, value=1000)
 
-
 st.write("## Positions Configuration")
 c1, c2, c3, c4 = st.columns(4)
 with c1:
@@ -87,28 +88,25 @@ with c1:
 with c2:
     transition_covariance = st.number_input("Transition Covariance", value=0.001, step=0.0001, format="%.4f")
 
-
 # Load candle data
-candle_data = get_candles(connector_name=candles_connector, trading_pair=candles_trading_pair, interval=interval, max_records=max_records)
+candle_data = get_candles(connector_name=candles_connector, trading_pair=candles_trading_pair, interval=interval,
+                          max_records=max_records)
 df = pd.DataFrame(candle_data)
 df.index = pd.to_datetime(df['timestamp'], unit='s')
 candles_processed = add_indicators(df, observation_covariance, transition_covariance)
-
-
 
 # Prepare data for signals
 signals = candles_processed[candles_processed['signal'] != 0]
 buy_signals = signals[signals['signal'] == 1]
 sell_signals = signals[signals['signal'] == -1]
 
-from plotly.subplots import make_subplots
 
 # Define your color palette
 tech_colors = {
-    'upper_band': '#4682B4',    # Steel Blue for the Upper Bollinger Band
+    'upper_band': '#4682B4',  # Steel Blue for the Upper Bollinger Band
     'middle_band': '#FFD700',  # Gold for the Middle Bollinger Band
-    'lower_band': '#32CD32',   # Green for the Lower Bollinger Band
-    'buy_signal': '#1E90FF',   # Dodger Blue for Buy Signals
+    'lower_band': '#32CD32',  # Green for the Lower Bollinger Band
+    'buy_signal': '#1E90FF',  # Dodger Blue for Buy Signals
     'sell_signal': '#FF0000',  # Red for Sell Signals
 }
 
@@ -127,9 +125,15 @@ fig.add_trace(go.Candlestick(x=candles_processed.index,
               row=1, col=1)
 
 # Bollinger Bands
-fig.add_trace(go.Scatter(x=candles_processed.index, y=candles_processed['kf_upper'], line=dict(color=tech_colors['upper_band']), name='Upper Band'), row=1, col=1)
-fig.add_trace(go.Scatter(x=candles_processed.index, y=candles_processed['kf'], line=dict(color=tech_colors['middle_band']), name='Middle Band'), row=1, col=1)
-fig.add_trace(go.Scatter(x=candles_processed.index, y=candles_processed['kf_lower'], line=dict(color=tech_colors['lower_band']), name='Lower Band'), row=1, col=1)
+fig.add_trace(
+    go.Scatter(x=candles_processed.index, y=candles_processed['kf_upper'], line=dict(color=tech_colors['upper_band']),
+               name='Upper Band'), row=1, col=1)
+fig.add_trace(
+    go.Scatter(x=candles_processed.index, y=candles_processed['kf'], line=dict(color=tech_colors['middle_band']),
+               name='Middle Band'), row=1, col=1)
+fig.add_trace(
+    go.Scatter(x=candles_processed.index, y=candles_processed['kf_lower'], line=dict(color=tech_colors['lower_band']),
+               name='Lower Band'), row=1, col=1)
 
 # Signals plot
 fig.add_trace(go.Scatter(x=buy_signals.index, y=buy_signals['close'], mode='markers',
@@ -140,7 +144,8 @@ fig.add_trace(go.Scatter(x=sell_signals.index, y=sell_signals['close'], mode='ma
                          name='Sell Signal'), row=1, col=1)
 
 fig.add_trace(go.Scatter(x=signals.index, y=signals['signal'], mode='markers',
-                         marker=dict(color=signals['signal'].map({1: tech_colors['buy_signal'], -1: tech_colors['sell_signal']}), size=10),
+                         marker=dict(color=signals['signal'].map(
+                             {1: tech_colors['buy_signal'], -1: tech_colors['sell_signal']}), size=10),
                          showlegend=False), row=2, col=1)
 
 # Update layout
@@ -217,7 +222,6 @@ with c3:
         mime='text/yaml'
     )
     upload_config_to_backend = st.button("Upload Config to BackendAPI")
-
 
 if upload_config_to_backend:
     backend_api_client = get_backend_api_client()

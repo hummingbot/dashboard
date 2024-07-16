@@ -1,10 +1,8 @@
-import streamlit as st
 import plotly.graph_objects as go
+import streamlit as st
 import yaml
 
-from CONFIG import BACKEND_API_HOST, BACKEND_API_PORT
-from backend.services.backend_api_client import BackendAPIClient
-from frontend.st_utils import initialize_st_page, get_backend_api_client
+from frontend.st_utils import get_backend_api_client, initialize_st_page
 
 # Initialize the Streamlit page
 initialize_st_page(title="XEMM Multiple Levels", icon="⚡️")
@@ -29,9 +27,9 @@ with c4:
     c41, c42 = st.columns([1, 1])
     for i in range(buy_maker_levels):
         with c41:
-            target_profitability = st.number_input(f"Target Profitability {i+1} B% ", value=0.3, step=0.01)
+            target_profitability = st.number_input(f"Target Profitability {i + 1} B% ", value=0.3, step=0.01)
         with c42:
-            amount = st.number_input(f"Amount {i+1}B Quote", value=10, step=1)
+            amount = st.number_input(f"Amount {i + 1}B Quote", value=10, step=1)
         buy_targets_amounts.append([target_profitability / 100, amount])
 with c5:
     sell_maker_levels = st.number_input("Sell Maker Levels", value=1, step=1)
@@ -39,9 +37,9 @@ with c5:
     c51, c52 = st.columns([1, 1])
     for i in range(sell_maker_levels):
         with c51:
-            target_profitability = st.number_input(f"Target Profitability {i+1}S %", value=0.3, step=0.001)
+            target_profitability = st.number_input(f"Target Profitability {i + 1}S %", value=0.3, step=0.001)
         with c52:
-            amount = st.number_input(f"Amount {i+1} S Quote", value=10, step=1)
+            amount = st.number_input(f"Amount {i + 1} S Quote", value=10, step=1)
         sell_targets_amounts.append([target_profitability / 100, amount])
 
 
@@ -82,7 +80,8 @@ def create_order_graph(order_type, targets, min_profit, max_profit):
         title=f"{order_type.capitalize()} Order Distribution with Profitability Targets",
         xaxis=dict(
             title="Profitability (%)",
-            range=[0, max(max(x_values + [min_profit_percent, max_profit_percent]) + 0.1, 1)]  # Adjust range to include a buffer
+            range=[0, max(max(x_values + [min_profit_percent, max_profit_percent]) + 0.1, 1)]
+            # Adjust range to include a buffer
         ),
         yaxis=dict(
             title="Order Amount"
@@ -92,6 +91,7 @@ def create_order_graph(order_type, targets, min_profit, max_profit):
     )
 
     return fig
+
 
 # Use the function for both buy and sell orders
 buy_order_fig = create_order_graph('buy', buy_targets_amounts, min_profitability, max_profitability)
@@ -104,29 +104,29 @@ st.plotly_chart(sell_order_fig, use_container_width=True)
 # Display in Streamlit
 c1, c2, c3 = st.columns([2, 2, 1])
 with c1:
-    config_base = st.text_input("Config Base", value=f"xemm-{maker_connector}-{taker_connector}-{maker_trading_pair.split('-')[0]}")
+    config_base = st.text_input("Config Base",
+                                value=f"xemm-{maker_connector}-{taker_connector}-{maker_trading_pair.split('-')[0]}")
 with c2:
     config_tag = st.text_input("Config Tag", value="1.1")
 
 id = f"{config_base}_{config_tag}"
 config = {
-        "id": id.lower(),
-        "controller_name": "xemm_multiple_levels",
-        "controller_type": "generic",
-        "maker_connector": maker_connector,
-        "maker_trading_pair": maker_trading_pair,
-        "taker_connector": taker_connector,
-        "taker_trading_pair": taker_trading_pair,
-        "min_profitability": min_profitability,
-        "max_profitability": max_profitability,
-        "buy_levels_targets_amount": buy_targets_amounts,
-        "sell_levels_targets_amount": sell_targets_amounts
+    "id": id.lower(),
+    "controller_name": "xemm_multiple_levels",
+    "controller_type": "generic",
+    "maker_connector": maker_connector,
+    "maker_trading_pair": maker_trading_pair,
+    "taker_connector": taker_connector,
+    "taker_trading_pair": taker_trading_pair,
+    "min_profitability": min_profitability,
+    "max_profitability": max_profitability,
+    "buy_levels_targets_amount": buy_targets_amounts,
+    "sell_levels_targets_amount": sell_targets_amounts
 }
 yaml_config = yaml.dump(config, default_flow_style=False)
 
 with c3:
     upload_config_to_backend = st.button("Upload Config to BackendAPI")
-
 
 if upload_config_to_backend:
     backend_api_client = get_backend_api_client()
