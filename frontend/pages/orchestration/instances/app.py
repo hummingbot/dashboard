@@ -1,17 +1,18 @@
 import time
+from types import SimpleNamespace
 
 import streamlit as st
 from streamlit_elements import elements, mui
-from types import SimpleNamespace
 
 from frontend.components.bot_performance_card import BotPerformanceCardV2
 from frontend.components.dashboard import Dashboard
-from frontend.st_utils import initialize_st_page, get_backend_api_client
+from frontend.st_utils import get_backend_api_client, initialize_st_page
 
 # Constants for UI layout
 CARD_WIDTH = 12
 CARD_HEIGHT = 4
 NUM_CARD_COLS = 1
+
 
 def get_grid_positions(n_cards: int, cols: int = NUM_CARD_COLS, card_width: int = CARD_WIDTH, card_height: int = CARD_HEIGHT):
     rows = n_cards // cols + 1
@@ -28,7 +29,9 @@ def update_active_bots(api_client):
         new_bots = set(current_active_bots.keys()) - set(stored_bots.keys())
         removed_bots = set(stored_bots.keys()) - set(current_active_bots.keys())
         for bot in removed_bots:
-            st.session_state.active_instances_board.bot_cards = [card for card in st.session_state.active_instances_board.bot_cards if card[1] != bot]
+            st.session_state.active_instances_board.bot_cards = [card for card in
+                                                                 st.session_state.active_instances_board.bot_cards
+                                                                 if card[1] != bot]
         positions = get_grid_positions(len(current_active_bots), NUM_CARD_COLS, CARD_WIDTH, CARD_HEIGHT)
         for bot, (x, y) in zip(new_bots, positions[:len(new_bots)]):
             card = BotPerformanceCardV2(st.session_state.active_instances_board.dashboard, x, y, CARD_WIDTH, CARD_HEIGHT)

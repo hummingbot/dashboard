@@ -1,8 +1,8 @@
-from frontend.st_utils import initialize_st_page, get_backend_api_client
-import streamlit as st
 import pandas as pd
-import plotly.graph_objects as go
 import plotly.express as px
+import streamlit as st
+
+from frontend.st_utils import get_backend_api_client, initialize_st_page
 
 initialize_st_page(title="Portfolio", icon="💰")
 
@@ -91,7 +91,8 @@ for account in accounts:
     filtered_account_state[account] = {}
     for exchange in exchanges:
         if exchange in account_state[account]:
-            filtered_account_state[account][exchange] = [token_info for token_info in account_state[account][exchange] if token_info["token"] in tokens_available]
+            filtered_account_state[account][exchange] = [token_info for token_info in account_state[account][exchange]
+                                                         if token_info["token"] in tokens_available]
 
 filtered_account_history = []
 for record in account_history:
@@ -101,7 +102,9 @@ for record in account_history:
             filtered_record["state"][account] = {}
             for exchange in exchanges:
                 if exchange in record["state"][account]:
-                    filtered_record["state"][account][exchange] = [token_info for token_info in record["state"][account][exchange] if token_info["token"] in tokens_available]
+                    filtered_record["state"][account][exchange] = [token_info for token_info in
+                                                                   record["state"][account][exchange] if
+                                                                   token_info["token"] in tokens_available]
     filtered_account_history.append(filtered_record)
 
 if len(filtered_account_state) > 0:

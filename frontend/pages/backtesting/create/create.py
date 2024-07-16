@@ -3,8 +3,8 @@ from types import SimpleNamespace
 import streamlit as st
 from streamlit_elements import elements, mui
 
-from frontend.components.dashboard import Dashboard
 from frontend.components.controllers_file_explorer import ControllersFileExplorer
+from frontend.components.dashboard import Dashboard
 from frontend.components.directional_strategy_creation_card import DirectionalStrategyCreationCard
 from frontend.components.editor import Editor
 from frontend.st_utils import initialize_st_page
