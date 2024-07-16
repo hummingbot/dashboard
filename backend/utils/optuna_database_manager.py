@@ -1,5 +1,5 @@
-import os
 import json
+import os
 from typing import Optional
 
 import pandas as pd
@@ -86,18 +86,6 @@ class OptunaDBManager:
         try:
             with self.session_maker() as session:
                 df = pd.read_sql_query(text("SELECT * FROM trial_values"), session.connection())
-            return df
-        except Exception as e:
-            return f"Error: {str(e)}"
-
-    @property
-    def trial_system_attributes(self):
-        return self._get_trial_system_attributes_table()
-
-    def _get_trial_system_attributes_table(self):
-        try:
-            with self.session_maker() as session:
-                df = pd.read_sql_query(text("SELECT * FROM trial_system_attributes"), session.connection())
             return df
         except Exception as e:
             return f"Error: {str(e)}"
