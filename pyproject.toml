@@ -7,7 +7,6 @@ line-length = 120
 target-version = ["py38"]
 
 [tool.isort]
-line_length = 120
 profile = "black"
 multi_line_output = 3
 include_trailing_comma = true
@@ -21,3 +20,6 @@ repos = [
     { repo = "https://github.com/psf/black", rev = "21.6b0", hooks = [{ id = "black" }] },
     { repo = "https://github.com/pre-commit/mirrors-isort", rev = "v5.9.3", hooks = [{ id = "isort" }] }
 ]
+
+[tool.flake8]
+max-line-length = 120
