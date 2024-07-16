@@ -23,16 +23,19 @@ def get_market_making_general_inputs(custom_candles=False):
                                          help="Enter the trading pair to trade on (e.g., WLD-USDT).")
         with c3:
             leverage = st.number_input("Leverage", value=leverage,
-                                       help="Set the leverage to use for trading (e.g., 20 for 20x leverage). Set it to 1 for spot trading.")
+                                       help="Set the leverage to use for trading (e.g., 20 for 20x leverage). "
+                                            "Set it to 1 for spot trading.")
         with c4:
             total_amount_quote = st.number_input("Total amount of quote", value=total_amount_quote,
-                                                 help="Enter the total amount in quote asset to use for trading (e.g., 1000).")
+                                                 help="Enter the total amount in quote asset to use for "
+                                                      "trading (e.g., 1000).")
         with c5:
             position_mode = st.selectbox("Position Mode", ("HEDGE", "ONEWAY"), index=position_mode,
                                          help="Enter the position mode (HEDGE/ONEWAY).")
         with c6:
             cooldown_time = st.number_input("Stop Loss Cooldown Time (minutes)", value=cooldown_time,
-                                            help="Specify the cooldown time in minutes after having a stop loss (e.g., 60).") * 60
+                                            help="Specify the cooldown time in minutes after having a"
+                                                 "stop loss (e.g., 60).") * 60
         with c7:
             executor_refresh_time = st.number_input("Executor Refresh Time (minutes)", value=executor_refresh_time,
                                                     help="Enter the refresh time in minutes for executors (e.g., 60).") * 60
@@ -44,11 +47,13 @@ def get_market_making_general_inputs(custom_candles=False):
             interval_index = intervals.index(interval)
             with c1:
                 candles_connector = st.text_input("Candles Connector", value=candles_connector,
-                                                  help="Enter the name of the exchange to get candles from (e.g., binance_perpetual).")
+                                                  help="Enter the name of the exchange to get candles from"
+                                                       "(e.g., binance_perpetual).")
             with c2:
                 candles_trading_pair = st.text_input("Candles Trading Pair", value=candles_trading_pair,
-                                                   help="Enter the trading pair to get candles for (e.g., WLD-USDT).")
+                                                     help="Enter the trading pair to get candles for (e.g., WLD-USDT).")
             with c3:
                 interval = st.selectbox("Candles Interval", intervals, index=interval_index,
                                         help="Enter the interval for candles (e.g., 1m).")
-    return connector_name, trading_pair, leverage, total_amount_quote, position_mode, cooldown_time, executor_refresh_time, candles_connector, candles_trading_pair, interval
+    return connector_name, trading_pair, leverage, total_amount_quote, position_mode, cooldown_time, \
+        executor_refresh_time, candles_connector, candles_trading_pair, interval

@@ -1,7 +1,8 @@
 import streamlit as st
 from streamlit_elements import mui
 
-from backend.utils.os_utils import remove_file, load_file
+from backend.utils.os_utils import load_file, remove_file
+
 from .dashboard import Dashboard
 
 
@@ -61,4 +62,3 @@ class FileExplorerBase(Dashboard.Item):
                         mui.IconButton(mui.icon.Close, onClick=self.remove_file_from_tab, sx={"mx": 1})
             with mui.Box(sx={"overflow": "auto"}):
                 self.add_tree_view()
-
