@@ -23,9 +23,8 @@ def get_default_config_loader(controller_name: str):
                 configs = [config for config in all_configs if config["controller_name"] == controller_name]
                 if len(configs) > 0:
                     default_config = st.selectbox("Select a config", [config["id"] for config in configs])
-                    st.session_state["default_config"] = next((config for config in all_configs if config["id"] == default_config), None)
+                    st.session_state["default_config"] = next(
+                        (config for config in all_configs if config["id"] == default_config), None)
                     st.session_state["default_config"]["id"] = st.session_state["default_config"]["id"].split("_")[0]
                 else:
                     st.warning("No existing configs found for this controller.")
-
-

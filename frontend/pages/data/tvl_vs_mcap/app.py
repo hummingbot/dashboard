@@ -1,7 +1,7 @@
 import numpy as np
-import streamlit as st
 import pandas as pd
 import plotly.express as px
+import streamlit as st
 from defillama import DefiLlama
 
 from frontend.st_utils import initialize_st_page
@@ -12,15 +12,20 @@ initialize_st_page(title="TVL vs Market Cap", icon="🦉")
 MIN_TVL = 1000000.
 MIN_MCAP = 1000000.
 
+
 @st.cache_data
 def get_tvl_mcap_data():
     llama = DefiLlama()
     df = pd.DataFrame(llama.get_all_protocols())
-    tvl_mcap_df = df.loc[(df["tvl"]>0) & (df["mcap"]>0), ["name", "tvl", "mcap", "chain", "category", "slug"]].sort_values(by=["mcap"], ascending=False)
-    return tvl_mcap_df[(tvl_mcap_df["tvl"] > MIN_TVL) & (tvl_mcap_df["mcap"]> MIN_MCAP)]
+    tvl_mcap_df = df.loc[
+        (df["tvl"] > 0) & (df["mcap"] > 0), ["name", "tvl", "mcap", "chain", "category", "slug"]].sort_values(
+        by=["mcap"], ascending=False)
+    return tvl_mcap_df[(tvl_mcap_df["tvl"] > MIN_TVL) & (tvl_mcap_df["mcap"] > MIN_MCAP)]
+
 
 def get_protocols_by_chain_category(protocols: pd.DataFrame, group_by: list, nth: list):
     return protocols.sort_values('tvl', ascending=False).groupby(group_by).nth(nth).reset_index()
+
 
 with st.spinner(text='In progress'):
     tvl_mcap_df = get_tvl_mcap_data()
@@ -57,7 +62,8 @@ st.write("### SunBurst 🌞")
 groupby = st.selectbox('Group by:', [['chain', 'category'], ['category', 'chain']])
 nth = st.slider('Top protocols by Category', min_value=1, max_value=5)
 
-proto_agg = get_protocols_by_chain_category(tvl_mcap_df[tvl_mcap_df["chain"].isin(chains)], groupby, np.arange(0, nth, 1).tolist())
+proto_agg = get_protocols_by_chain_category(tvl_mcap_df[tvl_mcap_df["chain"].isin(chains)],
+                                            groupby, np.arange(0, nth, 1).tolist())
 groupby.append("slug")
 sunburst = px.sunburst(
     proto_agg,
@@ -65,6 +71,6 @@ sunburst = px.sunburst(
     values='tvl',
     height=800,
     title="SunBurst",
-    template="plotly_dark",)
+    template="plotly_dark", )
 
 st.plotly_chart(sunburst, use_container_width=True)

@@ -1,5 +1,6 @@
-import streamlit as st
 import plotly.express as px
+import streamlit as st
+
 import CONFIG
 from backend.services.coingecko_client import CoinGeckoClient
 from backend.services.miner_client import MinerClient
@@ -11,21 +12,26 @@ initialize_st_page(title="Token Spreads", icon="🧙")
 cg_utils = CoinGeckoClient()
 miner_utils = MinerClient()
 
+
 @st.cache_data
 def get_all_coins_df():
     return cg_utils.get_all_coins_df()
+
 
 @st.cache_data
 def get_all_exchanges_df():
     return cg_utils.get_all_exchanges_df()
 
+
 @st.cache_data
 def get_miner_stats_df():
     return miner_utils.get_miner_stats_df()
 
+
 @st.cache_data
 def get_coin_tickers_by_id_list(coins_id: list):
     return cg_utils.get_coin_tickers_by_id_list(coins_id)
+
 
 with st.spinner(text='In progress'):
     exchanges_df = get_all_exchanges_df()
@@ -43,7 +49,8 @@ tokens = st.multiselect(
 coins_id = coins_df.loc[coins_df["name"].isin(tokens), "id"].tolist()
 
 coin_tickers_df = get_coin_tickers_by_id_list(coins_id)
-coin_tickers_df["coin_name"] = coin_tickers_df.apply(lambda x: coins_df.loc[coins_df["id"] == x.token_id, "name"].item(), axis=1)
+coin_tickers_df["coin_name"] = coin_tickers_df.apply(
+    lambda x: coins_df.loc[coins_df["id"] == x.token_id, "name"].item(), axis=1)
 
 exchanges = st.multiselect(
     "Select the exchanges to analyze:",

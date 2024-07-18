@@ -2,7 +2,7 @@ from st_pages import Page, Section
 
 
 def main_page():
-    return [Page("main.py", "Hummingbot Dashboard", "📊"),]
+    return [Page("main.py", "Hummingbot Dashboard", "📊")]
 
 
 def public_pages():

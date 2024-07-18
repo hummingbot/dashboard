@@ -1,5 +1,6 @@
-from frontend.st_utils import initialize_st_page, get_backend_api_client
 import streamlit as st
+
+from frontend.st_utils import get_backend_api_client, initialize_st_page
 
 initialize_st_page(title="Credentials", icon="🔑")
 
@@ -11,6 +12,7 @@ NUM_COLUMNS = 4
 @st.cache_data
 def get_all_connectors_config_map():
     return client.get_all_connectors_config_map()
+
 
 # Section to display available accounts and credentials
 accounts = client.get_accounts()
@@ -55,7 +57,8 @@ with c1:
 with c2:
     # Section to delete an existing account
     st.header("Delete an Account")
-    delete_account_name = st.selectbox("Select Account to Delete", options=accounts if accounts else ["No accounts available"], )
+    delete_account_name = st.selectbox("Select Account to Delete",
+                                       options=accounts if accounts else ["No accounts available"], )
     if st.button("Delete Account"):
         if delete_account_name and delete_account_name != "No accounts available":
             response = client.delete_account(delete_account_name)
@@ -66,11 +69,14 @@ with c2:
 with c3:
     # Section to delete a credential from an existing account
     st.header("Delete Credential")
-    delete_account_cred_name = st.selectbox("Select the credentials account", options=accounts if accounts else ["No accounts available"],)
+    delete_account_cred_name = st.selectbox("Select the credentials account",
+                                            options=accounts if accounts else ["No accounts available"], )
     creds_for_account = [credential.split(".")[0] for credential in client.get_credentials(delete_account_cred_name)]
-    delete_cred_name = st.selectbox("Select a Credential to Delete", options=creds_for_account if creds_for_account else ["No credentials available"])
+    delete_cred_name = st.selectbox("Select a Credential to Delete",
+                                    options=creds_for_account if creds_for_account else ["No credentials available"])
     if st.button("Delete Credential"):
-        if (delete_account_cred_name and delete_account_cred_name != "No accounts available") and (delete_cred_name and delete_cred_name != "No credentials available"):
+        if (delete_account_cred_name and delete_account_cred_name != "No accounts available") and \
+                (delete_cred_name and delete_cred_name != "No credentials available"):
             response = client.delete_credential(delete_account_cred_name, delete_cred_name)
             st.warning(response)
         else:
@@ -85,7 +91,8 @@ with c1:
     account_name = st.selectbox("Select Account", options=accounts if accounts else ["No accounts available"])
 with c2:
     all_connectors = list(all_connector_config_map.keys())
-    binance_perpetual_index = all_connectors.index("binance_perpetual") if "binance_perpetual" in all_connectors else None
+    binance_perpetual_index = all_connectors.index(
+        "binance_perpetual") if "binance_perpetual" in all_connectors else None
     connector_name = st.selectbox("Select Connector", options=all_connectors, index=binance_perpetual_index)
     config_map = all_connector_config_map[connector_name]
 

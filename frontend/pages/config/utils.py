@@ -1,10 +1,10 @@
 import datetime
 
-import streamlit as st
 import pandas as pd
+import streamlit as st
 
-from CONFIG import BACKEND_API_HOST, BACKEND_API_PORT
 from backend.services.backend_api_client import BackendAPIClient
+from CONFIG import BACKEND_API_HOST, BACKEND_API_PORT
 
 
 def get_max_records(days_to_download: int, interval: str) -> int:
@@ -25,4 +25,3 @@ def get_candles(connector_name="binance", trading_pair="BTC-USDT", interval="1m"
                                                             end_time=int(end_time.timestamp())))
     df.index = pd.to_datetime(df.timestamp, unit='s')
     return df
-

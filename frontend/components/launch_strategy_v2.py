@@ -1,12 +1,10 @@
 import time
 
 import streamlit as st
-from streamlit_elements import mui, lazy
+from streamlit_elements import lazy, mui
 
-from CONFIG import BACKEND_API_HOST, BACKEND_API_PORT
-from backend.services.backend_api_client import BackendAPIClient
-from .dashboard import Dashboard
 from ..st_utils import get_backend_api_client
+from .dashboard import Dashboard
 
 
 class LaunchStrategyV2(Dashboard.Item):
@@ -134,14 +132,14 @@ class LaunchStrategyV2(Dashboard.Item):
                     else:
                         config_base = config["id"]
                         version = "NaN"
+                    ts_text = str(trailing_stop["activation_price"]) + " / " + str(trailing_stop["trailing_delta"])
                     data.append({
                         "id": config["id"], "config_base": config_base, "version": version,
                         "controller_name": config["controller_name"], "controller_type": config["controller_type"],
                         "connector_name": connector_name, "trading_pair": trading_pair,
                         "total_amount_quote": total_amount_quote, "max_loss_quote": total_amount_quote * stop_loss / 2,
                         "stop_loss": stop_loss, "take_profit": take_profit,
-                        "trailing_stop": str(trailing_stop["activation_price"]) + " / " +
-                                         str(trailing_stop["trailing_delta"]),
+                        "trailing_stop": ts_text,
                         "time_limit": time_limit})
 
                 with mui.Grid(item=True, xs=12):

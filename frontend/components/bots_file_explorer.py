@@ -1,8 +1,12 @@
 from streamlit_elements import mui
 
 import constants
-from backend.utils.os_utils import get_directories_from_directory, get_python_files_from_directory, \
-    get_yml_files_from_directory, get_log_files_from_directory
+from backend.utils.os_utils import (
+    get_directories_from_directory,
+    get_log_files_from_directory,
+    get_python_files_from_directory,
+    get_yml_files_from_directory,
+)
 from frontend.components.file_explorer_base import FileExplorerBase
 
 

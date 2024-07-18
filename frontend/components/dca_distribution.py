@@ -1,6 +1,6 @@
 import streamlit as st
 
-from frontend.components.st_inputs import get_distribution, normalize, distribution_inputs
+from frontend.components.st_inputs import distribution_inputs, get_distribution, normalize
 
 
 def get_dca_distribution_inputs():
@@ -28,11 +28,13 @@ def get_dca_distribution_inputs():
                 dca_amounts = dca_amounts[:buy_order_levels]
             col_spreads, col_amounts = st.columns(2)
             with col_spreads:
-                buy_spread_dist_type, buy_spread_start, buy_spread_base, buy_spread_scaling, buy_spread_step, buy_spread_ratio, buy_manual_spreads = distribution_inputs(
-                    col_spreads, "Spread", buy_order_levels, dca_spreads)
+                buy_spread_dist_type, buy_spread_start, buy_spread_base, buy_spread_scaling, buy_spread_step, \
+                    buy_spread_ratio, buy_manual_spreads = distribution_inputs(col_spreads,
+                                                                               "Spread", buy_order_levels, dca_spreads)
             with col_amounts:
-                buy_amount_dist_type, buy_amount_start, buy_amount_base, buy_amount_scaling, buy_amount_step, buy_amount_ratio, buy_manual_amounts = distribution_inputs(
-                    col_amounts, "Amount", buy_order_levels, dca_amounts)
+                buy_amount_dist_type, buy_amount_start, buy_amount_base, buy_amount_scaling, buy_amount_step, \
+                    buy_amount_ratio, buy_manual_amounts = distribution_inputs(col_amounts, "Amount",
+                                                                               buy_order_levels, dca_amounts)
 
         # Generate distributions
         spread_distributions = get_distribution(buy_spread_dist_type, buy_order_levels, buy_spread_start,
@@ -63,7 +65,8 @@ def get_dca_distribution_inputs():
                                     step=0.1,
                                     help="Enter the tr  ailing stop activation price as a percentage (e.g., 1.0 for 1%).") / 100
             # with c5:
-            ts_delta = st.number_input("Trailing Stop Delta (%)", min_value=0.0, max_value=100.0, value=ts_delta, step=0.1,
+            ts_delta = st.number_input("Trailing Stop Delta (%)", min_value=0.0, max_value=100.0, value=ts_delta,
+                                       step=0.1,
                                        help="Enter the trailing stop delta as a percentage (e.g., 0.3 for 0.3%).") / 100
 
     return {

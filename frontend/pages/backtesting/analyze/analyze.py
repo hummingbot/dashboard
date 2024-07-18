@@ -1,20 +1,20 @@
-from hummingbot.core.data_type.common import PositionMode, TradeType, OrderType
+import json
+import os
+from decimal import Decimal
+
+import streamlit as st
+from hummingbot.core.data_type.common import OrderType, PositionMode, TradeType
 from hummingbot.data_feed.candles_feed.candles_factory import CandlesConfig
 from hummingbot.strategy_v2.strategy_frameworks.data_types import OrderLevel, TripleBarrierConf
 from hummingbot.strategy_v2.strategy_frameworks.directional_trading import DirectionalTradingBacktestingEngine
 from hummingbot.strategy_v2.utils.config_encoder_decoder import ConfigEncoderDecoder
 
 import constants
-import os
-import json
-import streamlit as st
-from decimal import Decimal
-
 from backend.utils.optuna_database_manager import OptunaDBManager
 from backend.utils.os_utils import load_controllers
+from frontend.st_utils import initialize_st_page
 from frontend.visualization.graphs import BacktestingGraphs
 from frontend.visualization.strategy_analysis import StrategyAnalysis
-from frontend.st_utils import initialize_st_page
 
 initialize_st_page(title="Analyze", icon="🔬")
 
@@ -56,18 +56,26 @@ else:
     filters_column, scatter_column = st.columns([1, 6])
     with filters_column:
         accuracy = st.slider("Accuracy", min_value=0.0, max_value=1.0, value=[0.4, 1.0], step=0.01)
-        net_profit = st.slider("Net PNL (%)", min_value=merged_df["net_pnl_pct"].min(), max_value=merged_df["net_pnl_pct"].max(),
+        net_profit = st.slider("Net PNL (%)", min_value=merged_df["net_pnl_pct"].min(),
+                               max_value=merged_df["net_pnl_pct"].max(),
                                value=[merged_df["net_pnl_pct"].min(), merged_df["net_pnl_pct"].max()], step=0.01)
-        max_drawdown = st.slider("Max Drawdown (%)", min_value=merged_df["max_drawdown_pct"].min(), max_value=merged_df["max_drawdown_pct"].max(),
-                                  value=[merged_df["max_drawdown_pct"].min(), merged_df["max_drawdown_pct"].max()], step=0.01)
-        total_positions = st.slider("Total Positions", min_value=merged_df["total_positions"].min(), max_value=merged_df["total_positions"].max(),
-                                    value=[merged_df["total_positions"].min(), merged_df["total_positions"].max()], step=1)
+        max_drawdown = st.slider("Max Drawdown (%)", min_value=merged_df["max_drawdown_pct"].min(),
+                                 max_value=merged_df["max_drawdown_pct"].max(),
+                                 value=[merged_df["max_drawdown_pct"].min(), merged_df["max_drawdown_pct"].max()],
+                                 step=0.01)
+        total_positions = st.slider("Total Positions", min_value=merged_df["total_positions"].min(),
+                                    max_value=merged_df["total_positions"].max(),
+                                    value=[merged_df["total_positions"].min(), merged_df["total_positions"].max()],
+                                    step=1)
         net_profit_filter = (merged_df["net_pnl_pct"] >= net_profit[0]) & (merged_df["net_pnl_pct"] <= net_profit[1])
         accuracy_filter = (merged_df["accuracy"] >= accuracy[0]) & (merged_df["accuracy"] <= accuracy[1])
-        max_drawdown_filter = (merged_df["max_drawdown_pct"] >= max_drawdown[0]) & (merged_df["max_drawdown_pct"] <= max_drawdown[1])
-        total_positions_filter = (merged_df["total_positions"] >= total_positions[0]) & (merged_df["total_positions"] <= total_positions[1])
+        max_drawdown_filter = (merged_df["max_drawdown_pct"] >= max_drawdown[0]) & (
+                merged_df["max_drawdown_pct"] <= max_drawdown[1])
+        total_positions_filter = (merged_df["total_positions"] >= total_positions[0]) & (
+                merged_df["total_positions"] <= total_positions[1])
     with scatter_column:
-        bt_graphs = BacktestingGraphs(merged_df[net_profit_filter & accuracy_filter & max_drawdown_filter & total_positions_filter])
+        bt_graphs = BacktestingGraphs(
+            merged_df[net_profit_filter & accuracy_filter & max_drawdown_filter & total_positions_filter])
         # Show and compare all of the study trials
         st.plotly_chart(bt_graphs.pnl_vs_maxdrawdown(), use_container_width=True)
     # Get study trials
@@ -107,11 +115,11 @@ else:
                     # TODO: Add support for boolean fields in optimize tab
                     field_value = st.checkbox(field_name, value=field_value)
                 else:
-                    raise ValueError(f"Field type {field_type} not supported")
+                    raise ValueError("Field type {field_type} not supported")
         else:
             if field_name == "candles_config":
                 st.write("---")
-                st.write(f"## Candles Config:")
+                st.write("## Candles Config:")
                 candles = []
                 for i, candles_config in enumerate(field_value):
                     st.write(f"#### Candle {i}:")
@@ -130,7 +138,7 @@ else:
                 field_value = candles
             elif field_name == "order_levels":
                 new_levels = []
-                st.write(f"## Order Levels:")
+                st.write("## Order Levels:")
                 for order_level in field_value:
                     st.write(f"### Level {order_level['level']} {order_level['side'].name}")
                     ol_c1, ol_c2 = st.columns([5, 1])
@@ -139,30 +147,38 @@ else:
                         c21, c22, c23, c24, c25 = st.columns(5)
                         triple_barrier_conf_level = order_level["triple_barrier_conf"]
                         with c21:
-                            take_profit = st.number_input("Take profit", value=float(triple_barrier_conf_level["take_profit"]),
+                            take_profit = st.number_input("Take profit",
+                                                          value=float(triple_barrier_conf_level["take_profit"]),
                                                           key=f"{order_level['level']}_{order_level['side'].name}_tp")
                         with c22:
-                            stop_loss = st.number_input("Stop Loss", value=float(triple_barrier_conf_level["stop_loss"]),
+                            stop_loss = st.number_input("Stop Loss",
+                                                        value=float(triple_barrier_conf_level["stop_loss"]),
                                                         key=f"{order_level['level']}_{order_level['side'].name}_sl")
                         with c23:
                             time_limit = st.number_input("Time Limit", value=triple_barrier_conf_level["time_limit"],
                                                          key=f"{order_level['level']}_{order_level['side'].name}_tl")
                         with c24:
-                            ts_ap = st.number_input("Trailing Stop Activation Price", value=float(triple_barrier_conf_level["trailing_stop_activation_price_delta"]),
-                                                    key=f"{order_level['level']}_{order_level['side'].name}_tsap", format="%.4f")
+                            ts_ap = st.number_input("Trailing Stop Activation Price", value=float(
+                                triple_barrier_conf_level["trailing_stop_activation_price_delta"]),
+                                                    key=f"{order_level['level']}_{order_level['side'].name}_tsap",
+                                                    format="%.4f")
                         with c25:
-                            ts_td = st.number_input("Trailing Stop Trailing Delta", value=float(triple_barrier_conf_level["trailing_stop_trailing_delta"]),
-                                                    key=f"{order_level['level']}_{order_level['side'].name}_tstd", format="%.4f")
+                            ts_td = st.number_input("Trailing Stop Trailing Delta", value=float(
+                                triple_barrier_conf_level["trailing_stop_trailing_delta"]),
+                                                    key=f"{order_level['level']}_{order_level['side'].name}_tstd",
+                                                    format="%.4f")
                     with ol_c2:
                         st.write("#### Position config:")
                         c31, c32 = st.columns(2)
                         with c31:
-                            order_amount = st.number_input("Order amount USD", value=float(order_level["order_amount_usd"]),
+                            order_amount = st.number_input("Order amount USD",
+                                                           value=float(order_level["order_amount_usd"]),
                                                            key=f"{order_level['level']}_{order_level['side'].name}_oa")
                         with c32:
                             cooldown_time = st.number_input("Cooldown time", value=order_level["cooldown_time"],
                                                             key=f"{order_level['level']}_{order_level['side'].name}_cd")
-                        triple_barrier_conf = TripleBarrierConf(stop_loss=Decimal(stop_loss), take_profit=Decimal(take_profit),
+                        triple_barrier_conf = TripleBarrierConf(stop_loss=Decimal(stop_loss),
+                                                                take_profit=Decimal(take_profit),
                                                                 time_limit=time_limit,
                                                                 trailing_stop_activation_price_delta=Decimal(ts_ap),
                                                                 trailing_stop_trailing_delta=Decimal(ts_td),
@@ -225,4 +241,4 @@ else:
                 add_volume=add_volume)
 
         except FileNotFoundError:
-            st.warning(f"The requested candles could not be found.")
+            st.warning("The requested candles could not be found.")

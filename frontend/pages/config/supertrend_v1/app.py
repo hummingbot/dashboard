@@ -6,13 +6,12 @@ from frontend.components.config_loader import get_default_config_loader
 from frontend.components.save_config import render_save_config
 from frontend.pages.config.supertrend_v1.user_inputs import user_inputs
 from frontend.pages.config.utils import get_candles
-from frontend.st_utils import initialize_st_page, get_backend_api_client
+from frontend.st_utils import get_backend_api_client, initialize_st_page
 from frontend.visualization import theme
 from frontend.visualization.backtesting import create_backtesting_figure
-from frontend.visualization.backtesting_metrics import render_backtesting_metrics, render_accuracy_metrics, \
-    render_close_types
+from frontend.visualization.backtesting_metrics import render_accuracy_metrics, render_backtesting_metrics, render_close_types
 from frontend.visualization.candles import get_candlestick_trace
-from frontend.visualization.indicators import get_volume_trace, get_supertrend_traces
+from frontend.visualization.indicators import get_supertrend_traces, get_volume_trace
 from frontend.visualization.signals import get_supertrend_v1_signal_traces
 from frontend.visualization.utils import add_traces_to_fig
 
@@ -28,7 +27,8 @@ st.session_state["default_config"].update(inputs)
 st.write("### Visualizing Supertrend Trading Signals")
 days_to_visualize = st.number_input("Days to Visualize", min_value=1, max_value=365, value=7)
 # Load candle data
-candles = get_candles(connector_name=inputs["candles_connector"], trading_pair=inputs["candles_trading_pair"], interval=inputs["interval"], days=days_to_visualize)
+candles = get_candles(connector_name=inputs["candles_connector"], trading_pair=inputs["candles_trading_pair"],
+                      interval=inputs["interval"], days=days_to_visualize)
 
 # Create a subplot with 2 rows
 fig = make_subplots(rows=2, cols=1, shared_xaxes=True,
@@ -36,7 +36,8 @@ fig = make_subplots(rows=2, cols=1, shared_xaxes=True,
                     row_heights=[0.8, 0.2])
 add_traces_to_fig(fig, [get_candlestick_trace(candles)], row=1, col=1)
 add_traces_to_fig(fig, get_supertrend_traces(candles, inputs["length"], inputs["multiplier"]), row=1, col=1)
-add_traces_to_fig(fig, get_supertrend_v1_signal_traces(candles, inputs["length"], inputs["multiplier"], inputs["percentage_threshold"]), row=1, col=1)
+add_traces_to_fig(fig, get_supertrend_v1_signal_traces(candles, inputs["length"], inputs["multiplier"],
+                                                       inputs["percentage_threshold"]), row=1, col=1)
 add_traces_to_fig(fig, [get_volume_trace(candles)], row=2, col=1)
 
 layout_settings = theme.get_default_layout()

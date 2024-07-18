@@ -1,11 +1,11 @@
-from uuid import uuid4
 from abc import ABC, abstractmethod
-from streamlit_elements import dashboard, mui
 from contextlib import contextmanager
+from uuid import uuid4
+
+from streamlit_elements import dashboard, mui
 
 
 class Dashboard:
-
     DRAGGABLE_CLASS = "draggable"
 
     def __init__(self):
@@ -36,15 +36,15 @@ class Dashboard:
         @contextmanager
         def title_bar(self, padding="5px 15px 5px 15px", dark_switcher=True):
             with mui.Stack(
-                className=self._draggable_class,
-                alignItems="center",
-                direction="row",
-                spacing=1,
-                sx={
-                    "padding": padding,
-                    "borderBottom": 1,
-                    "borderColor": "divider",
-                },
+                    className=self._draggable_class,
+                    alignItems="center",
+                    direction="row",
+                    spacing=1,
+                    sx={
+                        "padding": padding,
+                        "borderBottom": 1,
+                        "borderColor": "divider",
+                    },
             ):
                 yield
 

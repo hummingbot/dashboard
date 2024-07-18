@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.black]
+line-length = 130
+target-version = ["py38"]
+
+[tool.isort]
+line_length = 130
+profile = "black"
+multi_line_output = 3
+include_trailing_comma = true
+use_parentheses = true
+ensure_newline_before_comments = true
+combine_as_imports = true
+
+[tool.pre-commit]
+repos = [
+    { repo = "https://github.com/pre-commit/pre-commit-hooks", rev = "v3.4.0", hooks = [{ id = "check-yaml" }, { id = "end-of-file-fixer" }] },
+    { repo = "https://github.com/psf/black", rev = "21.6b0", hooks = [{ id = "black" }] },
+    { repo = "https://github.com/pre-commit/mirrors-isort", rev = "v5.9.3", hooks = [{ id = "isort" }] }
+]

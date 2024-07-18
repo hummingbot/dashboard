@@ -1,4 +1,5 @@
 from types import SimpleNamespace
+
 import streamlit as st
 from streamlit_elements import elements, mui
 

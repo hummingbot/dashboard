@@ -1,6 +1,6 @@
-from _decimal import Decimal
 from math import exp
 
+from _decimal import Decimal
 from hummingbot.strategy_v2.utils.distributions import Distributions
 
 
@@ -45,7 +45,7 @@ def distribution_inputs(column, dist_type_name, levels=3, default_values=None):
                                         key=f"{column}_{dist_type_name.lower()}_ratio")
         elif dist_type == "Linear":
             step = column.number_input(f"{dist_type_name} End", value=1.0,
-                                        key=f"{column}_{dist_type_name.lower()}_end")
+                                       key=f"{column}_{dist_type_name.lower()}_end")
     else:
         if default_values:
             manual_values = [column.number_input(f"{dist_type_name} for level {i + 1}", value=value * 100.0,
@@ -53,7 +53,8 @@ def distribution_inputs(column, dist_type_name, levels=3, default_values=None):
                              enumerate(default_values)]
         else:
             manual_values = [column.number_input(f"{dist_type_name} for level {i + 1}", value=i + 1.0,
-                                                 key=f"{column}_{dist_type_name.lower()}_{i}") for i, value in range(levels)]
+                                                 key=f"{column}_{dist_type_name.lower()}_{i}") for i, value in
+                             range(levels)]
         start = None  # As start is not relevant for Manual type
 
     return dist_type, start, base, scaling_factor, step, ratio, manual_values

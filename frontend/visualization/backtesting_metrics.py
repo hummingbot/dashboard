@@ -38,6 +38,7 @@ def render_accuracy_metrics(summary_results):
     st.metric(label="Accuracy Long", value=f"{accuracy_long:.2%}")
     st.metric(label="Accuracy Short", value=f"{accuracy_short:.2%}")
 
+
 def render_accuracy_metrics2(summary_results):
     accuracy = summary_results.get('accuracy', 0)
     total_long = summary_results.get('total_long', 0)

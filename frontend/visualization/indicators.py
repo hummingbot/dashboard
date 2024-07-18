@@ -24,7 +24,9 @@ def get_bbands_traces(df, bb_length, bb_std):
 
 def get_volume_trace(df):
     df.index = pd.to_datetime(df.timestamp, unit='s')
-    return go.Bar(x=df.index, y=df['volume'], name="Volume", marker_color=theme.get_color_scheme()["volume"], opacity=0.7)
+    return go.Bar(x=df.index, y=df['volume'], name="Volume", marker_color=theme.get_color_scheme()["volume"],
+                  opacity=0.7)
+
 
 def get_macd_traces(df, macd_fast, macd_slow, macd_signal):
     tech_colors = theme.get_color_scheme()
@@ -38,7 +40,8 @@ def get_macd_traces(df, macd_fast, macd_slow, macd_signal):
         go.Scatter(x=df.index, y=df[macd_s], line=dict(color=tech_colors['macd_signal']),
                    name='MACD Signal'),
         go.Bar(x=df.index, y=df[macd_hist], name='MACD Histogram',
-               marker_color=df[f"MACDh_{macd_fast}_{macd_slow}_{macd_signal}"].apply(lambda x: '#FF6347' if x < 0 else '#32CD32'))
+               marker_color=df[f"MACDh_{macd_fast}_{macd_slow}_{macd_signal}"].apply(
+                   lambda x: '#FF6347' if x < 0 else '#32CD32'))
     ]
     return traces
 
@@ -79,4 +82,3 @@ def get_supertrend_traces(df, length, multiplier):
     ]
 
     return traces
-

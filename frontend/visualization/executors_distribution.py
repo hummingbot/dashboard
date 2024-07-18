@@ -1,9 +1,11 @@
 import numpy as np
 import plotly.graph_objects as go
+
 import frontend.visualization.theme as theme
 
 
-def create_executors_distribution_traces(buy_spreads, sell_spreads, buy_amounts_pct, sell_amounts_pct, total_amount_quote):
+def create_executors_distribution_traces(buy_spreads, sell_spreads, buy_amounts_pct, sell_amounts_pct,
+                                         total_amount_quote):
     colors = theme.get_color_scheme()
 
     buy_spread_distributions = [spread * 100 for spread in buy_spreads]
