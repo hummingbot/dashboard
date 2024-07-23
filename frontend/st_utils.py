@@ -95,7 +95,8 @@ def auth_system():
     else:
         with open('credentials.yml') as file:
             config = yaml.load(file, Loader=SafeLoader)
-        if "authenticator" not in st.session_state:
+        if "authenticator" not in st.session_state or "authentication_status" not in st.session_state or not st.session_state.get(
+                "authentication_status", False):
             st.session_state.authenticator = stauth.Authenticate(
                 config['credentials'],
                 config['cookie']['name'],
@@ -103,16 +104,13 @@ def auth_system():
                 config['cookie']['expiry_days'],
                 config['pre-authorized']
             )
-            st.session_state.authenticator.login()
-        if st.session_state["authentication_status"]:
-            st.session_state.authenticator.logout(location="sidebar")
-            st.sidebar.write(f'Welcome *{st.session_state["name"]}*')
-            show_pages(main_page() + private_pages() + public_pages())
-
-        else:
             show_pages(main_page() + public_pages())
             st.session_state.authenticator.login()
             if st.session_state["authentication_status"] is False:
                 st.error('Username/password is incorrect')
             elif st.session_state["authentication_status"] is None:
                 st.warning('Please enter your username and password')
+        else:
+            st.session_state.authenticator.logout(location="sidebar")
+            st.sidebar.write(f'Welcome *{st.session_state["name"]}*')
+            show_pages(main_page() + private_pages() + public_pages())
