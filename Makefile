@@ -23,7 +23,7 @@ detect_conda_bin := $(shell bash -c 'if [ "${CONDA_EXE} " == " " ]; then \
 CONDA_BIN := $(detect_conda_bin)
 
 run:
-	streamlit run main.py
+	streamlit run main.py --server.headless true
 
 uninstall:
 	conda env remove -n dashboard
