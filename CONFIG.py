@@ -17,7 +17,7 @@ DEFAULT_MINER_COINS = ["Avalanche"]
 CERTIFIED_EXCHANGES = ["ascendex", "binance", "bybit", "gate.io", "hitbtc", "huobi", "kucoin", "okx", "gateway"]
 CERTIFIED_STRATEGIES = ["xemm", "cross exchange market making", "pmm", "pure market making"]
 
-AUTH_SYSTEM_ENABLED = os.getenv("AUTH_SYSTEM_ENABLED", False)
+AUTH_SYSTEM_ENABLED = os.getenv("AUTH_SYSTEM_ENABLED", "False").lower() in ("true", "1", "t")
 
 BACKEND_API_HOST = os.getenv("BACKEND_API_HOST", "127.0.0.1")
 BACKEND_API_PORT = os.getenv("BACKEND_API_PORT", 8000)
