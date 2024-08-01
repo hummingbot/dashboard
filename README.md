@@ -64,7 +64,7 @@ The dashboard uses `admin` and `abc` as the default username and password respec
     usernames:
       admin:
         email: admin@gmail.com
-        name: Admin User
+        name: John Doe
         logged_in: False
         password: abc
   cookie:
