@@ -29,7 +29,8 @@ def get_risk_management_inputs():
                                     step=0.1,
                                     help="Enter the tr  ailing stop activation price as a percentage (e.g., 1.0 for 1%).") / 100
         with c5:
-            ts_delta = st.number_input("Trailing Stop Delta (%)", min_value=0.0, max_value=100.0, value=ts_delta, step=0.1,
+            ts_delta = st.number_input("Trailing Stop Delta (%)", min_value=0.0, max_value=100.0, value=ts_delta,
+                                       step=0.1,
                                        help="Enter the trailing stop delta as a percentage (e.g., 0.3 for 0.3%).") / 100
         with c6:
             take_profit_order_type = st.selectbox("Take Profit Order Type", (OrderType.LIMIT, OrderType.MARKET),

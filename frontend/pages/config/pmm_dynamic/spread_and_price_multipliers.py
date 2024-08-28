@@ -1,4 +1,4 @@
-import pandas_ta as ta # noqa: F401
+import pandas_ta as ta  # noqa: F401
 
 
 def get_pmm_dynamic_multipliers(df, macd_fast, macd_slow, macd_signal, natr_length):

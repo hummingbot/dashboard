@@ -1,5 +1,5 @@
-import plotly.graph_objects as go
 import pandas as pd
+import plotly.graph_objects as go
 
 from frontend.visualization import theme
 
@@ -11,7 +11,7 @@ def get_candlestick_trace(df):
                           low=df['low'],
                           close=df['close'],
                           name="Candlesticks",
-                          increasing_line_color='#2ECC71', decreasing_line_color='#E74C3C',)
+                          increasing_line_color='#2ECC71', decreasing_line_color='#E74C3C', )
 
 
 def get_bt_candlestick_trace(df):

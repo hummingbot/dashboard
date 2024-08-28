@@ -10,7 +10,8 @@ def user_inputs():
     macd_slow = default_config.get("macd_slow", 42)
     macd_signal = default_config.get("macd_signal", 9)
     natr_length = default_config.get("natr_length", 14)
-    connector_name, trading_pair, leverage, total_amount_quote, position_mode, cooldown_time, executor_refresh_time, candles_connector, candles_trading_pair, interval = get_market_making_general_inputs(custom_candles=True)
+    connector_name, trading_pair, leverage, total_amount_quote, position_mode, cooldown_time, executor_refresh_time, \
+        candles_connector, candles_trading_pair, interval = get_market_making_general_inputs(custom_candles=True)
     sl, tp, time_limit, ts_ap, ts_delta, take_profit_order_type = get_risk_management_inputs()
     with st.expander("PMM Dynamic Configuration", expanded=True):
         c1, c2, c3, c4 = st.columns(4)

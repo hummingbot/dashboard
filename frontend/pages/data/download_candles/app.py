@@ -1,9 +1,10 @@
-import streamlit as st
 from datetime import datetime, time
+
 import pandas as pd
 import plotly.graph_objects as go
+import streamlit as st
 
-from frontend.st_utils import initialize_st_page, get_backend_api_client
+from frontend.st_utils import get_backend_api_client, initialize_st_page
 
 # Initialize Streamlit page
 initialize_st_page(title="Download Candles", icon="💾")
@@ -11,7 +12,9 @@ backend_api_client = get_backend_api_client()
 
 c1, c2, c3, c4 = st.columns([2, 2, 2, 0.5])
 with c1:
-    connector = st.selectbox("Exchange", ["binance_perpetual", "binance", "gate_io", "gate_io_perpetual", "kucoin", "ascend_ex"], index=0)
+    connector = st.selectbox("Exchange",
+                             ["binance_perpetual", "binance", "gate_io", "gate_io_perpetual", "kucoin", "ascend_ex"],
+                             index=0)
     trading_pair = st.text_input("Trading Pair", value="BTC-USDT")
 with c2:
     interval = st.selectbox("Interval", options=["1m", "3m", "5m", "15m", "1h", "4h", "1d", "1s"])
@@ -29,8 +32,8 @@ if get_data_button:
         connector=connector,
         trading_pair=trading_pair,
         interval=interval,
-        start_time=int(start_datetime.timestamp()) * 1000,
-        end_time=int(end_datetime.timestamp()) * 1000
+        start_time=int(start_datetime.timestamp()),
+        end_time=int(end_datetime.timestamp())
     )
 
     candles_df = pd.DataFrame(candles)

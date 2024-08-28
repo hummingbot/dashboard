@@ -1,4 +1,4 @@
-from typing import Optional, Dict
+from typing import Dict, Optional
 
 import pandas as pd
 import requests
@@ -115,7 +115,8 @@ class BackendAPIClient:
     def stop_bot(self, bot_name: str, skip_order_cancellation: bool = False, async_backend: bool = True):
         """Stop a Hummingbot bot."""
         endpoint = "stop-bot"
-        return self.post(endpoint, payload={"bot_name": bot_name, "skip_order_cancellation": skip_order_cancellation, "async_backend": async_backend})
+        return self.post(endpoint, payload={"bot_name": bot_name, "skip_order_cancellation": skip_order_cancellation,
+                                            "async_backend": async_backend})
 
     def import_strategy(self, strategy_config: dict):
         """Import a trading strategy to a bot."""

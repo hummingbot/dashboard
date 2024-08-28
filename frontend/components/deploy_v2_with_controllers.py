@@ -1,9 +1,8 @@
 import time
-import streamlit as st
-import pandas as pd
 
-from CONFIG import BACKEND_API_HOST, BACKEND_API_PORT
-from backend.services.backend_api_client import BackendAPIClient
+import pandas as pd
+import streamlit as st
+
 from frontend.st_utils import get_backend_api_client
 
 
@@ -93,7 +92,8 @@ class LaunchV2WithControllers:
 
         edited_df = st.data_editor(df, hide_index=True)
 
-        self._controller_config_selected = [f"{config}.yml" for config in edited_df[edited_df["selected"]]["id"].tolist()]
+        self._controller_config_selected = [f"{config}.yml" for config in
+                                            edited_df[edited_df["selected"]]["id"].tolist()]
         st.write(self._controller_config_selected)
         c1, c2, c3, c4 = st.columns([1, 1, 1, 0.3])
         with c1:

@@ -1,9 +1,11 @@
-from streamlit_elements import mui, lazy
 import datetime
+
+from streamlit_elements import lazy, mui
 
 import constants
 from backend.utils.file_templates import strategy_optimization_template
 from backend.utils.os_utils import load_controllers, save_file
+
 from .dashboard import Dashboard
 
 
@@ -28,7 +30,8 @@ class OptimizationCreationCard(Dashboard.Item):
 
     def __call__(self):
         available_strategies = load_controllers(constants.CONTROLLERS_PATH)
-        strategy_names = [strategy for strategy, strategy_info in available_strategies.items() if strategy_info["type"] == "directional_trading"]
+        strategy_names = [strategy for strategy, strategy_info in available_strategies.items() if
+                          strategy_info["type"] == "directional_trading"]
         with mui.Paper(key=self._key,
                        sx={"display": "flex", "flexDirection": "column", "borderRadius": 3, "overflow": "hidden"},
                        elevation=1):

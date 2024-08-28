@@ -1,6 +1,7 @@
-from frontend.visualization import theme
-import plotly.graph_objects as go
 import pandas_ta as ta  # noqa: F401
+import plotly.graph_objects as go
+
+from frontend.visualization import theme
 
 
 def get_signal_traces(buy_signals, sell_signals):
@@ -14,6 +15,7 @@ def get_signal_traces(buy_signals, sell_signals):
                    name='Sell Signal')
     ]
     return traces
+
 
 def get_bollinger_v1_signal_traces(df, bb_length, bb_std, bb_long_threshold, bb_short_threshold):
     # Add Bollinger Bands
@@ -29,7 +31,6 @@ def get_bollinger_v1_signal_traces(df, bb_length, bb_std, bb_long_threshold, bb_
 
 def get_macdbb_v1_signal_traces(df, bb_length, bb_std, bb_long_threshold, bb_short_threshold, macd_fast, macd_slow,
                                 macd_signal):
-    tech_colors = theme.get_color_scheme()
     # Add Bollinger Bands
     df.ta.bbands(length=bb_length, std=bb_std, append=True)
     # Add MACD

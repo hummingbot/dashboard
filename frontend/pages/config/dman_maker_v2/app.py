@@ -1,16 +1,13 @@
 import streamlit as st
 
-from CONFIG import BACKEND_API_HOST, BACKEND_API_PORT
-from backend.services.backend_api_client import BackendAPIClient
 from frontend.components.backtesting import backtesting_section
 from frontend.components.config_loader import get_default_config_loader
 from frontend.components.dca_distribution import get_dca_distribution_inputs
 from frontend.components.save_config import render_save_config
 from frontend.pages.config.dman_maker_v2.user_inputs import user_inputs
-from frontend.st_utils import initialize_st_page, get_backend_api_client
+from frontend.st_utils import get_backend_api_client, initialize_st_page
 from frontend.visualization.backtesting import create_backtesting_figure
-from frontend.visualization.backtesting_metrics import render_backtesting_metrics, render_accuracy_metrics, \
-    render_close_types
+from frontend.visualization.backtesting_metrics import render_accuracy_metrics, render_backtesting_metrics, render_close_types
 from frontend.visualization.dca_builder import create_dca_graph
 from frontend.visualization.executors_distribution import create_executors_distribution_traces
 
@@ -18,14 +15,14 @@ from frontend.visualization.executors_distribution import create_executors_distr
 initialize_st_page(title="D-Man Maker V2", icon="🧙‍♂️")
 backend_api_client = get_backend_api_client()
 
-
 # Page content
 st.text("This tool will let you create a config for D-Man Maker V2 and upload it to the BackendAPI.")
 get_default_config_loader("dman_maker_v2")
 
 inputs = user_inputs()
 with st.expander("Executor Distribution:", expanded=True):
-    fig = create_executors_distribution_traces(inputs["buy_spreads"], inputs["sell_spreads"], inputs["buy_amounts_pct"], inputs["sell_amounts_pct"], inputs["total_amount_quote"])
+    fig = create_executors_distribution_traces(inputs["buy_spreads"], inputs["sell_spreads"], inputs["buy_amounts_pct"],
+                                               inputs["sell_amounts_pct"], inputs["total_amount_quote"])
     st.plotly_chart(fig, use_container_width=True)
 
 dca_inputs = get_dca_distribution_inputs()

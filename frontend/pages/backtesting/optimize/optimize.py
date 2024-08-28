@@ -5,18 +5,19 @@ from types import SimpleNamespace
 import streamlit as st
 from streamlit_elements import elements, mui
 
+from backend.utils import os_utils
 from frontend.components.dashboard import Dashboard
 from frontend.components.editor import Editor
 from frontend.components.optimization_creation_card import OptimizationCreationCard
 from frontend.components.optimization_run_card import OptimizationRunCard
 from frontend.components.optimizations_file_explorer import OptimizationsStrategiesFileExplorer
-from backend.utils import os_utils
 from frontend.st_utils import initialize_st_page
 
 initialize_st_page(title="Optimize", icon="🧪")
 
+
 def run_optuna_dashboard():
-    os_utils.execute_bash_command(f"optuna-dashboard sqlite:///data/backtesting/backtesting_report.db")
+    os_utils.execute_bash_command("optuna-dashboard sqlite:///data/backtesting/backtesting_report.db")
     time.sleep(5)
     webbrowser.open("http://127.0.0.1:8080/dashboard", new=2)
 

@@ -1,10 +1,11 @@
 import threading
 
 import optuna
-from streamlit_elements import mui, lazy
+from streamlit_elements import lazy, mui
 
 import constants
 from backend.utils.os_utils import get_function_from_file, get_python_files_from_directory
+
 from .dashboard import Dashboard
 
 
@@ -36,7 +37,9 @@ class OptimizationRunCard(Dashboard.Item):
 
     def __call__(self):
         optimizations = get_python_files_from_directory(constants.OPTIMIZATIONS_PATH)
-        with mui.Paper(key=self._key, sx={"display": "flex", "flexDirection": "column", "borderRadius": 3, "overflow": "hidden"}, elevation=1):
+        with mui.Paper(key=self._key,
+                       sx={"display": "flex", "flexDirection": "column", "borderRadius": 3, "overflow": "hidden"},
+                       elevation=1):
             with self.title_bar(padding="10px 15px 10px 15px", dark_switcher=False):
                 mui.icon.AutoFixHigh()
                 mui.Typography("Run a optimization", variant="h6")
@@ -58,7 +61,7 @@ class OptimizationRunCard(Dashboard.Item):
                     with mui.Grid(item=True, xs=4):
                         with mui.FormControl(variant="standard", sx={"width": "100%"}):
                             mui.TextField(defaultValue=self._optimization_name, label="Number of trials", type="number",
-                                      variant="standard", onChange=lazy(self._set_number_of_trials))
+                                          variant="standard", onChange=lazy(self._set_number_of_trials))
                     with mui.Grid(item=True, xs=4):
                         with mui.Button(variant="contained", onClick=self._run_optimization, sx={"width": "100%"}):
                             mui.icon.PlayCircleFilled()

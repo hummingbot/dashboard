@@ -27,3 +27,6 @@ dependencies:
       - streamlit-elements==0.1.*
       - streamlit-authenticator
       - pydantic==1.10.4
+      - flake8
+      - isort
+      - pre-commit

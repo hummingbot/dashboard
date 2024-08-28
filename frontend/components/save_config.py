@@ -1,7 +1,5 @@
 import streamlit as st
 
-from CONFIG import BACKEND_API_HOST, BACKEND_API_PORT
-from backend.services.backend_api_client import BackendAPIClient
 from frontend.st_utils import get_backend_api_client
 
 

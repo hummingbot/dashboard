@@ -1,8 +1,8 @@
+import re
 import time
 
-from pycoingecko import CoinGeckoAPI
 import pandas as pd
-import re
+from pycoingecko import CoinGeckoAPI
 
 
 class CoinGeckoClient:

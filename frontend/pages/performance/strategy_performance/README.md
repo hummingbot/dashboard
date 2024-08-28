@@ -1,1 +1,0 @@
-This page helps you load the database file of a Hummingbot strategy and analyze its performance.
