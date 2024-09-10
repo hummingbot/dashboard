@@ -185,7 +185,7 @@ class BackendAPIClient:
         """Get historical candles data."""
         endpoint = "historical-candles"
         payload = {
-            "connector": connector,
+            "connector_name": connector,
             "trading_pair": trading_pair,
             "interval": interval,
             "start_time": start_time,
