@@ -17,6 +17,8 @@ def public_pages():
         Page("frontend/pages/config/xemm_controller/app.py", "XEMM Controller", "⚡️"),
         Section("Data", "💾"),
         Page("frontend/pages/data/download_candles/app.py", "Download Candles", "💹"),
+        Section("Performance Pages", "🚀"),
+        Page("frontend/pages/performance/bot_performance/app.py", "Strategy Performance", "📈"),
         Section("Community Pages", "👨‍👩‍👧‍👦"),
         Page("frontend/pages/data/token_spreads/app.py", "Token Spreads", "🧙"),
         Page("frontend/pages/data/tvl_vs_mcap/app.py", "TVL vs Market Cap", "🦉"),
