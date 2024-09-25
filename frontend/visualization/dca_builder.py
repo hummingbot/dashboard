@@ -25,7 +25,7 @@ def create_dca_graph(dca_inputs, dca_amount):
         dca_spreads_normalized = [spread + 0.01 for spread in dca_spreads[:level + 1]]
         amounts = dca_order_amounts[:level + 1]
         break_even = (sum([spread * amount for spread, amount in zip(dca_spreads_normalized, amounts)]) / sum(
-            amounts)) - 0.01
+            amounts)) - 0.01 if sum(amounts) != 0 else 0
         break_even_values.append(break_even)
         take_profit_values.append(break_even - dca_inputs["take_profit"] * 100)
 
