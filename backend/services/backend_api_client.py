@@ -1,4 +1,4 @@
-from typing import Dict, Optional
+from typing import Any, Dict, List, Optional
 
 import pandas as pd
 import requests
@@ -286,3 +286,63 @@ class BackendAPIClient:
         """Get account state history."""
         endpoint = "account-state-history"
         return self.get(endpoint)
+
+    def get_performance_results(self, executors: List[Dict[str, Any]], controller_type: str):
+        if not isinstance(executors, list) or len(executors) == 0:
+            raise ValueError("Executors must be a non-empty list of dictionaries")
+        # Check if all elements in executors are dictionaries
+        if not all(isinstance(executor, dict) for executor in executors):
+            raise ValueError("All elements in executors must be dictionaries")
+        if not controller_type:
+            raise ValueError("controller_type must be provided")
+        endpoint = "get-performance-results"
+        payload = {
+            "executors": executors,
+            "controller_type": controller_type
+        }
+
+        performance_results = self.post(endpoint, payload=payload)
+        if "error" in performance_results:
+            raise Exception(performance_results["error"])
+        if "detail" in performance_results:
+            raise Exception(performance_results["detail"])
+        if "processed_data" not in performance_results:
+            data = None
+        else:
+            data = pd.DataFrame(performance_results["processed_data"])
+        if "executors" not in performance_results:
+            executors = []
+        else:
+            executors = [ExecutorInfo(**executor) for executor in performance_results["executors"]]
+        return {
+            "processed_data": data,
+            "executors": executors,
+            "results": performance_results["results"]
+        }
+
+    def list_databases(self):
+        """Get databases list."""
+        endpoint = "list-databases"
+        return self.post(endpoint)
+
+    def read_databases(self, db_paths: List[str]):
+        """Read databases."""
+        endpoint = "read-databases"
+        return self.post(endpoint, payload=db_paths)
+
+    def create_checkpoint(self, db_names: List[str]):
+        """Create a checkpoint."""
+        endpoint = "create-checkpoint"
+        return self.post(endpoint, payload=db_names)
+
+    def list_checkpoints(self, full_path: bool):
+        """List checkpoints."""
+        endpoint = "list-checkpoints"
+        params = {"full_path": full_path}
+        return self.post(endpoint, params=params)
+
+    def load_checkpoint(self, checkpoint_path: str):
+        """Load a checkpoint."""
+        endpoint = "load-checkpoint"
+        params = {"checkpoint_path": checkpoint_path}
+        return self.post(endpoint, params=params)
