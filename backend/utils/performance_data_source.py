@@ -75,10 +75,10 @@ class PerformanceDataSource:
 
         executors_df = executors_df.merge(controllers[["controller_id", "controller_type", "controller_config"]],
                                           on="controller_id", how="left")
-        if executors_filter is not None:
-            executors_df = self.filter_executors(executors_df, executors_filter)
         if apply_executor_data_types:
             executors_df = self.apply_executor_data_types(executors_df)
+        if executors_filter is not None:
+            executors_df = self.filter_executors(executors_df, executors_filter)
         return executors_df
 
     def apply_executor_data_types(self, executors):
@@ -140,8 +140,10 @@ class PerformanceDataSource:
 
     def get_executor_dict(self,
                           executors_filter: Dict[str, Any] = None,
+                          apply_executor_data_types: bool = False,
                           remove_special_fields: bool = False) -> List[dict]:
-        executors_df = self.get_executors_df(executors_filter).copy()
+        executors_df = self.get_executors_df(executors_filter,
+                                             apply_executor_data_types=apply_executor_data_types).copy()
         if remove_special_fields:
             executors_df = self.remove_executor_data_types(executors_df)
         return executors_df.to_dict(orient="records")

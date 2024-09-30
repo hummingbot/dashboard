@@ -9,7 +9,6 @@ def display_etl_section(backend_api: BackendAPIClient):
     db_paths = backend_api.list_databases()
     dbs_dict = backend_api.read_databases(db_paths)
     healthy_dbs = [db["db_path"].replace("sqlite:///", "") for db in dbs_dict if db["healthy"]]
-    st.subheader("🔫 DATA SOURCE")
     with st.expander("ETL Tool"):
         st.markdown("""
         In this tool, you can easily fetch and combine different databases. Just follow these simple steps:

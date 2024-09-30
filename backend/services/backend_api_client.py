@@ -287,18 +287,15 @@ class BackendAPIClient:
         endpoint = "account-state-history"
         return self.get(endpoint)
 
-    def get_performance_results(self, executors: List[Dict[str, Any]], controller_type: str):
+    def get_performance_results(self, executors: List[Dict[str, Any]]):
         if not isinstance(executors, list) or len(executors) == 0:
             raise ValueError("Executors must be a non-empty list of dictionaries")
         # Check if all elements in executors are dictionaries
         if not all(isinstance(executor, dict) for executor in executors):
             raise ValueError("All elements in executors must be dictionaries")
-        if not controller_type:
-            raise ValueError("controller_type must be provided")
         endpoint = "get-performance-results"
         payload = {
             "executors": executors,
-            "controller_type": controller_type
         }
 
         performance_results = self.post(endpoint, payload=payload)

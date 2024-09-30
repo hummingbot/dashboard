@@ -3,7 +3,9 @@ import math
 from typing import Any, Dict, List
 
 import pandas as pd
+import plotly.graph_objects as go
 import streamlit as st
+from hummingbot.connector.connector_base import TradeType
 
 from backend.services.backend_api_client import BackendAPIClient
 from backend.utils.performance_data_source import PerformanceDataSource
@@ -13,7 +15,7 @@ from frontend.visualization.backtesting_metrics import render_accuracy_metrics, 
 from frontend.visualization.bot_performance import display_performance_summary_table, display_tables_section
 from frontend.visualization.dca_builder import create_dca_graph
 from frontend.visualization.etl_section import display_etl_section
-from frontend.visualization.time_evolution import create_combined_subplots
+from frontend.visualization.time_evolution import create_combined_subplots, create_combined_subplots_by_controller
 
 intervals_to_secs = {
     "1m": 60,
@@ -31,6 +33,8 @@ async def main():
     initialize_st_page(title="Bot Performance", icon="🚀", initial_sidebar_state="collapsed")
     st.session_state["default_config"] = {}
     backend_api = BackendAPIClient("localhost")
+
+    st.subheader("🔫 DATA SOURCE")
     checkpoint_data = display_etl_section(backend_api)
     data_source = PerformanceDataSource(checkpoint_data)
     st.divider()
@@ -61,78 +65,66 @@ def display_global_results(backend_api: BackendAPIClient,
     selected_controllers_filter = {
         "controller_id": selected_controllers
     }
-    executors_by_controller_type_dict = data_source.get_executors_by_controller_type(selected_controllers_filter)
+    executors_dict = data_source.get_executor_dict(selected_controllers_filter)
+    results_response = backend_api.get_performance_results(executors=executors_dict)
+    all_results = results_response.get("results", {})
 
-    for controller_type in ["market_making", "directional_trading"]:
-        selected_controller_types = selected_controllers_filter.copy()
-        executors_df = executors_by_controller_type_dict.get(controller_type)
-        if executors_df is None:
-            continue
-
-        selected_controller_types["controller_type"] = [controller_type]
-        executors_dict = data_source.get_executor_dict(selected_controller_types)
-        results_response = backend_api.get_performance_results(executors=executors_dict,
-                                                               controller_type=controller_type)
-        all_results[controller_type] = results_response.get("results", {})
-
-    global_results_df = calculate_global_results_table(all_results)
-
-    render_backtesting_metrics(summary_results=global_results_df["global_results"].to_dict(),
-                               title="Performance Metrics")
+    render_backtesting_metrics(summary_results=all_results,
+                               title="Global Metrics")
 
     time_tab, detail_tab = st.tabs(["Time Evolution", "Detail View"])
     with time_tab:
         executors_df = data_source.get_executors_df(executors_filter=selected_controllers_filter,
                                                     apply_executor_data_types=True)
-        st.plotly_chart(create_combined_subplots(executors_df), use_container_width=True)
+        by_controller = st.toggle("Global / By Controller", value=False)
+        if not by_controller:
+            st.plotly_chart(create_combined_subplots(executors_df), use_container_width=True)
+        else:
+            st.plotly_chart(create_combined_subplots_by_controller(executors_df), use_container_width=True)
     with detail_tab:
-        st.dataframe(global_results_df, use_container_width=True)
+        # Long Vs Short
+        long_col, short_col = st.columns(2)
+        with long_col:
+            display_long_vs_short_analysis(backend_api, data_source, selected_controllers_filter, is_long=True)
+        with short_col:
+            display_long_vs_short_analysis(backend_api, data_source, selected_controllers_filter, is_long=False)
 
 
-def calculate_global_results_table(global_results):
-    global_results_df = pd.DataFrame(global_results)
-
-    # Define indices for each calculation type
-    sum_index = ["net_pnl", "net_pnl_quote", "total_executors", "total_executors_with_position", "total_volume",
-                 "total_long", "total_short", "total_positions", "win_signals", "loss_signals"]
-    min_index = ["max_drawdown_usd", "max_drawdown_pct"]
-    mean_index = ["accuracy_long", "accuracy_short", "accuracy"]
-    dict_index = ["close_types"]
-
-    # Initialize a dictionary to store the global results
-    global_dict = {}
-
-    # Sum calculations
-    for index in sum_index:
-        global_dict[index] = global_results_df.loc[index].sum()
-
-    # Minimum calculations
-    for index in min_index:
-        global_dict[index] = global_results_df.loc[index].min()
-
-    # Mean calculations
-    for index in mean_index:
-        global_dict[index] = global_results_df.loc[index].mean()
-
-    # Special variables
-    for index in ["sharpe_ratio", "profit_factor"]:
-        global_dict[index] = 0
-
-    # Dictionary aggregation
-    for index in dict_index:
-        result_dict = {}
-        for column in global_results_df.columns:
-            current_dict = global_results_df.loc[index, column]
-            for key, value in current_dict.items():
-                if key in result_dict:
-                    result_dict[key] += value
-                else:
-                    result_dict[key] = value
-        global_dict[index] = result_dict
-
-    # Convert the global results dictionary to a DataFrame and add it as a new column
-    global_results_df['global_results'] = pd.Series(global_dict)
-    return global_results_df
+def display_long_vs_short_analysis(backend_api: BackendAPIClient,
+                                   data_source: PerformanceDataSource,
+                                   current_filter: Dict[str, Any] = None,
+                                   is_long: bool = True):
+    side_filter = current_filter.copy()
+    side_filter["side"] = [TradeType.BUY] if is_long else [TradeType.SELL]
+    executors_dict = data_source.get_executor_dict(side_filter,
+                                                   apply_executor_data_types=True,
+                                                   remove_special_fields=True)
+    results = backend_api.get_performance_results(executors=executors_dict).get("results", {})
+    if results:
+        executors_df = data_source.get_executors_df(executors_filter=side_filter,
+                                                    apply_executor_data_types=True)
+        side_str = "Long" if is_long else "Short"
+        st.write(f"### {side_str} Positions")
+        col1, col2, col3 = st.columns(3)
+        col1.metric(label="Net PNL (Quote)", value=f"{results['net_pnl_quote']:.2f}")
+        col2.metric(label="Max Drawdown (USD)", value=f"{results['max_drawdown_usd']:.2f}")
+        col3.metric(label="Total Volume (Quote)", value=f"{results['total_volume']:.2f}")
+        col1.metric(label="Sharpe Ratio", value=f"{results['sharpe_ratio']:.2f}")
+        col2.metric(label="Profit Factor", value=f"{results['profit_factor']:.2f}")
+        col3.metric(label="Total Executors with Position", value=results['total_executors_with_position'])
+        fig = go.Figure(data=[go.Pie(labels=list(results["close_types"].keys()),
+                                     values=list(results["close_types"].values()), hole=.3)])
+        fig.update_layout(title="Close Types")
+        st.plotly_chart(fig, use_container_width=True)
+        executors_by_close_type = executors_df.groupby("close_type_name")["net_pnl_quote"].sum().to_dict()
+        keys_to_remove = ["EXPIRED", "INSUFFICIENT_BALANCE", "FAILED"]
+        for key in keys_to_remove:
+            if key in executors_by_close_type:
+                del executors_by_close_type[key]
+        columns = st.columns(len(executors_by_close_type))
+        for i, (key, value) in enumerate(executors_by_close_type.items()):
+            with columns[i]:
+                st.metric(label=key, value=f"${value:.2f}")
 
 
 def display_execution_analysis(backend_api: BackendAPIClient,
@@ -191,17 +183,14 @@ def display_execution_analysis(backend_api: BackendAPIClient,
                     "start_time": start_time_page,
                     "end_time": end_time_page
                 }
-                page_filtered_executors = data_source.get_executors_df(executors_filter)
-                controller_type = page_filtered_executors["controller_type"].iloc[0]
                 executors: List[Dict[str, Any]] = data_source.get_executor_dict(executors_filter)
-                performance_results = backend_api.get_performance_results(executors=executors,
-                                                                          controller_type=controller_type)
+                performance_results = backend_api.get_performance_results(executors=executors)
                 fig = create_backtesting_figure(df=candles_df,
                                                 executors=performance_results["executors"],
                                                 config={"trading_pair": trading_pair})
             performance_section(performance_results, fig, "Real Performance")
 
-        if config_type == "dca" and False:
+        if config_type == "dca":
             with dca_tab:
                 col1, col2 = st.columns([0.75, 0.25])
                 with col1:
@@ -271,11 +260,14 @@ def performance_section(results: dict, fig=None, title: str = "Backtesting Metri
 
 
 def get_dca_inputs(config: dict):
+    take_profit = config.get("take_profit", 0.0)
+    if take_profit is None:
+        take_profit = config["trailing_stop"]["activation_price"]
     dca_inputs = {
         "dca_spreads": config.get("dca_spreads", []),
-        "dca_amounts": config.get("dca_amounts", []),
+        "dca_amounts_pct": config.get("dca_amounts_pct", []),
         "stop_loss": config.get("stop_loss", 0.0),
-        "take_profit": config.get("take_profit", 0.0),
+        "take_profit": take_profit,
         "time_limit": config.get("time_limit", 0.0),
         "buy_amounts_pct": config.get("buy_amounts_pct", []),
         "sell_amounts_pct": config.get("sell_amounts_pct", [])
