@@ -41,9 +41,16 @@ def display_etl_section(backend_api: BackendAPIClient):
         st.stop()
     else:
         selected_checkpoint = st.selectbox("Select a checkpoint to load", checkpoints_list)
-        checkpoint_data = backend_api.load_checkpoint(selected_checkpoint)
+        checkpoint_data = fetch_checkpoint_data(selected_checkpoint)
         checkpoint_data["executors"] = json.loads(checkpoint_data["executors"])
         checkpoint_data["orders"] = json.loads(checkpoint_data["orders"])
         checkpoint_data["trade_fill"] = json.loads(checkpoint_data["trade_fill"])
         checkpoint_data["controllers"] = json.loads(checkpoint_data["controllers"])
         return checkpoint_data
+
+
+@st.cache_data
+def fetch_checkpoint_data(selected_checkpoint: str):
+    backend_api = BackendAPIClient()
+    checkpoint_data = backend_api.load_checkpoint(selected_checkpoint)
+    return checkpoint_data

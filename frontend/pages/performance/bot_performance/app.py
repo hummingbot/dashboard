@@ -31,11 +31,11 @@ async def main():
     global_tab, execution_tab = st.tabs(["Global Results", "Execution Analysis"])
     with global_tab:
         st.subheader("🌎 GLOBAL RESULTS")
-        display_global_results(backend_api, data_source)
+        display_global_results(data_source)
         st.divider()
     with execution_tab:
         st.subheader("🧨 EXECUTION")
-        display_execution_analysis(backend_api, data_source)
+        display_execution_analysis(data_source)
         st.divider()
 
     st.subheader("💾 EXPORT")

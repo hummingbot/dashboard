@@ -15,7 +15,7 @@ def calculate_unrealized_pnl(spreads, break_even_values, accumulated_amount):
 
 def create_dca_graph(dca_inputs, dca_amount):
     tech_colors = theme.get_color_scheme()
-    dca_order_amounts = [amount_dist * dca_amount for amount_dist in dca_inputs["dca_amounts_pct"]]
+    dca_order_amounts = [amount_dist * dca_amount for amount_dist in dca_inputs["dca_amounts"]]
     n_levels = len(dca_inputs["dca_spreads"])
     dca_spreads = [spread * 100 for spread in dca_inputs["dca_spreads"]]
     break_even_values = []

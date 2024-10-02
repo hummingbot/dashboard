@@ -19,11 +19,12 @@ def display_dca_tab(config_type, config):
 
 def get_dca_inputs(config: dict):
     take_profit = config.get("take_profit", 0.0)
+    dca_amounts_key = "dca_amounts_pct" if config["controller_type"] == "directional_trading" else "dca_amounts"
     if take_profit is None:
         take_profit = config["trailing_stop"]["activation_price"]
     dca_inputs = {
         "dca_spreads": config.get("dca_spreads", []),
-        "dca_amounts_pct": config.get("dca_amounts_pct", []),
+        "dca_amounts": config.get(dca_amounts_key, []),
         "stop_loss": config.get("stop_loss", 0.0),
         "take_profit": take_profit,
         "time_limit": config.get("time_limit", 0.0),

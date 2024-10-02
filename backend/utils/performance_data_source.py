@@ -53,6 +53,7 @@ class PerformanceDataSource:
         executors_df["close_timestamp"] = executors_df["close_timestamp"].apply(
             lambda x: self.ensure_timestamp_in_seconds(x)
         )
+        executors_df.sort_values("close_timestamp", inplace=True)
         executors_df["trading_pair"] = executors_df["config"].apply(lambda x: x["trading_pair"])
         executors_df["exchange"] = executors_df["config"].apply(lambda x: x["connector_name"])
         executors_df["status"] = executors_df["status"].astype(int)
@@ -98,21 +99,6 @@ class PerformanceDataSource:
         executors.drop(columns=["datetime", "close_datetime"], inplace=True)
         return executors
 
-    @property
-    def executors_filter_options(self):
-        executors_df = self.get_executors_df().copy()
-        return {
-            "controller_id": list(set(executors_df['controller_id'])),
-            "controller_type": list(set(executors_df['controller_type'])),
-            "status": list(set(executors_df['status'])),
-            "side": list(set(executors_df['side'])),
-            "close_type": list(set(executors_df['close_type'])),
-            "exchange": list(set(executors_df['exchange'])),
-            "trading_pair": list(set(executors_df['trading_pair'])),
-            "start_time": executors_df["timestamp"].min(),
-            "end_time": executors_df["close_timestamp"].max()
-        }
-
     @staticmethod
     def get_executors_with_orders(executors_df: pd.DataFrame, orders: pd.DataFrame):
         df = (executors_df[["id", "order_ids"]]
@@ -134,6 +120,7 @@ class PerformanceDataSource:
         executors_df = self.get_executors_df(executors_filter=executors_filter,
                                              apply_executor_data_types=True
                                              )[required_columns].copy()
+        executors_df = executors_df[executors_df["net_pnl_quote"] != 0]
         executor_info_list = executors_df.apply(lambda row: ExecutorInfo(**row.to_dict()), axis=1).tolist()
         return executor_info_list
 
