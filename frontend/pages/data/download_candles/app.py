@@ -27,6 +27,9 @@ with c4:
 if get_data_button:
     start_datetime = datetime.combine(start_date, time.min)
     end_datetime = datetime.combine(end_date, time.max)
+    if end_datetime < start_datetime:
+        st.error("End Date should be greater than Start Date.")
+        st.stop()
 
     candles = backend_api_client.get_historical_candles(
         connector=connector,

@@ -74,14 +74,14 @@ def style_metric_cards(
 def get_backend_api_client():
     from backend.services.backend_api_client import BackendAPIClient
     from CONFIG import BACKEND_API_HOST, BACKEND_API_PORT
-    backend_api_client = BackendAPIClient.get_instance(host=BACKEND_API_HOST, port=BACKEND_API_PORT)
     is_docker_running = False
     try:
+        backend_api_client = BackendAPIClient.get_instance(host=BACKEND_API_HOST, port=BACKEND_API_PORT)
         is_docker_running = backend_api_client.is_docker_running()
     except Exception as e:
         st.error(
-            f"There was an error trying to connect to the Backend API: "
-            f"\n\n{str(e)} \n\nPlease make sure the Backend API is running.")
+            f"There was an error trying to connect to the Backend API. Please make sure the Backend API is running.\n\n"
+            f"Error: \n\n{str(e)}")
         st.stop()
     if not is_docker_running:
         st.error("Docker is not running. Please make sure Docker is running.")
