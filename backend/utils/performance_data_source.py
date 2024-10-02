@@ -64,6 +64,7 @@ class PerformanceDataSource:
         executors_df["sl"] = executors_df["config"].apply(lambda x: x["stop_loss"]).fillna(0)
         executors_df["tp"] = executors_df["config"].apply(lambda x: x["take_profit"]).fillna(0)
         executors_df["tl"] = executors_df["config"].apply(lambda x: x["time_limit"]).fillna(0)
+        executors_df["close_type_name"] = executors_df["close_type"].apply(lambda x: self.get_enum_by_value(CloseType, x).name)
 
         controllers = self.controllers_df.copy()
         controllers.drop(columns=["controller_id"], inplace=True)
@@ -85,7 +86,6 @@ class PerformanceDataSource:
         executors["status"] = executors["status"].apply(lambda x: self.get_enum_by_value(RunnableStatus, int(x)))
         executors["side"] = executors["config"].apply(lambda x: self.get_enum_by_value(TradeType, int(x["side"])))
         executors["close_type"] = executors["close_type"].apply(lambda x: self.get_enum_by_value(CloseType, int(x)))
-        executors["close_type_name"] = executors["close_type"].apply(lambda x: x.name)
         executors["datetime"] = pd.to_datetime(executors.timestamp, unit="s")
         executors["close_datetime"] = pd.to_datetime(executors["close_timestamp"], unit="s")
         return executors
@@ -95,7 +95,7 @@ class PerformanceDataSource:
         executors["status"] = executors["status"].apply(lambda x: x.value)
         executors["side"] = executors["side"].apply(lambda x: x.value)
         executors["close_type"] = executors["close_type"].apply(lambda x: x.value)
-        executors.drop(columns=["close_type_name", "datetime", "close_datetime"], inplace=True)
+        executors.drop(columns=["datetime", "close_datetime"], inplace=True)
         return executors
 
     @property
@@ -125,15 +125,14 @@ class PerformanceDataSource:
                                  "price", "amount", "position"]]
 
     def get_executor_info_list(self,
-                               executors_filter: Dict[str, Any] = None,
-                               apply_executor_data_types: bool = False) -> List[ExecutorInfo]:
+                               executors_filter: Dict[str, Any] = None) -> List[ExecutorInfo]:
         required_columns = [
             "id", "timestamp", "type", "close_timestamp", "close_type", "status", "controller_type",
             "net_pnl_pct", "net_pnl_quote", "cum_fees_quote", "filled_amount_quote",
             "is_active", "is_trading", "controller_id", "side", "config", "custom_info", "exchange", "trading_pair"
         ]
         executors_df = self.get_executors_df(executors_filter=executors_filter,
-                                             apply_executor_data_types=apply_executor_data_types
+                                             apply_executor_data_types=True
                                              )[required_columns].copy()
         executor_info_list = executors_df.apply(lambda row: ExecutorInfo(**row.to_dict()), axis=1).tolist()
         return executor_info_list
@@ -166,9 +165,11 @@ class PerformanceDataSource:
             if isinstance(value, list) and len(value) > 0:
                 filter_condition &= (executors_df[key].isin(value))
             elif key == "start_time":
-                filter_condition &= (executors_df["timestamp"] >= value)
+                filter_condition &= pd.Series((executors_df["timestamp"] >= value - 60))
+            elif key == "close_type_name":
+                filter_condition &= pd.Series((executors_df["close_type_name"] == value))
             elif key == "end_time":
-                filter_condition &= (executors_df["close_timestamp"] <= value)
+                filter_condition &= pd.Series((executors_df["close_timestamp"] <= value + 60))
         return executors_df[filter_condition]
 
     @staticmethod

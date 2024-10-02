@@ -3,8 +3,35 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from backend.services.backend_api_client import BackendAPIClient
+from frontend.visualization.dca_builder import create_dca_graph
 
 backend_api = BackendAPIClient()
+
+
+def display_dca_tab(config_type, config):
+    if config_type != "dca":
+        st.info("No DCA configuration available for this controller.")
+    else:
+        dca_inputs, dca_amount = get_dca_inputs(config)
+        fig = create_dca_graph(dca_inputs, dca_amount)
+        st.plotly_chart(fig, use_container_width=True)
+
+
+def get_dca_inputs(config: dict):
+    take_profit = config.get("take_profit", 0.0)
+    if take_profit is None:
+        take_profit = config["trailing_stop"]["activation_price"]
+    dca_inputs = {
+        "dca_spreads": config.get("dca_spreads", []),
+        "dca_amounts_pct": config.get("dca_amounts_pct", []),
+        "stop_loss": config.get("stop_loss", 0.0),
+        "take_profit": take_profit,
+        "time_limit": config.get("time_limit", 0.0),
+        "buy_amounts_pct": config.get("buy_amounts_pct", []),
+        "sell_amounts_pct": config.get("sell_amounts_pct", [])
+    }
+    dca_amount = config["total_amount_quote"]
+    return dca_inputs, dca_amount
 
 
 def display_dca_performance(executors: pd.DataFrame):
