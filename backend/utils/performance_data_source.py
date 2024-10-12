@@ -1,6 +1,7 @@
 import json
 from typing import Any, Dict, List
 
+import numpy as np
 import pandas as pd
 from hummingbot.core.data_type.common import TradeType
 from hummingbot.strategy_v2.models.base import RunnableStatus
@@ -57,8 +58,7 @@ class PerformanceDataSource:
         executors_df["trading_pair"] = executors_df["config"].apply(lambda x: x["trading_pair"])
         executors_df["exchange"] = executors_df["config"].apply(lambda x: x["connector_name"])
         executors_df["status"] = executors_df["status"].astype(int)
-        executors_df["level_id"] = executors_df["config"].apply(
-            lambda x: x.get("level_id") if x.get("level_id") is not None else 0)
+        executors_df["level_id"] = executors_df["config"].apply(lambda x: x.get("level_id"))
         executors_df["bep"] = executors_df["custom_info"].apply(lambda x: x["current_position_average_price"])
         executors_df["order_ids"] = executors_df["custom_info"].apply(lambda x: x.get("order_ids"))
         executors_df["close_price"] = executors_df["custom_info"].apply(lambda x: x["close_price"])
@@ -147,16 +147,17 @@ class PerformanceDataSource:
     @staticmethod
     def filter_executors(executors_df: pd.DataFrame,
                          filters: Dict[str, List[Any]]):
-        filter_condition = [True] * len(executors_df)
+        filter_condition = np.array([True] * len(executors_df))
         for key, value in filters.items():
             if isinstance(value, list) and len(value) > 0:
-                filter_condition &= (executors_df[key].isin(value))
+                filter_condition &= np.array(executors_df[key].isin(value))
             elif key == "start_time":
-                filter_condition &= pd.Series((executors_df["timestamp"] >= value - 60))
+                filter_condition &= np.array(executors_df["timestamp"] >= value - 60)
             elif key == "close_type_name":
-                filter_condition &= pd.Series((executors_df["close_type_name"] == value))
+                filter_condition &= np.array(executors_df["close_type_name"] == value)
             elif key == "end_time":
-                filter_condition &= pd.Series((executors_df["close_timestamp"] <= value + 60))
+                filter_condition &= np.array(executors_df["close_timestamp"] <= value + 60)
+
         return executors_df[filter_condition]
 
     @staticmethod

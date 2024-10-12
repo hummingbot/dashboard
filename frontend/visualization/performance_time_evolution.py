@@ -1,9 +1,51 @@
+import numpy as np
 import pandas as pd
-import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
 from frontend.visualization.theme import get_color_scheme
+
+
+def create_combined_subplots(executors: pd.DataFrame):
+    fig = make_subplots(rows=4, cols=1, shared_xaxes=True, vertical_spacing=0.1,
+                        subplot_titles=["Cumulative PnL",
+                                        "Cumulative Volume",
+                                        "Cumulative Positions",
+                                        "Win/Loss Ratio"])
+
+    pnl_trace = get_pnl_traces(executors)
+    fig.add_trace(pnl_trace, row=1, col=1)
+
+    volume_trace = get_volume_bar_traces(executors)
+    fig.add_trace(volume_trace, row=2, col=1)
+
+    activity_trace = get_total_executions_with_position_bar_traces(executors)
+    fig.add_trace(activity_trace, row=3, col=1)
+
+    win_loss_fig = get_win_loss_ratio_fig(executors)
+    for trace in win_loss_fig.data:
+        fig.add_trace(trace, row=4, col=1)
+
+    fig.update_layout(
+        showlegend=True,
+        yaxis4=dict(
+            type='linear',
+            range=[1, 100],
+            ticksuffix='%'
+        )
+    )
+
+    fig.update_layout(height=1000, width=800,
+                      title_text="Global Aggregated Performance Metrics",
+                      plot_bgcolor='rgba(0,0,0,0)',
+                      paper_bgcolor='rgba(0,0,0,0)',
+                      font=dict(color='white'))
+
+    fig.update_yaxes(title_text="$ Quote", row=1, col=1)
+    fig.update_yaxes(title_text="$ Quote", row=2, col=1)
+    fig.update_yaxes(title_text="# Executors", row=3, col=1)
+
+    return fig
 
 
 def get_pnl_traces(executors: pd.DataFrame):
@@ -16,6 +58,7 @@ def get_pnl_traces(executors: pd.DataFrame):
                                 marker_color=executors["cum_net_pnl_quote"].apply(
                                     lambda x: color_scheme["buy"] if x > 0 else color_scheme["sell"]),
                                 showlegend=False,
+                                line_shape='hv',
                                 fill="tozeroy")
     return scatter_traces
 
@@ -44,146 +87,51 @@ def get_total_executions_with_position_bar_traces(executors: pd.DataFrame):
                                 marker_color=executors["cum_n_trades"].apply(
                                     lambda x: color_scheme["buy"] if x > 0 else color_scheme["sell"]),
                                 showlegend=False,
+                                line_shape='hv',
                                 fill="tozeroy")
     return scatter_traces
 
 
-def get_accuracy_over_time_traces(executors: pd.DataFrame):
-    color_scheme = get_color_scheme()
-    executors.sort_values("close_timestamp", inplace=True)
-    executors = executors[executors['net_pnl_pct'] != 0]
-    executors['cum_win_signals'] = (executors['net_pnl_pct'] > 0).cumsum()
-    executors['cum_loss_signals'] = (executors['net_pnl_pct'] < 0).cumsum()
-    executors['acc_over_time'] = executors['cum_win_signals'] / range(1, len(executors) + 1)
+def get_win_loss_ratio_fig(executors: pd.DataFrame):
+    df = executors.copy()
+    df.to_csv("executors.csv", index=False)
+    df.sort_values("close_timestamp", inplace=True)
+    df = df[df['net_pnl_pct'] != 0]
+    df['cum_win_signals'] = (df['net_pnl_pct'] > 0).cumsum()
+    df['cum_loss_signals'] = (df['net_pnl_pct'] < 0).cumsum()
+    df['acc_over_time'] = df['cum_win_signals'] / np.arange(1, len(df) + 1)
 
-    acc_trace = go.Scatter(x=executors['close_datetime'],
-                           y=executors['acc_over_time'] * 100,
-                           mode='lines',
-                           line=dict(color='gold', width=2, dash="dash"),
-                           name='Accuracy Over Time',
-                           fill="tozeroy")
-    win_trace = go.Scatter(x=pd.to_datetime(executors["close_timestamp"], unit="s"),
-                           y=executors['cum_win_signals'],
-                           mode='lines',
-                           line=dict(color=color_scheme["buy"], width=2),
-                           name='Win',
-                           fill="tozeroy")
-    loss_trace = go.Scatter(x=pd.to_datetime(executors["close_timestamp"], unit="s"),
-                            y=executors['cum_loss_signals'],
-                            mode='lines',
-                            line=dict(color=color_scheme["sell"], width=2),
-                            name='Loss',
-                            fill='tozeroy')
-    return acc_trace, win_trace, loss_trace
+    df['total_signals'] = df['cum_win_signals'] + df['cum_loss_signals']
+    df['win_ratio'] = df['cum_win_signals'] / df['total_signals']
+    df['loss_ratio'] = df['cum_loss_signals'] / df['total_signals']
 
+    fig = go.Figure()
 
-def create_combined_subplots(executors: pd.DataFrame):
-    fig = make_subplots(rows=5, cols=1, shared_xaxes=True, vertical_spacing=0.1,
-                        subplot_titles=["Cumulative PnL",
-                                        "Cumulative Volume",
-                                        "Cumulative Positions",
-                                        "Accuracy",
-                                        "Win/Loss"])
+    fig.add_trace(go.Scatter(
+        x=df["close_datetime"], y=df["win_ratio"],
+        mode='lines',
+        line=dict(width=0.5, color='rgb(184, 247, 212)'),
+        stackgroup='one',
+        groupnorm='percent',
+        name="Win Ratio",
+        line_shape='hv',
+        showlegend=False
+    ))
+    fig.add_trace(go.Scatter(
+        x=df["close_datetime"], y=df["loss_ratio"],
+        mode='lines',
+        line=dict(width=0.5, color='rgb(111, 231, 219)'),
+        stackgroup='one',
+        name="Loss Ratio",
+        line_shape='hv',
+        showlegend=False
+    ))
 
-    # Adding PnL Bar trace
-    pnl_trace = get_pnl_traces(executors)
-    fig.add_trace(pnl_trace, row=1, col=1)
+    fig.update_layout(
+        showlegend=False,
+        yaxis=dict(
+            type='linear',
+            range=[1, 100],
+            ticksuffix='%'))
 
-    # Adding Volume Bar trace
-    volume_trace = get_volume_bar_traces(executors)
-    fig.add_trace(volume_trace, row=2, col=1)
-
-    # Adding Total Executions Bar trace
-    activity_trace = get_total_executions_with_position_bar_traces(executors)
-    fig.add_trace(activity_trace, row=3, col=1)
-
-    # Adding Accuracy, Win Signals, Loss Signals traces
-    acc_trace, win_trace, loss_trace = get_accuracy_over_time_traces(executors)
-    fig.add_trace(acc_trace, row=4, col=1)
-    fig.add_trace(win_trace, row=5, col=1)
-    fig.add_trace(loss_trace, row=5, col=1)
-
-    fig.update_layout(height=1000, width=800,
-                      title_text="Global Aggregated Performance Metrics",
-                      plot_bgcolor='rgba(0,0,0,0)',
-                      paper_bgcolor='rgba(0,0,0,0)',
-                      font=dict(color='white'))
-
-    fig.update_yaxes(title_text="$ Quote", row=1, col=1)
-    fig.update_yaxes(title_text="$ Quote", row=2, col=1)
-    fig.update_yaxes(title_text="# Executors", row=3, col=1)
-    fig.update_yaxes(title_text="%", row=4, col=1)
-    fig.update_yaxes(title_text="# Signals", row=5, col=1)
-
-    return fig
-
-
-def get_pnl_traces_by_controller(executors: pd.DataFrame):
-    # color_scheme = get_color_scheme()
-    executors = executors.loc[executors["net_pnl_quote"] != 0, ["controller_id", "close_datetime", "net_pnl_quote"]]
-    executors.sort_values(["controller_id", "close_datetime"], inplace=True)
-    executors["cum_net_pnl_quote"] = executors.groupby(["controller_id"])["net_pnl_quote"].cumsum()
-    scatter_traces = px.line(executors, x="close_datetime", y="net_pnl_quote", color="controller_id")
-    return scatter_traces
-
-
-def get_volume_bar_traces_by_controller(executors: pd.DataFrame):
-    color_scheme = get_color_scheme()
-    executors.sort_values("close_timestamp", inplace=True)
-    executors["cum_filled_amount_quote"] = executors["filled_amount_quote"].cumsum() * 2
-    scatter_traces = go.Scatter(name="Cum Volume",
-                                x=executors["close_datetime"],
-                                y=executors["cum_filled_amount_quote"],
-                                marker_color=executors["cum_filled_amount_quote"].apply(
-                                    lambda x: color_scheme["buy"] if x > 0 else color_scheme["sell"]),
-                                showlegend=False,
-                                fill="tozeroy")
-    return scatter_traces
-
-
-def get_total_executions_with_position_bar_traces_by_controller(executors: pd.DataFrame):
-    color_scheme = get_color_scheme()
-    executors.sort_values("close_timestamp", inplace=True)
-    executors["cum_n_trades"] = (executors['net_pnl_pct'] != 0).cumsum()
-    scatter_traces = go.Scatter(name="Cum Activity",
-                                x=executors["close_datetime"],
-                                y=executors["cum_n_trades"],
-                                marker_color=executors["cum_n_trades"].apply(
-                                    lambda x: color_scheme["buy"] if x > 0 else color_scheme["sell"]),
-                                showlegend=False,
-                                fill="tozeroy")
-    return scatter_traces
-
-
-def get_accuracy_over_time_traces_by_controller(executors: pd.DataFrame):
-    color_scheme = get_color_scheme()
-    executors.sort_values("close_timestamp", inplace=True)
-    executors = executors[executors['net_pnl_pct'] != 0]
-    executors['cum_win_signals'] = (executors['net_pnl_pct'] > 0).cumsum()
-    executors['cum_loss_signals'] = (executors['net_pnl_pct'] < 0).cumsum()
-    executors['acc_over_time'] = executors['cum_win_signals'] / range(1, len(executors) + 1)
-
-    acc_trace = go.Scatter(x=executors['close_datetime'],
-                           y=executors['acc_over_time'] * 100,
-                           mode='lines',
-                           line=dict(color='gold', width=2, dash="dash"),
-                           name='Accuracy Over Time',
-                           fill="tozeroy")
-    win_trace = go.Scatter(x=pd.to_datetime(executors["close_timestamp"], unit="s"),
-                           y=executors['cum_win_signals'],
-                           mode='lines',
-                           line=dict(color=color_scheme["buy"], width=2),
-                           name='Win',
-                           fill="tozeroy")
-    loss_trace = go.Scatter(x=pd.to_datetime(executors["close_timestamp"], unit="s"),
-                            y=executors['cum_loss_signals'],
-                            mode='lines',
-                            line=dict(color=color_scheme["sell"], width=2),
-                            name='Loss',
-                            fill='tozeroy')
-    return acc_trace, win_trace, loss_trace
-
-
-def create_combined_subplots_by_controller(executors: pd.DataFrame):
-    fig = get_pnl_traces_by_controller(executors)
     return fig

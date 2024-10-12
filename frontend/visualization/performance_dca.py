@@ -2,10 +2,10 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
-from backend.services.backend_api_client import BackendAPIClient
+from frontend.st_utils import get_backend_api_client
 from frontend.visualization.dca_builder import create_dca_graph
 
-backend_api = BackendAPIClient()
+backend_api = get_backend_api_client()
 
 
 def display_dca_tab(config_type, config):
@@ -38,11 +38,12 @@ def get_dca_inputs(config: dict):
 def display_dca_performance(executors: pd.DataFrame):
     col1, col2, col3 = st.columns(3)
     with col1:
+        level_id_pie_chart_fig = go.Figure()
         level_id_data = executors.groupby("level_id").agg({"id": "count"}).reset_index()
-        level_id_pie_chart_traces = go.Pie(labels=executors["level_id"],
-                                           values=executors["id"],
-                                           hole=0.4)
-        st.plotly_chart(level_id_pie_chart_traces, use_container_width=True)
+        level_id_pie_chart_fig.add_trace(go.Pie(labels=executors["level_id"],
+                                                values=executors["id"],
+                                                hole=0.4))
+        st.plotly_chart(level_id_pie_chart_fig, use_container_width=True)
     with col2:
         intra_level_id_data = executors.groupby(['exit_level', 'close_type']).size().reset_index(name='count')
         fig = go.Figure()

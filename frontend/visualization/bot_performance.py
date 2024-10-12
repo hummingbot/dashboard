@@ -7,11 +7,10 @@ from hummingbot.core.data_type.common import TradeType
 
 from backend.services.backend_api_client import BackendAPIClient
 from backend.utils.performance_data_source import PerformanceDataSource
-from frontend.st_utils import download_csv_button
+from frontend.st_utils import download_csv_button, get_backend_api_client
 from frontend.visualization.backtesting import create_backtesting_figure
 from frontend.visualization.backtesting_metrics import render_accuracy_metrics, render_backtesting_metrics
-from frontend.visualization.performance_dca import display_dca_tab
-from frontend.visualization.performance_time_evolution import create_combined_subplots, create_combined_subplots_by_controller
+from frontend.visualization.performance_time_evolution import create_combined_subplots
 
 intervals_to_secs = {
     "1m": 60,
@@ -35,10 +34,15 @@ def display_performance_summary_table(executors, executors_with_orders: pd.DataF
             id=("id", "count"),
             timestamp=("timestamp", "min"),
             close_timestamp=("close_timestamp", "max"),
-            filled_amount_quote=("filled_amount_quote", "sum"),
-            net_pnl_over_time=("net_pnl_over_time", lambda x: list(x))  # Store full series as a list
+            filled_amount_quote=("filled_amount_quote", "sum")
         ).reset_index()
-
+        grouped_executors["net_pnl_over_time"] = grouped_executors.apply(
+            lambda row: executors[
+                (executors["controller_id"] == row["controller_id"]) &
+                (executors["exchange"] == row["exchange"]) &
+                (executors["trading_pair"] == row["trading_pair"])
+                ]["net_pnl_quote"].cumsum().tolist(), axis=1
+        )
         grouped_executors["exchange"] = grouped_executors["exchange"].apply(lambda x: x.replace("_", " ").capitalize())
         grouped_executors["controller_type"] = grouped_executors["controller_type"].apply(
             lambda x: x.replace("_", " ").capitalize()
@@ -69,7 +73,7 @@ def display_performance_summary_table(executors, executors_with_orders: pd.DataF
                          ),
                          "controller_id": st.column_config.TextColumn("Controller ID"),
                          "controller_type": st.column_config.TextColumn("Controller Type"),
-                         "total_executors": st.column_config.NumberColumn("Total Executors with Position"),
+                         "total_executors": st.column_config.NumberColumn("Total Positions"),
                          "filled_amount_quote": st.column_config.NumberColumn("Total Volume", format="$ %.2f"),
                          "net_pnl_quote": st.column_config.NumberColumn("Net PnL", format="$ %.2f"),
                          "duration": st.column_config.TextColumn("Duration")
@@ -77,7 +81,9 @@ def display_performance_summary_table(executors, executors_with_orders: pd.DataF
 
 
 def display_global_results(data_source: PerformanceDataSource):
-    selected_controllers = st.multiselect("Select Controllers", data_source.controllers_dict.keys())
+    selected_controllers = st.multiselect("Select Controllers", data_source.controllers_dict.keys(),
+                                          help="Select one or more controllers from the table above to filter and "
+                                               "analyze their specific performance.")
     selected_controllers_filter = {
         "controller_id": selected_controllers if len(selected_controllers) > 0 else list(data_source.controllers_dict.keys())
     }
@@ -97,16 +103,12 @@ def display_global_results(data_source: PerformanceDataSource):
 
     executors_df = data_source.get_executors_df(executors_filter=selected_controllers_filter,
                                                 apply_executor_data_types=True)
-    agg_tab, by_controller = st.tabs(["Aggregated", "By Controller"])
-    with agg_tab:
-        st.plotly_chart(create_combined_subplots(executors_df), use_container_width=True)
-    with by_controller:
-        st.plotly_chart(create_combined_subplots_by_controller(executors_df), use_container_width=True)
+    st.plotly_chart(create_combined_subplots(executors_df), use_container_width=True)
 
 
 @st.cache_data(show_spinner=False)
 def fetch_global_results(executors_dict: List[Dict[str, Any]]):
-    backend_api = BackendAPIClient()
+    backend_api = get_backend_api_client()
     results_response = backend_api.get_performance_results(executors=executors_dict)
     return results_response.get("results", {})
 
@@ -142,14 +144,14 @@ def display_side_analysis(data_source: PerformanceDataSource,
 
 @st.cache_data(show_spinner=False)
 def fetch_long_results(executors_dict: List[Dict[str, Any]]):
-    backend_api = BackendAPIClient()
+    backend_api = get_backend_api_client()
     results_response = backend_api.get_performance_results(executors=executors_dict)
     return results_response.get("results", {})
 
 
 @st.cache_data(show_spinner=False)
 def fetch_short_results(executors_dict: List[Dict[str, Any]]):
-    backend_api = BackendAPIClient()
+    backend_api = get_backend_api_client()
     results_response = backend_api.get_performance_results(executors=executors_dict)
     return results_response.get("results", {})
 
@@ -203,23 +205,25 @@ def display_execution_analysis(data_source: PerformanceDataSource):
                                         config=config)
 
         performance_section(performance_results, fig, "Real Performance")
-
-    config_type = get_config_type(config)
-    if config_type == "dca":
         with config_tab:
-            st.markdown("#### DCA Config detected")
-            col1, col2 = st.columns([0.75, 0.25])
+            col1, col2 = st.columns(2)
             with col1:
-                display_dca_tab(config_type, config)
-            with col2:
-                st.write("### Params")
+                st.markdown("### ⚙️ Parameters")
                 st.json(config)
+            with col2:
+                st.markdown("### ➡️ Share")
+                host = st.text_input("Host", "localhost")
+                if st.button("Upload to Backend API"):
+                    backend_api_client = BackendAPIClient(host=host)
+                    config["id"] = controller_id
+                    backend_api_client.add_controller_config(config)
+                    st.success("Config uploaded successfully!")
 
 
 @st.cache_data()
 def fetch_market_data(params: Dict[str, Any] = None):
     with st.spinner(f"Loading market data from {params['connector']}..."):
-        backend_api = BackendAPIClient()
+        backend_api = get_backend_api_client()
         candles_dict = backend_api.get_historical_candles(**params)
         candles_df = pd.DataFrame(candles_dict)
         candles_df["datetime"] = pd.to_datetime(candles_df.timestamp, unit="s")
@@ -229,7 +233,7 @@ def fetch_market_data(params: Dict[str, Any] = None):
 
 @st.cache_data()
 def fetch_performance_results(executors_dict: List[Dict[str, Any]]):
-    backend_api = BackendAPIClient()
+    backend_api = get_backend_api_client()
     results_response = backend_api.get_performance_results(executors=executors_dict)
     return results_response.get("results", {})
 
