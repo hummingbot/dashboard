@@ -2,6 +2,17 @@ import streamlit as st
 
 from frontend.st_utils import auth_system
 
+# add dashboard version here 
+ver="2.0.1"
+st.set_page_config(
+    layout='centered',
+    page_title='hummingbot dashboard version',
+    menu_items={
+        'about': f'''**🚀 Hummingbot Dashboard {ver}**        
+        https://github.com/hummingbot/dashboard/releases
+        '''
+    }
+)
 
 def main():
     # readme section
@@ -19,6 +30,7 @@ def main():
     st.write(
         "If you encounter any bugs or have suggestions for improvement, please create an issue in the "
         "[hummingbot dashboard github](https://github.com/hummingbot/dashboard).")
+    
 
 
 auth_system()
