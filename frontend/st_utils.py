@@ -73,20 +73,16 @@ def style_metric_cards(
 
 def get_backend_api_client():
     from backend.services.backend_api_client import BackendAPIClient
-    from CONFIG import BACKEND_API_HOST, BACKEND_API_PORT
-    is_docker_running = False
+    from CONFIG import BACKEND_API_HOST, BACKEND_API_PASSWORD, BACKEND_API_PORT, BACKEND_API_USERNAME
     try:
-        backend_api_client = BackendAPIClient.get_instance(host=BACKEND_API_HOST, port=BACKEND_API_PORT)
-        is_docker_running = backend_api_client.is_docker_running()
-    except Exception as e:
-        st.error(
-            f"There was an error trying to connect to the Backend API. Please make sure the Backend API is running.\n\n"
-            f"Error: \n\n{str(e)}")
+        backend_api_client = BackendAPIClient.get_instance(host=BACKEND_API_HOST, port=BACKEND_API_PORT,
+                                                           username=BACKEND_API_USERNAME, password=BACKEND_API_PASSWORD)
+        if not backend_api_client.is_docker_running():
+            st.error("Docker is not running. Please make sure Docker is running.")
+            st.stop()
+        return backend_api_client
+    except Exception:
         st.stop()
-    if not is_docker_running:
-        st.error("Docker is not running. Please make sure Docker is running.")
-        st.stop()
-    return backend_api_client
 
 
 def auth_system():
@@ -102,7 +98,6 @@ def auth_system():
                 config['cookie']['name'],
                 config['cookie']['key'],
                 config['cookie']['expiry_days'],
-                config['pre-authorized']
             )
             show_pages(main_page() + public_pages())
             st.session_state.authenticator.login()
