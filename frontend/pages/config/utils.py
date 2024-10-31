@@ -3,8 +3,7 @@ import datetime
 import pandas as pd
 import streamlit as st
 
-from backend.services.backend_api_client import BackendAPIClient
-from CONFIG import BACKEND_API_HOST, BACKEND_API_PORT
+from frontend.st_utils import get_backend_api_client
 
 
 def get_max_records(days_to_download: int, interval: str) -> int:
@@ -16,7 +15,7 @@ def get_max_records(days_to_download: int, interval: str) -> int:
 
 @st.cache_data
 def get_candles(connector_name="binance", trading_pair="BTC-USDT", interval="1m", days=7):
-    backend_client = BackendAPIClient(BACKEND_API_HOST, BACKEND_API_PORT)
+    backend_client = get_backend_api_client()
     end_time = datetime.datetime.now() - datetime.timedelta(minutes=15)
     start_time = end_time - datetime.timedelta(days=days)
 
