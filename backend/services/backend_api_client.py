@@ -4,6 +4,7 @@ import pandas as pd
 import requests
 import streamlit as st
 from hummingbot.strategy_v2.models.executors_info import ExecutorInfo
+from requests.auth import HTTPBasicAuth
 
 
 class BackendAPIClient:
@@ -20,10 +21,11 @@ class BackendAPIClient:
             cls._shared_instance = BackendAPIClient(*args, **kwargs)
         return cls._shared_instance
 
-    def __init__(self, host: str = "localhost", port: int = 8000):
+    def __init__(self, host: str = "localhost", port: int = 8000, username: str = "admin", password: str = "admin"):
         self.host = host
         self.port = port
         self.base_url = f"http://{self.host}:{self.port}"
+        self.auth = HTTPBasicAuth(username, password)
 
     def post(self, endpoint: str, payload: Optional[Dict] = None, params: Optional[Dict] = None):
         """
@@ -34,7 +36,7 @@ class BackendAPIClient:
         :return:
         """
         url = f"{self.base_url}/{endpoint}"
-        response = requests.post(url, json=payload, params=params)
+        response = requests.post(url, json=payload, params=params, auth=self.auth)
         return self._process_response(response)
 
     def get(self, endpoint: str):
@@ -44,12 +46,15 @@ class BackendAPIClient:
         :return:
         """
         url = f"{self.base_url}/{endpoint}"
-        response = requests.get(url)
+        response = requests.get(url, auth=self.auth)
         return self._process_response(response)
 
     @staticmethod
     def _process_response(response):
-        if response.status_code == 400:
+        if response.status_code == 401:
+            st.error("You are not authorized to access Backend API. Please check your credentials.")
+            return
+        elif response.status_code == 400:
             st.error(response.json()["detail"])
             return
         return response.json()
