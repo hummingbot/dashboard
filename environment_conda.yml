@@ -19,13 +19,10 @@ dependencies:
       - statsmodels
       - pandas_ta==0.3.14b
       - pyyaml
-      - jupyter
-      - optuna
-      - optuna-dashboard
       - pathlib
-      - st-pages
+      - st_pages
       - streamlit-elements==0.1.*
-      - streamlit-authenticator
+      - streamlit-authenticator==0.3.2
       - pydantic==1.10.4
       - flake8
       - isort
