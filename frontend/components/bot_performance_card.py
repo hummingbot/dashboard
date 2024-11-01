@@ -78,6 +78,9 @@ class BotPerformanceCardV2(Dashboard.Item):
             total_open_order_volume = 0
             total_imbalance = 0
             total_unrealized_pnl_quote = 0
+            bot_data = bot_status.get("data")
+            error_logs = bot_data.get("error_logs", [])
+            general_logs = bot_data.get("general_logs", [])
             if bot_status.get("status") == "error":
                 with mui.Card(key=self._key,
                               sx={"display": "flex", "flexDirection": "column", "borderRadius": 2, "overflow": "auto"},
@@ -91,11 +94,8 @@ class BotPerformanceCardV2(Dashboard.Item):
                         f"An error occurred while fetching bot status of the bot {bot_name}. Please check the bot client.",
                         severity="error")
             else:
-                bot_data = bot_status.get("data")
                 is_running = bot_data.get("status") == "running"
                 performance = bot_data.get("performance")
-                error_logs = bot_data.get("error_logs")
-                general_logs = bot_data.get("general_logs")
                 if is_running:
                     for controller, inner_dict in performance.items():
                         controller_status = inner_dict.get("status")
