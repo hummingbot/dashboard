@@ -141,7 +141,7 @@ class LaunchStrategyV2(Dashboard.Item):
                     ts_text = str(trailing_stop["activation_price"]) + " / " + str(trailing_stop["trailing_delta"])
                     data.append({
                         "id": config["id"], "config_base": config_base, "version": version,
-                        "controller_name": config["controller_name"], "controller_type": config["controller_type"],
+                        "controller_name": config["controller_name"], "controller_type": config.get("controller_type", "generic"),
                         "connector_name": connector_name, "trading_pair": trading_pair,
                         "total_amount_quote": total_amount_quote, "max_loss_quote": total_amount_quote * stop_loss / 2,
                         "stop_loss": stop_loss, "take_profit": take_profit,
