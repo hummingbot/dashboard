@@ -97,6 +97,31 @@ The dashboard uses `admin` and `abc` as the default username and password respec
 - Change the value of `AUTH_SYSTEM_ENABLED` from `False` to `True`.
 - Save the changes to the `docker-compose.yml` file.
 - Relaunch Dashboard by running `bash setup.sh`
+
+If you want to put the instance behind a reverse proxy here is an example nginx config
+```
+server {
+	server_name <your-domain.example.com>;
+    listen 80;
+    
+    location / {
+        proxy_pass http://127.0.0.1:8501;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Protocol $scheme;
+        proxy_set_header X-Forwarded-Host $http_host;
+
+        # WebSocket support
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_read_timeout 86400;
+	}
+
+}
+```
   
 ### Source 
 
