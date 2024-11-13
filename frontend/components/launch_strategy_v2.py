@@ -49,35 +49,41 @@ class LaunchStrategyV2(Dashboard.Item):
         self._controller_config_selected = [param + ".yml" for param in params]
 
     def launch_new_bot(self):
-        if self._bot_name and self._image_name and len(self._controller_config_selected) > 0:
-            start_time_str = time.strftime("%Y.%m.%d_%H.%M")
-            bot_name = f"{self._bot_name}-{start_time_str}"
-            script_config = {
-                "name": bot_name,
-                "content": {
-                    "markets": {},
-                    "candles_config": [],
-                    "controllers_config": self._controller_config_selected,
-                    "config_update_interval": 10,
-                    "script_file_name": "v2_with_controllers.py",
-                    "time_to_cash_out": None,
-                }
+        if not self._bot_name:
+            st.warning("You need to define the bot name.")
+            return
+        if not self._image_name:
+            st.warning("You need to select the hummingbot image.")
+            return
+        if not self._controller_config_selected or len(self._controller_config_selected) == 0:
+            st.warning("You need to select the controllers configs. Please select at least one controller "
+                       "config by clicking on the checkbox.")
+            return
+        start_time_str = time.strftime("%Y.%m.%d_%H.%M")
+        bot_name = f"{self._bot_name}-{start_time_str}"
+        script_config = {
+            "name": bot_name,
+            "content": {
+                "markets": {},
+                "candles_config": [],
+                "controllers_config": self._controller_config_selected,
+                "config_update_interval": 10,
+                "script_file_name": "v2_with_controllers.py",
+                "time_to_cash_out": None,
             }
+        }
 
-            self._backend_api_client.add_script_config(script_config)
-            deploy_config = {
-                "instance_name": bot_name,
-                "script": "v2_with_controllers.py",
-                "script_config": bot_name + ".yml",
-                "image": self._image_name,
-                "credentials_profile": self._credentials,
-            }
-            self._backend_api_client.create_hummingbot_instance(deploy_config)
-            with st.spinner('Starting Bot... This process may take a few seconds'):
-                time.sleep(3)
-        else:
-            st.warning("You need to define the bot name and select the controllers configs "
-                       "that you want to deploy.")
+        self._backend_api_client.add_script_config(script_config)
+        deploy_config = {
+            "instance_name": bot_name,
+            "script": "v2_with_controllers.py",
+            "script_config": bot_name + ".yml",
+            "image": self._image_name,
+            "credentials_profile": self._credentials,
+        }
+        self._backend_api_client.create_hummingbot_instance(deploy_config)
+        with st.spinner('Starting Bot... This process may take a few seconds'):
+            time.sleep(3)
 
     def delete_selected_configs(self):
         if self._controller_config_selected:
