@@ -140,7 +140,7 @@ def user_inputs():
                         f"Amount % {i}",
                         min_value=0.0,
                         max_value=100.0,
-                        value=10.0,
+                        value=50.0,
                         key=f"amount_pct_{i}"
                     )
                 st.markdown("---")
