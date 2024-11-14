@@ -175,6 +175,21 @@ class BackendAPIClient:
         url = "delete-controller-config"
         return self.post(url, params={"config_name": controller_name})
 
+    def delete_script_config(self, script_name: str):
+        """Delete a script configuration."""
+        url = "delete-script-config"
+        return self.post(url, params={"script_name": script_name})
+
+    def delete_all_controller_configs(self):
+        """Delete all controller configurations."""
+        endpoint = "delete-all-controller-configs"
+        return self.post(endpoint)
+
+    def delete_all_script_configs(self):
+        """Delete all script configurations."""
+        endpoint = "delete-all-script-configs"
+        return self.post(endpoint)
+
     def get_real_time_candles(self, connector: str, trading_pair: str, interval: str, max_records: int):
         """Get candles data."""
         endpoint = "real-time-candles"
