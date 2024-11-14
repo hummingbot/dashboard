@@ -86,13 +86,20 @@ class LaunchStrategyV2(Dashboard.Item):
                 "config_update_interval": 10,
                 "script_file_name": "v2_with_controllers.py",
                 "time_to_cash_out": None,
-                "max_global_drawdown": self._max_global_drawdown,
-                "max_controller_drawdown": self._max_controller_drawdown,
-                "rebalance_interval": self._rebalance_interval,
-                "asset_to_rebalance": self._asset_to_rebalance,
             }
         }
+        if self._max_global_drawdown:
+            script_config["content"]["max_global_drawdown"] = self._max_global_drawdown
+        if self._max_controller_drawdown:
+            script_config["content"]["max_controller_drawdown"] = self._max_controller_drawdown
+        if self._rebalance_interval:
+            script_config["content"]["rebalance_interval"] = self._rebalance_interval
+            if self._asset_to_rebalance and "USD" in self._asset_to_rebalance:
+                script_config["content"]["asset_to_rebalance"] = self._asset_to_rebalance
+            else:
+                st.error("You need to define the asset to rebalance in USD like token.")
 
+        self._backend_api_client.delete_all_script_configs()
         self._backend_api_client.add_script_config(script_config)
         deploy_config = {
             "instance_name": bot_name,
