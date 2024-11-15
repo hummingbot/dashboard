@@ -61,10 +61,11 @@ class PerformanceDataSource:
         executors_df["level_id"] = executors_df["config"].apply(lambda x: x.get("level_id"))
         executors_df["bep"] = executors_df["custom_info"].apply(lambda x: x["current_position_average_price"])
         executors_df["order_ids"] = executors_df["custom_info"].apply(lambda x: x.get("order_ids"))
-        executors_df["close_price"] = executors_df["custom_info"].apply(lambda x: x["close_price"])
-        executors_df["sl"] = executors_df["config"].apply(lambda x: x["stop_loss"]).fillna(0)
-        executors_df["tp"] = executors_df["config"].apply(lambda x: x["take_profit"]).fillna(0)
-        executors_df["tl"] = executors_df["config"].apply(lambda x: x["time_limit"]).fillna(0)
+        executors_df["close_price"] = executors_df["custom_info"].apply(
+            lambda x: x.get("close_price", x["current_position_average_price"]))
+        executors_df["sl"] = executors_df["config"].apply(lambda x: x.get("stop_loss")).fillna(0)
+        executors_df["tp"] = executors_df["config"].apply(lambda x: x.get("take_profit")).fillna(0)
+        executors_df["tl"] = executors_df["config"].apply(lambda x: x.get("time_limit")).fillna(0)
         executors_df["close_type_name"] = executors_df["close_type"].apply(lambda x: self.get_enum_by_value(CloseType, x).name)
 
         controllers = self.controllers_df.copy()
