@@ -1,0 +1,19 @@
+services:
+  dashboard:
+    container_name: dashboard
+    image: hummingbot/dashboard:latest
+    ports:
+      - "8501:8501"
+    environment:
+        - AUTH_SYSTEM_ENABLED=False
+        - BACKEND_API_HOST=backend-api
+        - BACKEND_API_PORT=8000
+        - BACKEND_API_USERNAME=admin
+        - BACKEND_API_PASSWORD=admin
+    volumes:
+      - .:/home/dashboard/backend
+      - ./frontend:/home/dashboard/frontend
+      - ./data:/home/dashboard/data
+      - ./main.py:/home/dashboard/main.py
+      - ./CONFIG.py:/home/dashboard/CONFIG.py
+      - ./constants.py:/home/dashboard/constants.py

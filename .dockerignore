@@ -1,7 +1,25 @@
-/.github
-/.vscode
+# Ignore Git and version control files
 .git
 .gitignore
 .dockerignore
-_pycache_
 
+# Ignore cache and temporary files
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore editor and IDE configurations
+.vscode
+.idea
+*.swp
+*~
+
+# Ignore environment and dependency files
+*.env
+*.venv
+*.DS_Store
+*.log
+
+# Ignore specific folders that are not needed in the container
+.github

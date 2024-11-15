@@ -37,7 +37,7 @@ LABEL date=${BUILD_DATE}
 # Set ENV variables
 ENV COMMIT_SHA=${COMMIT}
 ENV COMMIT_BRANCH=${BRANCH}
-ENV BUILD_DATE=${DATE}
+ENV BUILD_DATE=${BUILD_DATE}
 
 # Install system dependencies
 RUN apt-get update && \
