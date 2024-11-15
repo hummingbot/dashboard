@@ -98,6 +98,7 @@ class LaunchStrategyV2(Dashboard.Item):
                 script_config["content"]["asset_to_rebalance"] = self._asset_to_rebalance
             else:
                 st.error("You need to define the asset to rebalance in USD like token.")
+                return
 
         self._backend_api_client.delete_all_script_configs()
         self._backend_api_client.add_script_config(script_config)
