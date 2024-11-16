@@ -8,6 +8,7 @@ def main_page():
 def public_pages():
     return [
         Section("Config Generator", "🎛️"),
+        Page("frontend/pages/config/grid_strike/app.py", "Grid Strike", "🎳"),
         Page("frontend/pages/config/pmm_simple/app.py", "PMM Simple", "👨‍🏫"),
         Page("frontend/pages/config/pmm_dynamic/app.py", "PMM Dynamic", "👩‍🏫"),
         Page("frontend/pages/config/dman_maker_v2/app.py", "D-Man Maker V2", "🤖"),

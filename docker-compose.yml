@@ -11,9 +11,4 @@ services:
         - BACKEND_API_USERNAME=admin
         - BACKEND_API_PASSWORD=admin
     volumes:
-      - .:/home/dashboard/backend
-      - ./frontend:/home/dashboard/frontend
-      - ./data:/home/dashboard/data
-      - ./main.py:/home/dashboard/main.py
-      - ./CONFIG.py:/home/dashboard/CONFIG.py
-      - ./constants.py:/home/dashboard/constants.py
+      - .:/home/dashboard
