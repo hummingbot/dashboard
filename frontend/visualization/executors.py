@@ -10,7 +10,7 @@ def add_executors_trace(fig, executors, row, col):
         entry_time = pd.to_datetime(executor.timestamp, unit='s')
         entry_price = executor.custom_info["current_position_average_price"]
         exit_time = pd.to_datetime(executor.close_timestamp, unit='s')
-        exit_price = executor.custom_info["close_price"]
+        exit_price = executor.custom_info.get("close_price", executor.custom_info["current_position_average_price"])
         name = "Buy Executor" if executor.config.side == TradeType.BUY else "Sell Executor"
 
         if executor.filled_amount_quote == 0:

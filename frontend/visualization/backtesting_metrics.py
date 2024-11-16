@@ -1,7 +1,7 @@
 import streamlit as st
 
 
-def render_backtesting_metrics(summary_results):
+def render_backtesting_metrics(summary_results, title="Backtesting Metrics"):
     net_pnl = summary_results.get('net_pnl', 0)
     net_pnl_quote = summary_results.get('net_pnl_quote', 0)
     total_volume = summary_results.get('total_volume', 0)
@@ -13,7 +13,7 @@ def render_backtesting_metrics(summary_results):
     profit_factor = summary_results.get('profit_factor', 0)
 
     # Displaying KPIs in Streamlit
-    st.write("### Backtesting Metrics")
+    st.write(f"### {title}")
     col1, col2, col3, col4, col5, col6 = st.columns(6)
     col1.metric(label="Net PNL (Quote)", value=f"{net_pnl_quote:.2f}", delta=f"{net_pnl:.2%}")
     col2.metric(label="Max Drawdown (USD)", value=f"{max_drawdown_usd:.2f}", delta=f"{max_drawdown_pct:.2%}")
