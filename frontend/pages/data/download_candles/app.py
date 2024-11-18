@@ -13,7 +13,8 @@ backend_api_client = get_backend_api_client()
 c1, c2, c3, c4 = st.columns([2, 2, 2, 0.5])
 with c1:
     connector = st.selectbox("Exchange",
-                             ["binance_perpetual", "binance", "gate_io", "gate_io_perpetual", "kucoin", "ascend_ex"],
+                             ["binance_perpetual", "binance", "gate_io", "gate_io_perpetual", "kucoin", "ascend_ex",
+                              "bitget_perpetual"],
                              index=0)
     trading_pair = st.text_input("Trading Pair", value="BTC-USDT")
 with c2:
