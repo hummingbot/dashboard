@@ -109,7 +109,10 @@ def display_global_results(data_source: PerformanceDataSource):
 @st.cache_data(show_spinner=False)
 def fetch_global_results(executors_dict: List[Dict[str, Any]]):
     backend_api = get_backend_api_client()
-    results_response = backend_api.get_performance_results(executors=executors_dict)
+    if len(executors_dict) > 0:
+        results_response = backend_api.get_performance_results(executors=executors_dict)
+    else:
+        results_response = {}
     return results_response.get("results", {})
 
 
@@ -145,14 +148,20 @@ def display_side_analysis(data_source: PerformanceDataSource,
 @st.cache_data(show_spinner=False)
 def fetch_long_results(executors_dict: List[Dict[str, Any]]):
     backend_api = get_backend_api_client()
-    results_response = backend_api.get_performance_results(executors=executors_dict)
+    if len(executors_dict) > 0:
+        results_response = backend_api.get_performance_results(executors=executors_dict)
+    else:
+        results_response = {}
     return results_response.get("results", {})
 
 
 @st.cache_data(show_spinner=False)
 def fetch_short_results(executors_dict: List[Dict[str, Any]]):
     backend_api = get_backend_api_client()
-    results_response = backend_api.get_performance_results(executors=executors_dict)
+    if len(executors_dict) > 0:
+        results_response = backend_api.get_performance_results(executors=executors_dict)
+    else:
+        results_response = {}
     return results_response.get("results", {})
 
 
@@ -234,7 +243,10 @@ def fetch_market_data(params: Dict[str, Any] = None):
 @st.cache_data()
 def fetch_performance_results(executors_dict: List[Dict[str, Any]]):
     backend_api = get_backend_api_client()
-    results_response = backend_api.get_performance_results(executors=executors_dict)
+    if len(executors_dict) > 0:
+        results_response = backend_api.get_performance_results(executors=executors_dict)
+    else:
+        results_response = {}
     return results_response.get("results", {})
 
 
