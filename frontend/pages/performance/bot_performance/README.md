@@ -1,4 +1,4 @@
-This page helps you analize database files of several Hummingbot strategies and measure performance.
+This page helps you analyze database files of several Hummingbot strategies and measure performance.
 
 #### Support
 
