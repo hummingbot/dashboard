@@ -10,7 +10,7 @@ from frontend.visualization.bot_performance import (
     display_performance_summary_table,
     display_tables_section,
 )
-from frontend.visualization.performance_etl import display_etl_section
+from frontend.visualization.performance_etl import display_postgres_etl_section, display_sqlite_etl_section
 
 
 async def main():
@@ -19,7 +19,14 @@ async def main():
     backend_api = get_backend_api_client()
 
     st.subheader("🔫 DATA SOURCE")
-    checkpoint_data = display_etl_section(backend_api)
+    selected_db = st.selectbox("Select DB connector", ["PostgreSQL", "SQLite"])
+    if selected_db == "SQLite":
+        checkpoint_data = display_sqlite_etl_section(backend_api)
+    else:
+        checkpoint_data = await display_postgres_etl_section()
+        if checkpoint_data is None:
+            st.warning("Unable to retrieve data. Ensure the PostgreSQL database is accessible and contains relevant information.")
+            st.stop()
     data_source = PerformanceDataSource(checkpoint_data)
     st.divider()
 

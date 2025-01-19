@@ -1,11 +1,56 @@
 import json
+import os
 
+import pandas as pd
 import streamlit as st
+from dotenv import load_dotenv
+from sqlalchemy import create_engine
 
 from backend.services.backend_api_client import BackendAPIClient
 
 
-def display_etl_section(backend_api: BackendAPIClient):
+async def display_postgres_etl_section():
+    load_dotenv()
+    col1, col2, col3, col4, col5 = st.columns(5)
+
+    with col1:
+        username = st.text_input("Username", os.getenv("POSTGRES_USERNAME", "postgres"))
+    with col2:
+        password = st.text_input("Password", os.getenv("POSTGRES_PASSWORD", "postgres"), type="password")
+    with col3:
+        host = st.text_input("Host", os.getenv("POSTGRES_HOST", "localhost"))
+    with col4:
+        port = st.number_input("Port", os.getenv("POSTGRES_PORT", 5432))
+    with col5:
+        database = st.text_input("Database", os.getenv("POSTGRES_DATABASE", "postgres"))
+    if st.button("Fetch data"):
+        db_url = f"postgresql://{username}:{password}@{host}:{port}/{database}"
+        try:
+            engine = create_engine(
+                db_url,
+                pool_size=5,
+                max_overflow=10,
+                pool_timeout=30,
+                pool_recycle=1800,
+                connect_args={"connect_timeout": 10}
+            )
+            with engine.connect() as connection:
+                raw_connection = connection.connection
+                checkpoint_data = {
+                    "executors": pd.read_sql_query("SELECT * FROM \"Executors\"", raw_connection).to_dict('records'),
+                    "orders": pd.read_sql_query("SELECT * FROM \"Order\"", raw_connection).to_dict('records'),
+                    "trade_fill": pd.read_sql_query("SELECT * FROM \"TradeFill\"", raw_connection).to_dict('records'),
+                    "controllers": pd.read_sql_query("SELECT * FROM \"Controllers\"", raw_connection).to_dict('records')
+                }
+            return checkpoint_data
+        except Exception as e:
+            print(f"Error fetching data: {e}")
+            return None
+    else:
+        st.stop()
+
+
+def display_sqlite_etl_section(backend_api: BackendAPIClient):
     db_paths = backend_api.list_databases()
     dbs_dict = backend_api.read_databases(db_paths)
     healthy_dbs = [db["db_path"].replace("sqlite:///", "") for db in dbs_dict if db["healthy"]]
