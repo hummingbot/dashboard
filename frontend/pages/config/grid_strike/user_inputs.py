@@ -109,7 +109,12 @@ def user_inputs():
         # Grid Ranges Configuration
         with st.expander("Grid Ranges", expanded=True):
             grid_ranges = []
-            num_ranges = st.number_input("Number of Grid Ranges", min_value=1, max_value=5, value=1)
+            c1, c2 = st.columns(2)
+            with c1:
+                num_ranges = st.number_input("Number of Grid Ranges", min_value=1, max_value=5, value=1)
+            with c2:
+                decimals = st.number_input("Decimals to Display", min_value=0, max_value=20, value=4)
+            fmt = f"%.{decimals}f"
             for i in range(num_ranges):
                 st.markdown(f"#### Range {i}")
                 # Price configuration
@@ -126,14 +131,16 @@ def user_inputs():
                     start_price = st.number_input(
                         f"Start Price {i}",
                         value=default_min,
-                        key=f"start_price_{i}"
+                        key=f"start_price_{i}",
+                        format=fmt
                     )
                 with c3:
                     # Set default end price based on side
                     end_price = st.number_input(
                         f"End Price {i}",
                         value=default_max,
-                        key=f"end_price_{i}"
+                        key=f"end_price_{i}",
+                        format=fmt
                     )
                 with c4:
                     total_amount_pct = st.number_input(
