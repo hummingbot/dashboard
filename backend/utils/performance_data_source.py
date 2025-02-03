@@ -3,6 +3,7 @@ from typing import Any, Dict, List
 
 import numpy as np
 import pandas as pd
+
 from hummingbot.core.data_type.common import TradeType
 from hummingbot.strategy_v2.models.base import RunnableStatus
 from hummingbot.strategy_v2.models.executors import CloseType
@@ -36,7 +37,7 @@ class PerformanceDataSource:
     def load_controllers(self):
         controllers = self.checkpoint_data["controllers"].copy()
         controllers = pd.DataFrame(controllers)
-        controllers["config"] = controllers["config"].apply(lambda x: json.loads(x))
+        controllers["config"] = controllers["config"].apply(lambda x: json.loads(x) if isinstance(x, str) else x)
         controllers["datetime"] = pd.to_datetime(controllers.timestamp, unit="s")
         return controllers
 
@@ -105,6 +106,8 @@ class PerformanceDataSource:
         df = (executors_df[["id", "order_ids"]]
               .rename(columns={"id": "executor_id", "order_ids": "order_id"})
               .explode("order_id"))
+        if "id" in orders.columns:
+            orders.rename(columns={"id": "client_order_id"}, inplace=True)
         exec_with_orders = df.merge(orders, left_on="order_id", right_on="client_order_id", how="inner")
         exec_with_orders = exec_with_orders[exec_with_orders["last_status"].isin(["SellOrderCompleted",
                                                                                   "BuyOrderCompleted"])]
