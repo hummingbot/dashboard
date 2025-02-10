@@ -139,7 +139,7 @@ if len(filtered_account_state) > 0:
 # Plot the evolution of the portfolio over time
 if len(filtered_account_history) > 0:
     account_history_df = account_history_to_df(filtered_account_history)
-    account_history_df['timestamp'] = pd.to_datetime(account_history_df['timestamp'])
+    account_history_df['timestamp'] = pd.to_datetime(account_history_df['timestamp'], format='ISO8601')
 
     # Aggregate the value of the portfolio over time
     portfolio_evolution_df = account_history_df.groupby('timestamp')['value'].sum().reset_index()
