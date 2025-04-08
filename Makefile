@@ -26,7 +26,7 @@ run:
 	streamlit run main.py --server.headless true
 
 uninstall:
-	conda env remove -n dashboard
+	conda env remove -n dashboard -y
 
 install:
 	if conda env list | grep -q '^dashboard '; then \
