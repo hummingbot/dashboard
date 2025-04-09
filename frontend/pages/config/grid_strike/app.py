@@ -13,45 +13,46 @@ from frontend.visualization.candles import get_candlestick_trace
 from frontend.visualization.utils import add_traces_to_fig
 
 
-def get_grid_range_traces(grid_ranges):
-    """Generate horizontal line traces for grid ranges with different colors."""
-    dash_styles = ['solid', 'dash', 'dot', 'dashdot', 'longdash']  # 5 different styles
+def get_grid_trace(start_price, end_price, limit_price):
+    """Generate horizontal line traces for the grid with different colors."""
     traces = []
-    buy_count = 0
-    sell_count = 0
-    for i, grid_range in enumerate(grid_ranges):
-        # Set color based on trade type
-        if grid_range["side"] == TradeType.BUY:
-            color = 'rgba(0, 255, 0, 1)'  # Bright green for buy
-            dash_style = dash_styles[buy_count % len(dash_styles)]
-            buy_count += 1
-        else:
-            color = 'rgba(255, 0, 0, 1)'  # Bright red for sell
-            dash_style = dash_styles[sell_count % len(dash_styles)]
-            sell_count += 1
-        # Start price line
+    
+    # Start price line
+    traces.append(go.Scatter(
+        x=[],  # Will be set to full range when plotting
+        y=[float(start_price), float(start_price)],
+        mode='lines',
+        line=dict(color='rgba(0, 255, 0, 1)', width=1.5, dash='solid'),
+        name=f'Start Price: {float(start_price):,.2f}',
+        hoverinfo='name'
+    ))
+    
+    # End price line
+    traces.append(go.Scatter(
+        x=[],  # Will be set to full range when plotting
+        y=[float(end_price), float(end_price)],
+        mode='lines',
+        line=dict(color='rgba(0, 255, 0, 1)', width=1.5, dash='dot'),
+        name=f'End Price: {float(end_price):,.2f}',
+        hoverinfo='name'
+    ))
+    
+    # Limit price line (if provided)
+    if limit_price:
         traces.append(go.Scatter(
             x=[],  # Will be set to full range when plotting
-            y=[float(grid_range["start_price"]), float(grid_range["start_price"])],
+            y=[float(limit_price), float(limit_price)],
             mode='lines',
-            line=dict(color=color, width=1.5, dash=dash_style),
-            name=f'Range {i} Start: {float(grid_range["start_price"]):,.2f} ({grid_range["side"].name})',
+            line=dict(color='rgba(255, 0, 0, 1)', width=1.5, dash='dashdot'),
+            name=f'Limit Price: {float(limit_price):,.2f}',
             hoverinfo='name'
         ))
-        # End price line
-        traces.append(go.Scatter(
-            x=[],  # Will be set to full range when plotting
-            y=[float(grid_range["end_price"]), float(grid_range["end_price"])],
-            mode='lines',
-            line=dict(color=color, width=1.5, dash=dash_style),
-            name=f'Range {i} End: {float(grid_range["end_price"]):,.2f} ({grid_range["side"].name})',
-            hoverinfo='name'
-        ))
+    
     return traces
 
 
 # Initialize the Streamlit page
-initialize_st_page(title="Grid Strike", icon="📊", initial_sidebar_state="expanded")
+initialize_st_page(title="Grid Strike Grid Component", icon="📊", initial_sidebar_state="expanded")
 backend_api_client = get_backend_api_client()
 
 get_default_config_loader("grid_strike")
@@ -70,28 +71,34 @@ candles = get_candles(
 # Create a subplot with just 1 row for price action
 fig = make_subplots(
     rows=1, cols=1,
-    subplot_titles=(f'Grid Strike - {inputs["trading_pair"]} ({inputs["interval"]})',),
+    subplot_titles=(f'Grid Strike Grid Component - {inputs["trading_pair"]} ({inputs["interval"]})',),
 )
 
 # Add basic candlestick chart
 candlestick_trace = get_candlestick_trace(candles)
 add_traces_to_fig(fig, [candlestick_trace], row=1, col=1)
 
-# Add grid range visualization
-grid_traces = get_grid_range_traces(inputs["grid_ranges"])
+# Add grid visualization
+grid_traces = get_grid_trace(
+    inputs["start_price"], 
+    inputs["end_price"], 
+    inputs["limit_price"]
+)
+
 for trace in grid_traces:
     # Set the x-axis range for all grid traces
     trace.x = [candles.index[0], candles.index[-1]]
     fig.add_trace(trace, row=1, col=1)
 
-# Update y-axis to make sure all grid ranges and candles are visible
+# Update y-axis to make sure all grid points and candles are visible
 all_prices = []
 # Add candle prices
 all_prices.extend(candles['high'].tolist())
 all_prices.extend(candles['low'].tolist())
-# Add grid range prices
-for grid_range in inputs["grid_ranges"]:
-    all_prices.extend([float(grid_range["start_price"]), float(grid_range["end_price"])])
+# Add grid prices
+all_prices.extend([float(inputs["start_price"]), float(inputs["end_price"])])
+if inputs["limit_price"]:
+    all_prices.append(float(inputs["limit_price"]))
 
 y_min, y_max = min(all_prices), max(all_prices)
 padding = (y_max - y_min) * 0.1  # Add 10% padding
@@ -128,21 +135,27 @@ st.plotly_chart(fig, use_container_width=True)
 def prepare_config_for_save(config):
     """Prepare config for JSON serialization."""
     prepared_config = config.copy()
-    grid_ranges = []
-    for grid_range in prepared_config["grid_ranges"]:
-        grid_range = grid_range.copy()
-        grid_range["side"] = grid_range["side"].value
-        grid_range["open_order_type"] = grid_range["open_order_type"].value
-        grid_range["take_profit_order_type"] = grid_range["take_profit_order_type"].value
-        grid_ranges.append(grid_range)
-    prepared_config["grid_ranges"] = grid_ranges
+    
+    # Convert position mode enum to value
     prepared_config["position_mode"] = prepared_config["position_mode"].value
+    
+    # Convert side to value
+    prepared_config["side"] = prepared_config["side"].value
+    
+    # Convert triple barrier order types to values
+    if "triple_barrier_config" in prepared_config and prepared_config["triple_barrier_config"]:
+        for key in ["open_order_type", "stop_loss_order_type", "take_profit_order_type", "time_limit_order_type"]:
+            if key in prepared_config["triple_barrier_config"] and prepared_config["triple_barrier_config"][key] is not None:
+                prepared_config["triple_barrier_config"][key] = prepared_config["triple_barrier_config"][key].value
+    
+    # Remove chart-specific fields
     del prepared_config["candles_connector"]
     del prepared_config["interval"]
     del prepared_config["days_to_visualize"]
+    
     return prepared_config
 
 
-# Replace the render_save_config line with:
+# Render save config component
 render_save_config(st.session_state["default_config"]["id"],
-                   prepare_config_for_save(st.session_state["default_config"]))
+                   prepare_config_for_save(st.session_state["default_config"])) 
