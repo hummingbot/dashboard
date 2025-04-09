@@ -28,7 +28,7 @@ def user_inputs():
     config = {
         "controller_name": "pmm_dynamic",
         "controller_type": "market_making",
-        "manual_kill_switch": None,
+        "manual_kill_switch": False,
         "candles_config": [],
         "connector_name": connector_name,
         "trading_pair": trading_pair,
