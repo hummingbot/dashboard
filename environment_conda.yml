@@ -3,12 +3,12 @@ channels:
   - defaults
   - conda-forge
 dependencies:
-  - python=3.10
-  - sqlalchemy=1.4
+  - python=3.12
+  - sqlalchemy
   - pip
   - pip:
       - hummingbot
-      - numpy==1.26.4
+      - pydantic
       - streamlit==1.33.0
       - watchdog
       - python-dotenv
@@ -23,7 +23,6 @@ dependencies:
       - st_pages
       - streamlit-elements==0.1.*
       - streamlit-authenticator==0.3.2
-      - pydantic==1.10.4
       - flake8
       - isort
       - pre-commit
