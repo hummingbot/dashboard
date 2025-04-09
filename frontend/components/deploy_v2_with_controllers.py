@@ -40,9 +40,7 @@ class LaunchV2WithControllers:
                     "markets": {},
                     "candles_config": [],
                     "controllers_config": self._controller_config_selected,
-                    "config_update_interval": 20,
                     "script_file_name": "v2_with_controllers.py",
-                    "time_to_cash_out": None,
                 }
             }
 
