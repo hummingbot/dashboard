@@ -1,13 +1,13 @@
-# Grid Strike Configuration Tool
+# Grid Strike Grid Component Configuration Tool
 
-Welcome to the Grid Strike Configuration Tool! This tool allows you to create, modify, visualize, and save configurations for the Grid Strike trading strategy. Here's how you can make the most out of it.
+Welcome to the Grid Strike Grid Component Configuration Tool! This tool allows you to create, modify, visualize, and save configurations for the Grid Strike Grid Component trading strategy, which is a simplified version of the Grid Strike strategy focused on a single grid.
 
 ## Features
 
-- **Start from Default Configurations**: Begin with a default configuration or use the values from an existing configuration.
-- **Dynamic Price Range Defaults**: Automatically sets grid ranges based on current market conditions.
-- **Visual Grid Configuration**: See your grid ranges directly on the price chart.
-- **Multiple Grid Ranges**: Configure up to 5 different grid ranges with different sides (BUY/SELL).
+- **Simple Grid Configuration**: Configure a single grid with start, end, and limit prices.
+- **Dynamic Price Range Defaults**: Automatically sets price ranges based on current market conditions.
+- **Visual Grid Configuration**: See your grid settings directly on the price chart.
+- **Triple Barrier Risk Management**: Configure take profit, stop loss, and time limit parameters.
 - **Save and Deploy**: Once satisfied, save the configuration to deploy it later.
 
 ## How to Use
@@ -15,9 +15,10 @@ Welcome to the Grid Strike Configuration Tool! This tool allows you to create, m
 ### 1. Basic Configuration
 
 Start by configuring the basic parameters:
+- **ID Prefix**: Prefix for the strategy ID (default: "grid_").
+- **Trading Pair**: Choose the cryptocurrency trading pair (e.g., "BTC-FDUSD").
 - **Connector Name**: Select the trading platform or exchange (e.g., "binance").
-- **Trading Pair**: Choose the cryptocurrency trading pair (e.g., "BTC-USDT").
-- **Leverage**: Set the leverage ratio (use 1 for spot trading).
+- **Leverage**: Set the leverage ratio for margin/futures trading.
 
 ### 2. Chart Configuration
 
@@ -26,69 +27,111 @@ Configure how you want to visualize the market data:
 - **Interval**: Choose the timeframe for the candlesticks (1m to 1d).
 - **Days to Display**: Select how many days of historical data to show.
 
-### 3. Grid Ranges
+### 3. Grid Configuration
 
-Configure up to 5 grid ranges with different parameters:
-- **Number of Grid Ranges**: Select how many ranges you want to configure (1-5).
-- **Side**: Choose BUY or SELL for each range.
-- **Start Price**: The price where the range begins.
-- **End Price**: The price where the range ends.
-- **Amount %**: Percentage of total amount allocated to this range.
-
-### 4. Advanced Configuration
-
-Fine-tune your strategy with advanced parameters:
-- **Position Mode**: Choose between HEDGE or ONE-WAY.
-- **Time Limit**: Maximum duration for orders (in hours).
-- **Activation Bounds**: Price deviation to trigger updates.
+Configure your grid parameters:
+- **Side**: Choose BUY or SELL for the grid.
+- **Start Price**: The price where the grid begins.
+- **End Price**: The price where the grid ends.
+- **Limit Price**: A price limit that will stop the strategy.
 - **Min Spread Between Orders**: Minimum price difference between orders.
-- **Min Order Amount**: Minimum size for individual orders.
-- **Max Open Orders**: Maximum number of active orders per range.
-- **Grid Range Update Interval**: How often to update grid ranges (in seconds).
+- **Min Order Amount (Quote)**: Minimum size for individual orders.
+- **Maximum Open Orders**: Maximum number of active orders in the grid.
 
-## Understanding Grid Strike Strategy
+### 4. Order Configuration
 
-The Grid Strike strategy creates a grid of orders within specified price ranges. Here's how it works:
+Fine-tune your order placement:
+- **Max Orders Per Batch**: Maximum number of orders to place at once.
+- **Order Frequency**: Time between order placements in seconds.
+- **Activation Bounds**: Price deviation to trigger updates.
 
-### Grid Range Mechanics
-- Each grid range defines a price zone where the strategy will place orders
-- BUY ranges place buy orders from higher to lower prices
-- SELL ranges place sell orders from lower to higher prices
-- Multiple ranges can work simultaneously with different configurations
+### 5. Triple Barrier Configuration
+
+Set up risk management parameters:
+- **Open Order Type**: The type of order to open positions (e.g., MARKET, LIMIT).
+- **Take Profit**: Price movement percentage for take profit.
+- **Stop Loss**: Price movement percentage for stop loss.
+- **Time Limit**: Time limit for orders in hours.
+- **Order Type Settings**: Configure order types for each barrier.
+
+### 6. Advanced Configuration
+
+Additional settings:
+- **Position Mode**: Choose between HEDGE or ONE-WAY.
+- **Strategy Time Limit**: Maximum duration for the entire strategy in hours.
+- **Manual Kill Switch**: Option to enable manual kill switch.
+
+## Understanding Grid Strike Grid Component
+
+The Grid Strike Grid Component strategy creates a single grid of orders within a specified price range. Here's how it works:
+
+### Grid Mechanics
+- The strategy places orders uniformly between the start and end prices
+- BUY grids place buy orders from start (higher) to end (lower) prices
+- SELL grids place sell orders from start (lower) to end (higher) prices
+- The limit price serves as an additional safety boundary
 
 ### Order Placement
-- Orders are placed within each range based on the min spread between orders
-- The amount per order is calculated based on the range's allocation percentage
+- Orders are placed within the grid based on the min spread between orders
+- The amount per order is calculated based on the total amount specified
 - Orders are automatically adjusted when price moves beyond activation bounds
 
 ### Visual Indicators
-- Green lines represent BUY ranges
-- Red lines represent SELL ranges
-- Different dash patterns distinguish multiple ranges of the same side
-- Horizontal lines show the start and end prices of each range
-
-## Best Practices
-
-1. **Range Placement**
-   - Place BUY ranges below current price
-   - Place SELL ranges above current price
-   - Avoid overlapping ranges of the same side
-
-2. **Amount Allocation**
-   - Distribute amounts across ranges based on your risk preference
-   - Ensure total allocation across all ranges doesn't exceed 100%
-   - Consider larger allocations for ranges closer to current price
-
-3. **Spread Configuration**
-   - Set min spread based on the asset's volatility
-   - Larger spreads mean fewer, more profitable orders
-   - Smaller spreads mean more frequent, less profitable orders
-
-4. **Risk Management**
-   - Use appropriate leverage (1 for spot)
-   - Set reasonable time limits for orders
-   - Monitor and adjust activation bounds based on market conditions
+- Green lines represent the start and end prices
+- Red line represents the limit price
+- Candlestick chart shows the market price action
 
 ## Example Configuration
 
-Here's a sample configuration for a BTC-USDT grid:
+Here's a sample configuration for a BTC-FDUSD grid:
+
+```yaml
+id: grid_btcfdusd
+controller_name: grid_strike
+controller_type: generic
+total_amount_quote: 200
+manual_kill_switch: null
+candles_config: []
+leverage: 75
+position_mode: HEDGE
+connector_name: binance
+trading_pair: BTC-FDUSD
+side: 1
+start_price: 84000
+end_price: 84300
+limit_price: 83700
+min_spread_between_orders: 0.0001
+min_order_amount_quote: 5
+max_open_orders: 40
+max_orders_per_batch: 1
+order_frequency: 2
+activation_bounds: 0.01
+triple_barrier_config:
+  open_order_type: 3
+  stop_loss: null
+  stop_loss_order_type: 1
+  take_profit: 0.0001
+  take_profit_order_type: 3
+  time_limit: 21600
+  time_limit_order_type: 1
+time_limit: 172800
+```
+
+## Best Practices
+
+1. **Grid Placement**
+   - For BUY grids, set start price above end price
+   - For SELL grids, set end price above start price
+   - Set limit price as a safety boundary where you want to stop the strategy
+
+2. **Amount Management**
+   - Set total amount based on your risk tolerance
+   - Configure min order amount to ensure meaningful trade sizes
+
+3. **Grid Density**
+   - Adjust min spread between orders based on the asset's volatility
+   - Set max open orders to control grid density
+
+4. **Risk Management**
+   - Use triple barrier parameters to manage risk for individual positions
+   - Set appropriate time limits for both positions and the overall strategy 

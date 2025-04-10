@@ -190,7 +190,7 @@ config = {
     "id": id,
     "controller_name": "bollinger_v1",
     "controller_type": "directional_trading",
-    "manual_kill_switch": None,
+    "manual_kill_switch": False,
     "candles_config": [],
     "connector_name": connector_name,
     "trading_pair": trading_pair,
