@@ -7,7 +7,7 @@
 .PHONY: install-pre-commit
 .PHONY: docker_build
 .PHONY: docker_run
-
+.PHONY: reference-local-hummingbot
 
 detect_conda_bin := $(shell bash -c 'if [ "${CONDA_EXE} " == " " ]; then \
     CONDA_EXE=$$((find /opt/conda/bin/conda || find ~/anaconda3/bin/conda || \
@@ -47,3 +47,7 @@ docker_build:
 
 docker_run:
 	docker run -p 8501:8501 hummingbot/dashboard:latest
+
+# See reference_local_hummingbot.sh for available options
+reference-local-hummingbot:
+	bash ./scripts/reference_local_hummingbot.sh $(if $(force-repackage),--force-repackage,) --conda-env=dashboard $(ARGS)

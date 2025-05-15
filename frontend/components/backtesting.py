@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import streamlit as st
 
@@ -6,7 +6,7 @@ import streamlit as st
 def backtesting_section(inputs, backend_api_client):
     st.write("### Backtesting")
     c1, c2, c3, c4, c5 = st.columns(5)
-    default_end_time = datetime.now().date() - timedelta(days=1)
+    default_end_time = datetime.now(timezone.utc).date() - timedelta(days=1)
     default_start_time = default_end_time - timedelta(days=2)
     with c1:
         start_date = st.date_input("Start Date", default_start_time)
@@ -22,8 +22,8 @@ def backtesting_section(inputs, backend_api_client):
         run_backtesting = st.button("Run Backtesting")
 
     if run_backtesting:
-        start_datetime = datetime.combine(start_date, datetime.min.time())
-        end_datetime = datetime.combine(end_date, datetime.max.time())
+        start_datetime = datetime.combine(start_date, datetime.min.time(), tzinfo=timezone.utc)
+        end_datetime = datetime.combine(end_date, datetime.max.time(), tzinfo=timezone.utc)
         try:
             backtesting_results = backend_api_client.run_backtesting(
                 start_time=int(start_datetime.timestamp()),
