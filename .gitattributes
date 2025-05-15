@@ -1,0 +1,6 @@
+# Set default behavior to automatically normalize line endings with LF
+* text=auto eol=lf
+
+# Special diff drivers
+*.py diff=python
+*.md diff=markdown
