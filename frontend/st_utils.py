@@ -1,33 +1,46 @@
 import inspect
 import os.path
 from pathlib import Path
+from typing import Optional, Union
 
 import pandas as pd
 import streamlit as st
 import streamlit_authenticator as stauth
 import yaml
-from st_pages import add_page_title, show_pages
+from streamlit.commands.page_config import InitialSideBarState, Layout
 from yaml import SafeLoader
 
 from CONFIG import AUTH_SYSTEM_ENABLED
 from frontend.pages.permissions import main_page, private_pages, public_pages
 
 
-def initialize_st_page(title: str, icon: str, layout="wide", initial_sidebar_state="expanded"):
+def initialize_st_page(title: str, icon: str, layout: Layout = 'wide', initial_sidebar_state: InitialSideBarState = "expanded"):
     st.set_page_config(
         page_title=title,
         page_icon=icon,
         layout=layout,
         initial_sidebar_state=initial_sidebar_state
     )
-    caller_frame = inspect.currentframe().f_back
+    
+    # Add page title
+    st.title(title)
+    
+    # Get caller frame info safely
+    frame: Optional[Union[inspect.FrameInfo, inspect.Traceback]] = None
+    try:
+        caller_frame = inspect.currentframe()
+        if caller_frame is not None:
+            caller_frame = caller_frame.f_back
+            if caller_frame is not None:
+                frame = inspect.getframeinfo(caller_frame)
+    except Exception:
+        pass
 
-    add_page_title(layout=layout, initial_sidebar_state=initial_sidebar_state)
-
-    current_directory = Path(os.path.dirname(inspect.getframeinfo(caller_frame).filename))
-    readme_path = current_directory / "README.md"
-    with st.expander("About This Page"):
-        st.write(readme_path.read_text())
+    if frame is not None:
+        current_directory = Path(os.path.dirname(frame.filename))
+        readme_path = current_directory / "README.md"
+        with st.expander("About This Page"):
+            st.write(readme_path.read_text())
 
 
 def download_csv_button(df: pd.DataFrame, filename: str, key: str):
@@ -87,7 +100,11 @@ def get_backend_api_client():
 
 def auth_system():
     if not AUTH_SYSTEM_ENABLED:
-        show_pages(main_page() + private_pages() + public_pages())
+        return {
+            "Main": main_page(),
+            **private_pages(),
+            **public_pages(),
+        }
     else:
         with open('credentials.yml') as file:
             config = yaml.load(file, Loader=SafeLoader)
@@ -99,13 +116,22 @@ def auth_system():
                 config['cookie']['key'],
                 config['cookie']['expiry_days'],
             )
-            show_pages(main_page() + public_pages())
+            # Show only public pages for non-authenticated users
             st.session_state.authenticator.login()
             if st.session_state["authentication_status"] is False:
                 st.error('Username/password is incorrect')
             elif st.session_state["authentication_status"] is None:
                 st.warning('Please enter your username and password')
+            return {
+                "Main": main_page(),
+                **public_pages()
+            }
         else:
             st.session_state.authenticator.logout(location="sidebar")
             st.sidebar.write(f'Welcome *{st.session_state["name"]}*')
-            show_pages(main_page() + private_pages() + public_pages())
+            # Show all pages for authenticated users
+            return {
+                "Main": main_page(),
+                **private_pages(),
+                **public_pages(),
+            }
