@@ -75,7 +75,7 @@ class LaunchStrategyV2(Dashboard.Item):
             st.warning("You need to select the controllers configs. Please select at least one controller "
                        "config by clicking on the checkbox.")
             return
-        start_time_str = time.strftime("%Y.%m.%d_%H.%M")
+        start_time_str = time.strftime("%Y%m%d-%H%M")
         bot_name = f"{self._bot_name}-{start_time_str}"
         script_config = {
             "name": bot_name,
@@ -166,13 +166,18 @@ class LaunchStrategyV2(Dashboard.Item):
                 all_controllers_config = self._backend_api_client.get_all_controllers_config()
                 data = []
                 for config in all_controllers_config:
+                    # Handle case where config might be a string instead of dict
+                    if isinstance(config, str):
+                        st.warning(f"Unexpected config format: {config}. Expected a dictionary.")
+                        continue
+                    
                     connector_name = config.get("connector_name", "Unknown")
                     trading_pair = config.get("trading_pair", "Unknown")
-                    total_amount_quote = config.get("total_amount_quote", 0)
-                    stop_loss = config.get("stop_loss", 0)
-                    take_profit = config.get("take_profit", 0)
+                    total_amount_quote = float(config.get("total_amount_quote", 0))
+                    stop_loss = float(config.get("stop_loss", 0))
+                    take_profit = float(config.get("take_profit", 0))
                     trailing_stop = config.get("trailing_stop", {"activation_price": 0, "trailing_delta": 0})
-                    time_limit = config.get("time_limit", 0)
+                    time_limit = float(config.get("time_limit", 0))
                     config_version = config["id"].split("_")
                     if len(config_version) > 1:
                         config_base = config_version[0]
