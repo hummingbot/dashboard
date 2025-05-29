@@ -98,13 +98,37 @@ with c2:
 
 st.write(f"Configuration Map for {connector_name}:")
 config_inputs = {}
-cols = st.columns(NUM_COLUMNS)
-for i, config in enumerate(config_map):
-    with cols[i % (NUM_COLUMNS - 1)]:
-        config_inputs[config] = st.text_input(config, type="password", key=f"{connector_name}_{config}")
 
-with cols[-1]:
+# Custom logic for XRPL connector
+if connector_name == "xrpl":
+    # Define custom XRPL fields with default values
+    xrpl_fields = {
+        "xrpl_secret_key": "",
+        "wss_node_url": "wss://xrplcluster.com",
+        "wss_second_node_url": "wss://s1.ripple.com",
+        "wss_third_node_url": "wss://s2.ripple.com"
+    }
+    
+    # Display XRPL-specific fields
+    for field, default_value in xrpl_fields.items():
+        if field == "xrpl_secret_key":
+            config_inputs[field] = st.text_input(field, type="password", key=f"{connector_name}_{field}")
+        else:
+            config_inputs[field] = st.text_input(field, value=default_value, key=f"{connector_name}_{field}")
+    
     if st.button("Submit Credentials"):
         response = client.add_connector_keys(account_name, connector_name, config_inputs)
         if response:
             st.success(response)
+else:
+    # Default behavior for other connectors
+    cols = st.columns(NUM_COLUMNS)
+    for i, config in enumerate(config_map):
+        with cols[i % (NUM_COLUMNS - 1)]:
+            config_inputs[config] = st.text_input(config, type="password", key=f"{connector_name}_{config}")
+    
+    with cols[-1]:
+        if st.button("Submit Credentials"):
+            response = client.add_connector_keys(account_name, connector_name, config_inputs)
+            if response:
+                st.success(response)
