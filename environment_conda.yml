@@ -9,7 +9,7 @@ dependencies:
   - pip:
       - hummingbot
       - pydantic
-      - streamlit==1.33.0
+      - streamlit==1.40.0
       - watchdog
       - python-dotenv
       - plotly==5.24.1

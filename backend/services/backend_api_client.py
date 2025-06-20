@@ -39,7 +39,7 @@ class BackendAPIClient:
         response = requests.post(url, json=payload, params=params, auth=self.auth)
         return self._process_response(response)
 
-    def get(self, endpoint: str):
+    def get(self, endpoint: str) -> Any:
         """
         Get request to the backend API.
         :param endpoint:
@@ -146,7 +146,7 @@ class BackendAPIClient:
         endpoint = "get-active-bots-status"
         return self.get(endpoint)
 
-    def get_all_controllers_config(self):
+    def get_all_controllers_config(self) -> List[dict]:
         """Get all controller configurations."""
         endpoint = "all-controller-configs"
         return self.get(endpoint)

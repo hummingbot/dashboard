@@ -1,33 +1,33 @@
 repos:
--   repo: https://github.com/pre-commit/pre-commit-hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v2.3.0
     hooks:
-    - id: detect-private-key
+      - id: detect-private-key
 
--   repo: https://github.com/pre-commit/mirrors-eslint
+  - repo: https://github.com/pre-commit/mirrors-eslint
     rev: v8.10.0
     hooks:
-    -   id: eslint
-        files: \.[jt]sx?$  # *.js, *.jsx, *.ts and *.tsx
+      - id: eslint
+        files: \.[jt]sx?$ # *.js, *.jsx, *.ts and *.tsx
         types: [file]
 
--   repo: https://github.com/CoinAlpha/git-hooks
+  - repo: https://github.com/CoinAlpha/git-hooks
     rev: 78f0683233a09c68a072fd52740d32c0376d4f0f
     hooks:
-    -   id: detect-wallet-private-key
+      - id: detect-wallet-private-key
         types: [file]
         exclude: .json
 
--   repo: https://github.com/pycqa/isort
+  - repo: https://github.com/pycqa/isort
     rev: 5.12.0
     hooks:
       - id: isort
         files: "\\.(py)$"
         args: [--settings-path=pyproject.toml]
 
--   repo: https://github.com/pycqa/flake8
-    rev: 3.9.2
+  - repo: https://github.com/pycqa/flake8
+    rev: 7.0.0
     hooks:
       - id: flake8
-        additional_dependencies: ['flake8']
+        additional_dependencies: ["flake8"]
         args: [--max-line-length=130]
