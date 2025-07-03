@@ -21,7 +21,6 @@ def public_pages():
             st.Page("frontend/pages/data/download_candles/app.py", title="Download Candles", icon="💹", url_path="download_candles"),
         ],
         "Community Pages": [
-            st.Page("frontend/pages/data/token_spreads/app.py", title="Token Spreads", icon="🧙", url_path="token_spreads"),
             st.Page("frontend/pages/data/tvl_vs_mcap/app.py", title="TVL vs Market Cap", icon="🦉", url_path="tvl_vs_mcap"),
             st.Page("frontend/pages/performance/bot_performance/app.py", title="Strategy Performance", icon="📈", url_path="bot_performance"),
         ]

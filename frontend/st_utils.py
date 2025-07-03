@@ -85,17 +85,39 @@ def style_metric_cards(
 
 
 def get_backend_api_client():
-    from backend.services.backend_api_client import BackendAPIClient
+    from hummingbot_api_client import SyncHummingbotAPIClient
+
     from CONFIG import BACKEND_API_HOST, BACKEND_API_PASSWORD, BACKEND_API_PORT, BACKEND_API_USERNAME
-    try:
-        backend_api_client = BackendAPIClient.get_instance(host=BACKEND_API_HOST, port=BACKEND_API_PORT,
-                                                           username=BACKEND_API_USERNAME, password=BACKEND_API_PASSWORD)
-        if not backend_api_client.is_docker_running():
-            st.error("Docker is not running. Please make sure Docker is running.")
+
+    # Use Streamlit session state to store singleton instance
+    if 'backend_api_client' not in st.session_state or st.session_state.backend_api_client is None:
+        try:
+            # Create and enter the client context
+            # Ensure URL has proper protocol
+            if not BACKEND_API_HOST.startswith(('http://', 'https://')):
+                base_url = f"http://{BACKEND_API_HOST}:{BACKEND_API_PORT}"
+            else:
+                base_url = f"{BACKEND_API_HOST}:{BACKEND_API_PORT}"
+            
+            client = SyncHummingbotAPIClient(
+                base_url=base_url,
+                username=BACKEND_API_USERNAME,
+                password=BACKEND_API_PASSWORD
+            )
+            # Initialize the client using context manager
+            client.__enter__()
+            
+            # Check Docker after initialization
+            if not client.docker.is_running():
+                st.error("Docker is not running. Please make sure Docker is running.")
+                st.stop()
+                
+            st.session_state.backend_api_client = client
+        except Exception as e:
+            st.error(f"Failed to initialize API client: {str(e)}")
             st.stop()
-        return backend_api_client
-    except Exception:
-        st.stop()
+    
+    return st.session_state.backend_api_client
 
 
 def auth_system():
