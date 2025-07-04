@@ -67,7 +67,7 @@ class BotPerformanceCardV2(Dashboard.Item):
 
     def __call__(self, bot_name: str):
         try:
-            controller_configs = backend_api_client.get_all_configs_from_bot(bot_name)
+            controller_configs = backend_api_client.controllers.get_bot_controller_configs(bot_name)
             controller_configs = controller_configs if controller_configs else []
             bot_status = backend_api_client.get_bot_status(bot_name)
             # Controllers Table

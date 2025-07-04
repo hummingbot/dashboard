@@ -1,4 +1,5 @@
 import time
+import re
 
 import streamlit as st
 from streamlit_elements import lazy, mui
@@ -10,32 +11,25 @@ from .dashboard import Dashboard
 class LaunchStrategyV2(Dashboard.Item):
     DEFAULT_ROWS = []
     DEFAULT_COLUMNS = [
-        {"field": 'config_base', "headerName": 'Config Base', "minWidth": 160, "editable": False, },
-        {"field": 'version', "headerName": 'Version', "minWidth": 100, "editable": False, },
-        {"field": 'controller_name', "headerName": 'Controller Name', "width": 150, "editable": False, },
+        {"field": 'config_base', "headerName": 'Config Base', "minWidth": 250, "editable": False, },
+        {"field": 'version', "headerName": 'Version', "width": 100, "editable": False, },
+        {"field": 'controller_name', "headerName": 'Controller Name', "width": 180, "editable": False, },
         {"field": 'controller_type', "headerName": 'Controller Type', "width": 150, "editable": False, },
-        {"field": 'connector_name', "headerName": 'Connector', "width": 150, "editable": False, },
-        {"field": 'trading_pair', "headerName": 'Trading pair', "width": 140, "editable": False, },
-        {"field": 'total_amount_quote', "headerName": 'Total amount ($)', "width": 140, "editable": False, },
-        {"field": 'max_loss_quote', "headerName": 'Max loss ($)', "width": 120, "editable": False, },
-        {"field": 'stop_loss', "headerName": 'SL (%)', "width": 100, "editable": False, },
-        {"field": 'take_profit', "headerName": 'TP (%)', "width": 100, "editable": False, },
-        {"field": 'trailing_stop', "headerName": 'TS (%)', "width": 120, "editable": False, },
-        {"field": 'time_limit', "headerName": 'Time limit', "width": 100, "editable": False, },
+        {"field": 'connector_name', "headerName": 'Connector', "width": 130, "editable": False, },
+        {"field": 'trading_pair', "headerName": 'Trading Pair', "width": 130, "editable": False, },
+        {"field": 'total_amount_quote', "headerName": 'Amount (USDT)', "width": 120, "editable": False, },
     ]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._backend_api_client = get_backend_api_client()
-        self._controller_configs_available = self._backend_api_client.get_all_controllers_config()
+        self._controller_configs_available = self._get_controller_configs()
         self._controller_config_selected = None
         self._bot_name = None
         self._image_name = "hummingbot/hummingbot:latest"
         self._credentials = "master_account"
-        self._max_global_drawdown = None
-        self._max_controller_drawdown = None
-        self._rebalance_interval = None
-        self._asset_to_rebalance = "USDT"
+        self._max_global_drawdown_quote = None
+        self._max_controller_drawdown_quote = None
 
     def _set_bot_name(self, event):
         self._bot_name = event.target.value
@@ -52,19 +46,45 @@ class LaunchStrategyV2(Dashboard.Item):
     def _handle_row_selection(self, params, _):
         self._controller_config_selected = [param + ".yml" for param in params]
 
-    def _set_max_global_drawdown(self, event):
-        self._max_global_drawdown = event.target.value
+    def _set_max_global_drawdown_quote(self, event):
+        try:
+            self._max_global_drawdown_quote = float(event.target.value) if event.target.value else None
+        except ValueError:
+            self._max_global_drawdown_quote = None
 
-    def _set_max_controller_drawdown(self, event):
-        self._max_controller_drawdown = event.target.value
+    def _set_max_controller_drawdown_quote(self, event):
+        try:
+            self._max_controller_drawdown_quote = float(event.target.value) if event.target.value else None
+        except ValueError:
+            self._max_controller_drawdown_quote = None
+    
+    def _get_controller_configs(self):
+        """Get all controller configurations using the new API."""
+        try:
+            return self._backend_api_client.controllers.list_controller_configs()
+        except Exception as e:
+            st.error(f"Failed to fetch controller configs: {e}")
+            return []
+    
+    @staticmethod
+    def _filter_hummingbot_images(images):
+        """Filter images to only show Hummingbot-related ones."""
+        hummingbot_images = []
+        pattern = r'.+/hummingbot:'
+        
+        for image in images:
+            try:
+                if re.match(pattern, image):
+                    hummingbot_images.append(image)
+            except Exception:
+                continue
+        
+        return hummingbot_images
 
-    def _set_rebalance_interval(self, event):
-        self._rebalance_interval = event.target.value
-
-    def _set_asset_to_rebalance(self, event):
-        self._asset_to_rebalance = event.target.value
-
-    def launch_new_bot(self):
+    def launch_new_bot(self, *args, **kwargs):
+        print(f"DEBUG: launch_new_bot called with args={args}, kwargs={kwargs}")
+        st.write("DEBUG: Launch button was clicked!")
+        
         if not self._bot_name:
             st.warning("You need to define the bot name.")
             return
@@ -77,93 +97,146 @@ class LaunchStrategyV2(Dashboard.Item):
             return
         start_time_str = time.strftime("%Y%m%d-%H%M")
         bot_name = f"{self._bot_name}-{start_time_str}"
-        script_config = {
-            "name": bot_name,
-            "content": {
-                "markets": {},
-                "candles_config": [],
-                "controllers_config": self._controller_config_selected,
-                "script_file_name": "v2_with_controllers.py",
-                "time_to_cash_out": None,
+        try:
+            # Use the new deploy_v2_controllers method
+            deploy_config = {
+                "instance_name": bot_name,
+                "credentials_profile": self._credentials,
+                "controllers_config": [config.replace(".yml", "") for config in self._controller_config_selected],
+                "image": self._image_name,
             }
-        }
-        if self._max_global_drawdown:
-            script_config["content"]["max_global_drawdown"] = self._max_global_drawdown
-        if self._max_controller_drawdown:
-            script_config["content"]["max_controller_drawdown"] = self._max_controller_drawdown
-        if self._rebalance_interval:
-            script_config["content"]["rebalance_interval"] = self._rebalance_interval
-            if self._asset_to_rebalance and "USD" in self._asset_to_rebalance:
-                script_config["content"]["asset_to_rebalance"] = self._asset_to_rebalance
-            else:
-                st.error("You need to define the asset to rebalance in USD like token.")
-                return
-
-        self._backend_api_client.delete_all_script_configs()
-        self._backend_api_client.add_script_config(script_config)
-        deploy_config = {
-            "instance_name": bot_name,
-            "script": "v2_with_controllers.py",
-            "script_config": bot_name + ".yml",
-            "image": self._image_name,
-            "credentials_profile": self._credentials,
-        }
-        self._backend_api_client.create_hummingbot_instance(deploy_config)
+            
+            # Add optional drawdown parameters if set
+            if self._max_global_drawdown_quote is not None:
+                deploy_config["max_global_drawdown_quote"] = self._max_global_drawdown_quote
+            if self._max_controller_drawdown_quote is not None:
+                deploy_config["max_controller_drawdown_quote"] = self._max_controller_drawdown_quote
+            
+            self._backend_api_client.bot_orchestration.deploy_v2_controllers(**deploy_config)
+        except Exception as e:
+            st.error(f"Failed to deploy bot: {e}")
+            return
         with st.spinner('Starting Bot... This process may take a few seconds'):
             time.sleep(3)
 
-    def delete_selected_configs(self):
+    def delete_selected_configs(self, *args, **kwargs):
+        print(f"DEBUG: delete_selected_configs called with args={args}, kwargs={kwargs}")
+        st.write("DEBUG: Delete button was clicked!")
+        
         if self._controller_config_selected:
-            for config in self._controller_config_selected:
-                response = self._backend_api_client.delete_controller_config(config)
-                st.success(response)
-            self._controller_configs_available = self._backend_api_client.get_all_controllers_config()
+            try:
+                for config in self._controller_config_selected:
+                    # Remove .yml extension if present
+                    config_name = config.replace(".yml", "")
+                    response = self._backend_api_client.controllers.delete_controller_config(config_name)
+                    st.success(f"Deleted {config_name}: {response}")
+                self._controller_configs_available = self._get_controller_configs()
+            except Exception as e:
+                st.error(f"Failed to delete configs: {e}")
         else:
             st.warning("You need to select the controllers configs that you want to delete.")
 
     def __call__(self):
-        with mui.Paper(key=self._key,
-                       sx={"display": "flex", "flexDirection": "column", "borderRadius": 3, "overflow": "hidden"},
-                       elevation=1):
-            with self.title_bar(padding="10px 15px 10px 15px", dark_switcher=False):
-                mui.Typography("🎛️ Bot Configuration", variant="h5")
-
-            with mui.Grid(container=True, spacing=2, sx={"padding": "10px 15px 10px 15px"}):
-                with mui.Grid(item=True, xs=3):
-                    mui.TextField(label="Instance Name", variant="outlined", onChange=lazy(self._set_bot_name),
-                                  sx={"width": "100%"})
-                with mui.Grid(item=True, xs=3):
-                    available_images = self._backend_api_client.get_available_images("hummingbot")
-                    with mui.FormControl(variant="standard", sx={"width": "100%"}):
-                        mui.FormHelperText("Available Images")
-                        with mui.Select(label="Hummingbot Image", defaultValue="hummingbot/hummingbot:latest",
-                                        variant="standard", onChange=lazy(self._set_image_name)):
-                            for image in available_images:
-                                mui.MenuItem(image, value=image)
-                    available_credentials = self._backend_api_client.get_accounts()
-                    with mui.FormControl(variant="standard", sx={"width": "100%"}):
-                        mui.FormHelperText("Credentials")
-                        with mui.Select(label="Credentials", defaultValue="master_account",
-                                        variant="standard", onChange=lazy(self._set_credentials)):
-                            for master_config in available_credentials:
-                                mui.MenuItem(master_config, value=master_config)
-                with mui.Grid(item=True, xs=3):
-                    with mui.FormControl(variant="standard", sx={"width": "100%"}):
-                        mui.FormHelperText("Risk Management")
-                        mui.TextField(label="Max Global Drawdown (%)", variant="outlined", type="number",
-                                      onChange=lazy(self._set_max_global_drawdown), sx={"width": "100%"})
-                        mui.TextField(label="Max Controller Drawdown (%)", variant="outlined", type="number",
-                                      onChange=lazy(self._set_max_controller_drawdown), sx={"width": "100%"})
-
-                with mui.Grid(item=True, xs=3):
-                    with mui.FormControl(variant="standard", sx={"width": "100%"}):
-                        mui.FormHelperText("Rebalance Configuration")
-                        mui.TextField(label="Rebalance Interval (minutes)", variant="outlined", type="number",
-                                      onChange=lazy(self._set_rebalance_interval), sx={"width": "100%"})
-                        mui.TextField(label="Asset to Rebalance", variant="outlined",
-                                      onChange=lazy(self._set_asset_to_rebalance),
-                                      sx={"width": "100%"}, default="USDT")
-                all_controllers_config = self._backend_api_client.get_all_controllers_config()
+        with mui.Box(key=self._key,
+                     sx={"display": "flex", "flexDirection": "column", "width": "100%", "padding": "24px"}):
+            # Page Header
+            mui.Typography("🚀 Deploy Trading Bot", variant="h4", sx={"marginBottom": "8px", "fontWeight": "700"})
+            mui.Typography("Configure and deploy your automated trading strategy", variant="subtitle1", sx={"color": "text.secondary", "marginBottom": "32px"})
+            
+            with mui.Box():
+                # Bot Configuration Section
+                mui.Typography("🤖 Bot Configuration", variant="h6", sx={"marginBottom": "20px", "fontWeight": "600"})
+                
+                with mui.Grid(container=True, spacing=3):
+                    # Instance Name
+                    with mui.Grid(item=True, xs=4):
+                        mui.TextField(
+                            label="Instance Name", 
+                            variant="outlined", 
+                            onChange=lazy(self._set_bot_name),
+                            placeholder="Enter a unique name for your bot instance",
+                            sx={"width": "100%"}
+                        )
+                    
+                    # Credentials Selection
+                    with mui.Grid(item=True, xs=4):
+                        try:
+                            available_credentials = self._backend_api_client.accounts.list_accounts()
+                            with mui.FormControl(variant="outlined", sx={"width": "100%"}):
+                                mui.InputLabel("Credentials Profile")
+                                with mui.Select(
+                                    label="Credentials Profile", 
+                                    defaultValue="master_account",
+                                    variant="outlined", 
+                                    onChange=lazy(self._set_credentials),
+                                    sx={"width": "100%"}
+                                ):
+                                    for master_config in available_credentials:
+                                        mui.MenuItem(master_config, value=master_config)
+                        except Exception as e:
+                            st.error(f"Failed to fetch credentials: {e}")
+                    
+                    # Docker Image Selection
+                    with mui.Grid(item=True, xs=4):
+                        try:
+                            all_images = self._backend_api_client.docker.get_available_images("hummingbot")
+                            available_images = self._filter_hummingbot_images(all_images)
+                            
+                            if not available_images:
+                                # Fallback to default if no hummingbot images found
+                                available_images = ["hummingbot/hummingbot:latest"]
+                            
+                            # Ensure default image is in the list
+                            default_image = "hummingbot/hummingbot:latest"
+                            if default_image not in available_images:
+                                available_images.insert(0, default_image)
+                            
+                            with mui.FormControl(variant="outlined", sx={"width": "100%"}):
+                                mui.InputLabel("Hummingbot Image")
+                                with mui.Select(
+                                    label="Hummingbot Image", 
+                                    defaultValue=default_image,
+                                    variant="outlined", 
+                                    onChange=lazy(self._set_image_name),
+                                    sx={"width": "100%"}
+                                ):
+                                    for image in available_images:
+                                        mui.MenuItem(image, value=image)
+                        except Exception as e:
+                            st.error(f"Failed to fetch available images: {e}")
+                
+                # Risk Management Section
+                mui.Divider(sx={"margin": "24px 0 20px 0"})
+                mui.Typography("⚠️ Risk Management", variant="h6", sx={"marginBottom": "16px", "fontWeight": "600"})
+                mui.Typography("Set maximum drawdown limits in USDT to protect your capital", variant="body2", sx={"marginBottom": "16px", "color": "text.secondary"})
+                
+                with mui.Grid(container=True, spacing=3):
+                    with mui.Grid(item=True, xs=6):
+                        mui.TextField(
+                            label="Max Global Drawdown (USDT)", 
+                            variant="outlined", 
+                            type="number",
+                            placeholder="e.g., 1000",
+                            onChange=lazy(self._set_max_global_drawdown_quote), 
+                            sx={"width": "100%"},
+                            InputProps={"startAdornment": mui.InputAdornment("$", position="start")}
+                        )
+                    with mui.Grid(item=True, xs=6):
+                        mui.TextField(
+                            label="Max Controller Drawdown (USDT)", 
+                            variant="outlined", 
+                            type="number",
+                            placeholder="e.g., 500",
+                            onChange=lazy(self._set_max_controller_drawdown_quote), 
+                            sx={"width": "100%"},
+                            InputProps={"startAdornment": mui.InputAdornment("$", position="start")}
+                        )
+                
+                # Controllers Section Header
+                mui.Divider(sx={"margin": "24px 0 20px 0"})
+                mui.Typography("🎛️ Controller Selection", variant="h6", sx={"marginBottom": "8px", "fontWeight": "600"})
+                mui.Typography("Select the trading controllers you want to deploy with this bot instance", variant="body2", sx={"marginBottom": "16px", "color": "text.secondary"})
+                all_controllers_config = self._controller_configs_available
                 data = []
                 for config in all_controllers_config:
                     # Handle case where config might be a string instead of dict
@@ -171,62 +244,108 @@ class LaunchStrategyV2(Dashboard.Item):
                         st.warning(f"Unexpected config format: {config}. Expected a dictionary.")
                         continue
                     
-                    connector_name = config.get("connector_name", "Unknown")
-                    trading_pair = config.get("trading_pair", "Unknown")
-                    total_amount_quote = float(config.get("total_amount_quote", 0))
-                    stop_loss = float(config.get("stop_loss", 0))
-                    take_profit = float(config.get("take_profit", 0))
-                    trailing_stop = config.get("trailing_stop", {"activation_price": 0, "trailing_delta": 0})
-                    time_limit = float(config.get("time_limit", 0))
-                    config_version = config["id"].split("_")
-                    if len(config_version) > 1:
-                        config_base = config_version[0]
-                        version = config_version[1]
+                    # Handle both old and new config format
+                    config_name = config.get("config_name", config.get("id", "Unknown"))
+                    config_data = config.get("config", config)  # New format has config nested
+                    
+                    connector_name = config_data.get("connector_name", "Unknown")
+                    trading_pair = config_data.get("trading_pair", "Unknown")
+                    total_amount_quote = float(config_data.get("total_amount_quote", 0))
+                    stop_loss = float(config_data.get("stop_loss", 0))
+                    take_profit = float(config_data.get("take_profit", 0))
+                    trailing_stop = config_data.get("trailing_stop", {"activation_price": 0, "trailing_delta": 0})
+                    time_limit = float(config_data.get("time_limit", 0))
+                    
+                    # Extract controller info
+                    controller_name = config_data.get("controller_name", config_name)
+                    controller_type = config_data.get("controller_type", "generic")
+                    
+                    # Fix config base and version splitting - version should be the last part after underscore
+                    config_parts = config_name.split("_")
+                    if len(config_parts) > 1:
+                        # Version is the last part, config_base is everything before that
+                        version = config_parts[-1]
+                        config_base = "_".join(config_parts[:-1])
                     else:
-                        config_base = config["id"]
+                        config_base = config_name
                         version = "NaN"
-                    ts_text = str(trailing_stop["activation_price"]) + " / " + str(trailing_stop["trailing_delta"])
+                    
                     data.append({
-                        "id": config["id"], "config_base": config_base, "version": version,
-                        "controller_name": config["controller_name"],
-                        "controller_type": config.get("controller_type", "generic"),
+                        "id": config_name, "config_base": config_base, "version": version,
+                        "controller_name": controller_name,
+                        "controller_type": controller_type,
                         "connector_name": connector_name, "trading_pair": trading_pair,
-                        "total_amount_quote": total_amount_quote, "max_loss_quote": total_amount_quote * stop_loss / 2,
-                        "stop_loss": stop_loss, "take_profit": take_profit,
-                        "trailing_stop": ts_text,
-                        "time_limit": time_limit})
+                        "total_amount_quote": total_amount_quote})
 
-                with mui.Grid(item=True, xs=12):
-                    with mui.Paper(key=self._key,
-                                   sx={"display": "flex", "flexDirection": "column", "borderRadius": 3,
-                                       "overflow": "hidden", "height": 1000},
-                                   elevation=2):
-                        with self.title_bar(padding="10px 15px 10px 15px", dark_switcher=False):
-                            with mui.Grid(container=True, spacing=2):
-                                with mui.Grid(item=True, xs=8):
-                                    mui.Typography("🗄️ Available Configurations", variant="h6")
-                                with mui.Grid(item=True, xs=2):
-                                    with mui.Button(onClick=self.delete_selected_configs,
-                                                    variant="outlined",
-                                                    color="error",
-                                                    sx={"width": "100%", "height": "100%"}):
-                                        mui.icon.Delete()
-                                        mui.Typography("Delete")
-                                with mui.Grid(item=True, xs=2):
-                                    with mui.Button(onClick=self.launch_new_bot,
-                                                    variant="outlined",
-                                                    color="success",
-                                                    sx={"width": "100%", "height": "100%"}):
-                                        mui.icon.AddCircleOutline()
-                                        mui.Typography("Launch Bot")
-                        with mui.Box(sx={"flex": 1, "minHeight": 3, "width": "100%"}):
-                            mui.DataGrid(
-                                columns=self.DEFAULT_COLUMNS,
-                                rows=data,
-                                pageSize=15,
-                                rowsPerPageOptions=[15],
-                                checkboxSelection=True,
-                                disableSelectionOnClick=True,
-                                disableColumnResize=False,
-                                onSelectionModelChange=self._handle_row_selection,
-                            )
+                # Controller Selection Table
+                with mui.Paper(
+                    sx={
+                        "marginTop": "16px",
+                        "borderRadius": "12px",
+                        "overflow": "hidden",
+                        "boxShadow": "0 4px 20px rgba(0,0,0,0.1)"
+                    },
+                    elevation=0
+                ):
+                    # Table Header
+                    with mui.Box(sx={"padding": "20px 24px 16px 24px", "backgroundColor": "rgba(25, 118, 210, 0.04)", "borderBottom": "1px solid rgba(0,0,0,0.12)"}):
+                        with mui.Grid(container=True, spacing=2, alignItems="center"):
+                            with mui.Grid(item=True, xs=8):
+                                mui.Typography("Available Controller Configurations", variant="h6", sx={"fontWeight": "600"})
+                                mui.Typography(f"{len(data)} configurations available", variant="body2", sx={"color": "text.secondary", "marginTop": "4px"})
+                            with mui.Grid(item=True, xs=2):
+                                mui.Button(
+                                    "Delete Selected",
+                                    onClick=lazy(self.delete_selected_configs),
+                                    variant="outlined",
+                                    color="error",
+                                    startIcon=mui.icon.Delete(),
+                                    sx={
+                                        "width": "100%", 
+                                        "borderRadius": "8px",
+                                        "textTransform": "none",
+                                        "fontWeight": "500"
+                                    }
+                                )
+                            with mui.Grid(item=True, xs=2):
+                                mui.Button(
+                                    "Deploy Bot",
+                                    onClick=lazy(self.launch_new_bot),
+                                    variant="contained",
+                                    color="primary",
+                                    startIcon=mui.icon.RocketLaunch(),
+                                    sx={
+                                        "width": "100%",
+                                        "borderRadius": "8px", 
+                                        "textTransform": "none",
+                                        "fontWeight": "600",
+                                        "boxShadow": "0 4px 12px rgba(25, 118, 210, 0.3)"
+                                    }
+                                )
+                    
+                    # Data Grid
+                    with mui.Box(sx={"height": "600px", "width": "100%"}):
+                        mui.DataGrid(
+                            columns=self.DEFAULT_COLUMNS,
+                            rows=data,
+                            pageSize=15,
+                            rowsPerPageOptions=[15, 25, 50],
+                            checkboxSelection=True,
+                            disableSelectionOnClick=True,
+                            disableColumnResize=False,
+                            onSelectionModelChange=self._handle_row_selection,
+                            sx={
+                                "border": "none",
+                                "& .MuiDataGrid-cell": {
+                                    "borderBottom": "1px solid rgba(0,0,0,0.08)"
+                                },
+                                "& .MuiDataGrid-columnHeaders": {
+                                    "backgroundColor": "rgba(0,0,0,0.02)",
+                                    "borderBottom": "2px solid rgba(0,0,0,0.12)",
+                                    "fontWeight": "600"
+                                },
+                                "& .MuiDataGrid-row:hover": {
+                                    "backgroundColor": "rgba(25, 118, 210, 0.04)"
+                                }
+                            }
+                        )

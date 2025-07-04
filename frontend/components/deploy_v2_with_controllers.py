@@ -1,4 +1,5 @@
 import time
+import re
 
 import pandas as pd
 import streamlit as st
@@ -9,13 +10,12 @@ from frontend.st_utils import get_backend_api_client
 class LaunchV2WithControllers:
     DEFAULT_COLUMNS = [
         "id", "controller_name", "controller_type", "connector_name",
-        "trading_pair", "total_amount_quote", "max_loss_quote", "stop_loss",
-        "take_profit", "trailing_stop", "time_limit", "selected"
+        "trading_pair", "total_amount_quote", "selected"
     ]
 
     def __init__(self):
         self._backend_api_client = get_backend_api_client()
-        self._controller_configs_available = self._backend_api_client.get_all_controllers_config()
+        self._controller_configs_available = self._get_controller_configs()
         self._controller_config_selected = []
         self._bot_name = None
         self._image_name = "hummingbot/hummingbot:latest"
@@ -29,30 +29,48 @@ class LaunchV2WithControllers:
 
     def _set_credentials(self, credentials):
         self._credentials = credentials
+    
+    def _get_controller_configs(self):
+        """Get all controller configurations using the new API."""
+        try:
+            return self._backend_api_client.controllers.list_controller_configs()
+        except Exception as e:
+            st.error(f"Failed to fetch controller configs: {e}")
+            return []
+    
+    @staticmethod
+    def _filter_hummingbot_images(images):
+        """Filter images to only show Hummingbot-related ones."""
+        hummingbot_images = []
+        pattern = r'.+/hummingbot:'
+        
+        for image in images:
+            try:
+                if re.match(pattern, image):
+                    hummingbot_images.append(image)
+            except Exception:
+                continue
+        
+        return hummingbot_images
 
     def launch_new_bot(self):
         if self._bot_name and self._image_name and self._controller_config_selected:
             start_time_str = time.strftime("%Y.%m.%d_%H.%M")
             bot_name = f"{self._bot_name}-{start_time_str}"
-            script_config = {
-                "name": bot_name,
-                "content": {
-                    "markets": {},
-                    "candles_config": [],
-                    "controllers_config": self._controller_config_selected,
-                    "script_file_name": "v2_with_controllers.py",
+            
+            try:
+                # Use the new deploy_v2_controllers method
+                deploy_config = {
+                    "instance_name": bot_name,
+                    "credentials_profile": self._credentials,
+                    "controllers_config": [config.replace(".yml", "") for config in self._controller_config_selected],
+                    "image": self._image_name,
                 }
-            }
-
-            self._backend_api_client.add_script_config(script_config)
-            deploy_config = {
-                "instance_name": bot_name,
-                "script": "v2_with_controllers.py",
-                "script_config": bot_name + ".yml",
-                "image": self._image_name,
-                "credentials_profile": self._credentials,
-            }
-            self._backend_api_client.create_hummingbot_instance(deploy_config)
+                
+                self._backend_api_client.bot_orchestration.deploy_v2_controllers(**deploy_config)
+            except Exception as e:
+                st.error(f"Failed to deploy bot: {e}")
+                return
             with st.spinner('Starting Bot... This process may take a few seconds'):
                 time.sleep(3)
         else:
@@ -64,45 +82,71 @@ class LaunchV2WithControllers:
         all_controllers_config = self._controller_configs_available
         data = []
         for config in all_controllers_config:
-            connector_name = config.get("connector_name", "Unknown")
-            trading_pair = config.get("trading_pair", "Unknown")
-            total_amount_quote = config.get("total_amount_quote", 0)
-            stop_loss = config.get("stop_loss", 0)
-            take_profit = config.get("take_profit", 0)
-            trailing_stop = config.get("trailing_stop", {"activation_price": 0, "trailing_delta": 0})
-            time_limit = config.get("time_limit", 0)
+            # Handle both old and new config format
+            config_name = config.get("config_name", config.get("id", "Unknown"))
+            config_data = config.get("config", config)  # New format has config nested
+            
+            connector_name = config_data.get("connector_name", "Unknown")
+            trading_pair = config_data.get("trading_pair", "Unknown")
+            total_amount_quote = config_data.get("total_amount_quote", 0)
+            stop_loss = config_data.get("stop_loss", 0)
+            take_profit = config_data.get("take_profit", 0)
+            trailing_stop = config_data.get("trailing_stop", {"activation_price": 0, "trailing_delta": 0})
+            time_limit = config_data.get("time_limit", 0)
+            
+            # Extract controller info from config
+            controller_name = config_data.get("controller_name", config_name)
+            controller_type = config_data.get("controller_type", "Unknown")
+            
             data.append({
                 "selected": False,
-                "id": config["id"],
-                "controller_name": config["controller_name"],
-                "controller_type": config["controller_type"],
+                "id": config_name,
+                "controller_name": controller_name,
+                "controller_type": controller_type,
                 "connector_name": connector_name,
                 "trading_pair": trading_pair,
                 "total_amount_quote": total_amount_quote,
-                "max_loss_quote": total_amount_quote * stop_loss / 2,
-                "stop_loss": f"{stop_loss:.2%}",
-                "take_profit": f"{take_profit:.2%}",
-                "trailing_stop": f"{trailing_stop['activation_price']:.2%} / {trailing_stop['trailing_delta']:.2%}",
-                "time_limit": time_limit,
             })
 
         df = pd.DataFrame(data)
 
         edited_df = st.data_editor(df, hide_index=True)
 
-        self._controller_config_selected = [f"{config}.yml" for config in
-                                            edited_df[edited_df["selected"]]["id"].tolist()]
+        selected_configs = edited_df[edited_df["selected"]]["id"].tolist()
+        self._controller_config_selected = [f"{config}.yml" for config in selected_configs]
         st.write(self._controller_config_selected)
         c1, c2, c3, c4 = st.columns([1, 1, 1, 0.3])
         with c1:
             self._bot_name = st.text_input("Instance Name")
         with c2:
-            available_images = self._backend_api_client.get_available_images("hummingbot")
-            self._image_name = st.selectbox("Hummingbot Image", available_images,
-                                            index=available_images.index("hummingbot/hummingbot:latest"))
+            try:
+                all_images = self._backend_api_client.docker.get_available_images("hummingbot")
+                available_images = self._filter_hummingbot_images(all_images)
+                
+                if not available_images:
+                    # Fallback to default if no hummingbot images found
+                    available_images = ["hummingbot/hummingbot:latest"]
+                
+                # Ensure default image is in the list
+                default_image = "hummingbot/hummingbot:latest"
+                if default_image not in available_images:
+                    available_images.insert(0, default_image)
+                
+                default_index = 0
+                if default_image in available_images:
+                    default_index = available_images.index(default_image)
+                
+                self._image_name = st.selectbox("Hummingbot Image", available_images, index=default_index)
+            except Exception as e:
+                st.error(f"Failed to fetch available images: {e}")
+                self._image_name = st.text_input("Hummingbot Image", value="hummingbot/hummingbot:latest")
         with c3:
-            available_credentials = self._backend_api_client.get_accounts()
-            self._credentials = st.selectbox("Credentials", available_credentials, index=0)
+            try:
+                available_credentials = self._backend_api_client.accounts.list_accounts()
+                self._credentials = st.selectbox("Credentials", available_credentials, index=0)
+            except Exception as e:
+                st.error(f"Failed to fetch accounts: {e}")
+                self._credentials = st.text_input("Credentials", value="master_account")
         with c4:
             deploy_button = st.button("Deploy Bot")
         if deploy_button:

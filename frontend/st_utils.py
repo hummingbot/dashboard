@@ -86,6 +86,7 @@ def style_metric_cards(
 
 def get_backend_api_client():
     from hummingbot_api_client import SyncHummingbotAPIClient
+    import atexit
 
     from CONFIG import BACKEND_API_HOST, BACKEND_API_PASSWORD, BACKEND_API_PORT, BACKEND_API_USERNAME
 
@@ -107,9 +108,26 @@ def get_backend_api_client():
             # Initialize the client using context manager
             client.__enter__()
             
+            # Register cleanup function to properly exit the context manager
+            def cleanup_client():
+                try:
+                    if 'backend_api_client' in st.session_state and st.session_state.backend_api_client is not None:
+                        st.session_state.backend_api_client.__exit__(None, None, None)
+                        st.session_state.backend_api_client = None
+                except Exception:
+                    pass  # Ignore cleanup errors
+            
+            # Register cleanup with atexit and session state
+            atexit.register(cleanup_client)
+            if 'cleanup_registered' not in st.session_state:
+                st.session_state.cleanup_registered = True
+                # Also register cleanup for session state changes
+                st.session_state.backend_api_client_cleanup = cleanup_client
+            
             # Check Docker after initialization
             if not client.docker.is_running():
                 st.error("Docker is not running. Please make sure Docker is running.")
+                cleanup_client()  # Clean up before stopping
                 st.stop()
                 
             st.session_state.backend_api_client = client

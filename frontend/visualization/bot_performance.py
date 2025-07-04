@@ -223,10 +223,16 @@ def display_execution_analysis(data_source: PerformanceDataSource):
                 st.markdown("### ➡️ Share")
                 host = st.text_input("Host", "localhost")
                 if st.button("Upload to Backend API"):
-                    backend_api_client = BackendAPIClient(host=host)
-                    config["id"] = controller_id
-                    backend_api_client.add_controller_config(config)
-                    st.success("Config uploaded successfully!")
+                    try:
+                        backend_api_client = BackendAPIClient(host=host)
+                        config_name = controller_id
+                        backend_api_client.controllers.create_or_update_controller_config(
+                            config_name=config_name,
+                            config=config
+                        )
+                        st.success("Config uploaded successfully!")
+                    except Exception as e:
+                        st.error(f"Failed to upload config: {e}")
 
 
 @st.cache_data()
