@@ -1,8 +1,14 @@
+import asyncio
 import time
+
+import nest_asyncio
 import pandas as pd
 import streamlit as st
 
 from frontend.st_utils import get_backend_api_client, initialize_st_page
+
+# Apply nest_asyncio to allow nested event loops
+nest_asyncio.apply()
 
 initialize_st_page(title="Instances", icon="🦅")
 
@@ -47,65 +53,75 @@ def archive_bot(bot_name):
 
 def stop_controllers(bot_name, controllers):
     """Stop selected controllers."""
-    st.write(f"DEBUG: Attempting to stop controllers {controllers} for bot {bot_name}")
-    
-    # Try to check available methods
-    st.write(f"DEBUG: bot_orchestration methods: {dir(backend_api_client.bot_orchestration)}")
-    
+    success_count = 0
     for controller in controllers:
         try:
-            st.write(f"DEBUG: Stopping controller {controller}")
-            
-            # Try different possible method names
+            # Try the most likely method first
+            result = None
             if hasattr(backend_api_client.bot_orchestration, 'stop_controller_from_bot'):
-                result = backend_api_client.bot_orchestration.stop_controller_from_bot(bot_name, controller)
+                if asyncio.iscoroutinefunction(backend_api_client.bot_orchestration.stop_controller_from_bot):
+                    result = asyncio.run(backend_api_client.bot_orchestration.stop_controller_from_bot(bot_name, controller))
+                else:
+                    result = backend_api_client.bot_orchestration.stop_controller_from_bot(bot_name, controller)
             elif hasattr(backend_api_client, 'stop_controller_from_bot'):
-                result = backend_api_client.stop_controller_from_bot(bot_name, controller)
+                if asyncio.iscoroutinefunction(backend_api_client.stop_controller_from_bot):
+                    result = asyncio.run(backend_api_client.stop_controller_from_bot(bot_name, controller))
+                else:
+                    result = backend_api_client.stop_controller_from_bot(bot_name, controller)
             else:
                 st.error(f"Method stop_controller_from_bot not found")
                 continue
-                
-            st.write(f"DEBUG: API result: {result}")
-            st.success(f"Stopped controller: {controller}")
+            
+            success_count += 1
         except Exception as e:
             st.error(f"Failed to stop controller {controller}: {e}")
-            st.write(f"DEBUG: Exception details: {type(e).__name__}: {str(e)}")
-    if controllers:
-        time.sleep(1)
-        st.rerun()
+    
+    if success_count > 0:
+        st.success(f"Successfully stopped {success_count} controller(s)")
+    
+    return success_count > 0
 
 
 def start_controllers(bot_name, controllers):
     """Start selected controllers."""
-    st.write(f"DEBUG: Attempting to start controllers {controllers} for bot {bot_name}")
+    success_count = 0
     for controller in controllers:
         try:
-            st.write(f"DEBUG: Starting controller {controller}")
-            
-            # Try different possible method names
+            # Try the most likely method first
+            result = None
             if hasattr(backend_api_client.bot_orchestration, 'start_controller_from_bot'):
-                result = backend_api_client.bot_orchestration.start_controller_from_bot(bot_name, controller)
+                if asyncio.iscoroutinefunction(backend_api_client.bot_orchestration.start_controller_from_bot):
+                    result = asyncio.run(backend_api_client.bot_orchestration.start_controller_from_bot(bot_name, controller))
+                else:
+                    result = backend_api_client.bot_orchestration.start_controller_from_bot(bot_name, controller)
             elif hasattr(backend_api_client, 'start_controller_from_bot'):
-                result = backend_api_client.start_controller_from_bot(bot_name, controller)
+                if asyncio.iscoroutinefunction(backend_api_client.start_controller_from_bot):
+                    result = asyncio.run(backend_api_client.start_controller_from_bot(bot_name, controller))
+                else:
+                    result = backend_api_client.start_controller_from_bot(bot_name, controller)
             else:
                 st.error(f"Method start_controller_from_bot not found")
                 continue
-                
-            st.write(f"DEBUG: API result: {result}")
-            st.success(f"Started controller: {controller}")
+            
+            success_count += 1
         except Exception as e:
             st.error(f"Failed to start controller {controller}: {e}")
-            st.write(f"DEBUG: Exception details: {type(e).__name__}: {str(e)}")
-    if controllers:
-        time.sleep(1)
-        st.rerun()
+    
+    if success_count > 0:
+        st.success(f"Successfully started {success_count} controller(s)")
+    
+    return success_count > 0
 
 
+@st.fragment
 def render_bot_card(bot_name):
     """Render a bot performance card using native Streamlit components."""
     try:
         # Get bot status first
-        bot_status = backend_api_client.bot_orchestration.get_bot_status(bot_name)
+        if asyncio.iscoroutinefunction(backend_api_client.bot_orchestration.get_bot_status):
+            bot_status = asyncio.run(backend_api_client.bot_orchestration.get_bot_status(bot_name))
+        else:
+            bot_status = backend_api_client.bot_orchestration.get_bot_status(bot_name)
         
         # Only try to get controller configs if bot exists and is running
         controller_configs = []
@@ -114,7 +130,10 @@ def render_bot_card(bot_name):
             is_running = bot_data.get("status") == "running"
             if is_running:
                 try:
-                    controller_configs = backend_api_client.controllers.get_bot_controller_configs(bot_name)
+                    if asyncio.iscoroutinefunction(backend_api_client.controllers.get_bot_controller_configs):
+                        controller_configs = asyncio.run(backend_api_client.controllers.get_bot_controller_configs(bot_name))
+                    else:
+                        controller_configs = backend_api_client.controllers.get_bot_controller_configs(bot_name)
                     controller_configs = controller_configs if controller_configs else []
                 except Exception as e:
                     # If controller configs fail, continue without them
@@ -261,7 +280,10 @@ def render_bot_card(bot_name):
                         if st.button(f"⏹️ Stop Selected ({len(selected_active)})", 
                                    key=f"stop_active_{bot_name}", 
                                    type="secondary"):
-                            stop_controllers(bot_name, selected_active)
+                            with st.spinner(f"Stopping {len(selected_active)} controller(s)..."):
+                                if stop_controllers(bot_name, selected_active):
+                                    time.sleep(1)
+                                    st.rerun()
                 
                 # Stopped Controllers
                 if stopped_controllers:
@@ -294,7 +316,10 @@ def render_bot_card(bot_name):
                         if st.button(f"▶️ Start Selected ({len(selected_stopped)})", 
                                    key=f"start_stopped_{bot_name}", 
                                    type="primary"):
-                            start_controllers(bot_name, selected_stopped)
+                            with st.spinner(f"Starting {len(selected_stopped)} controller(s)..."):
+                                if start_controllers(bot_name, selected_stopped):
+                                    time.sleep(1)
+                                    st.rerun()
                 
                 # Error Controllers
                 if error_controllers:
@@ -363,7 +388,10 @@ def show_bot_instances():
     
     try:
         # Always fetch fresh data - don't rely on any caching
-        active_bots_response = backend_api_client.bot_orchestration.get_active_bots_status()
+        if asyncio.iscoroutinefunction(backend_api_client.bot_orchestration.get_active_bots_status):
+            active_bots_response = asyncio.run(backend_api_client.bot_orchestration.get_active_bots_status())
+        else:
+            active_bots_response = backend_api_client.bot_orchestration.get_active_bots_status()
         
         if active_bots_response.get("status") == "success":
             active_bots = active_bots_response.get("data", {})
@@ -373,7 +401,10 @@ def show_bot_instances():
             for bot_name, bot_info in active_bots.items():
                 try:
                     # Double-check each bot's status
-                    bot_status = backend_api_client.bot_orchestration.get_bot_status(bot_name)
+                    if asyncio.iscoroutinefunction(backend_api_client.bot_orchestration.get_bot_status):
+                        bot_status = asyncio.run(backend_api_client.bot_orchestration.get_bot_status(bot_name))
+                    else:
+                        bot_status = backend_api_client.bot_orchestration.get_bot_status(bot_name)
                     if bot_status.get("status") == "success":
                         bot_data = bot_status.get("data", {})
                         # Only include if the bot is actually running or stopped (not archived)
@@ -390,12 +421,7 @@ def show_bot_instances():
                 
                 # Render each bot
                 for bot_name in truly_active_bots.keys():
-                    try:
-                        render_bot_card(bot_name)
-                    except Exception as e:
-                        # If a specific bot fails, show error but continue with others
-                        st.error(f"Error displaying bot {bot_name}: {e}")
-                        st.divider()
+                    render_bot_card(bot_name)
             else:
                 st.info("No active bot instances found. Deploy a bot to see it here.")
         else:

@@ -1,10 +1,15 @@
-import time
+import asyncio
 import re
+import time
 
+import nest_asyncio
 import pandas as pd
 import streamlit as st
 
-from frontend.st_utils import initialize_st_page, get_backend_api_client
+from frontend.st_utils import get_backend_api_client, initialize_st_page
+
+# Apply nest_asyncio to allow nested event loops
+nest_asyncio.apply()
 
 initialize_st_page(title="🚀 Deploy Trading Bot", icon="🙌")
 
@@ -15,7 +20,8 @@ backend_api_client = get_backend_api_client()
 def get_controller_configs():
     """Get all controller configurations using the new API."""
     try:
-        return backend_api_client.controllers.list_controller_configs()
+        # Run async method in sync context
+        return asyncio.run(backend_api_client.controllers.list_controller_configs())
     except Exception as e:
         st.error(f"Failed to fetch controller configs: {e}")
         return []
@@ -131,7 +137,8 @@ with col2:
 
 with col3:
     try:
-        all_images = backend_api_client.docker.get_available_images("hummingbot")
+        # Run async method in sync context
+        all_images = asyncio.run(backend_api_client.docker.get_available_images("hummingbot"))
         available_images = filter_hummingbot_images(all_images)
         
         if not available_images:

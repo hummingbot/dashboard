@@ -16,11 +16,17 @@ def get_max_records(days_to_download: int, interval: str) -> int:
 @st.cache_data
 def get_candles(connector_name="binance", trading_pair="BTC-USDT", interval="1m", days=7):
     backend_client = get_backend_api_client()
-    end_time = datetime.datetime.now() - datetime.timedelta(minutes=15)
-    start_time = end_time - datetime.timedelta(days=days)
-
-    df = pd.DataFrame(backend_client.get_historical_candles(connector_name, trading_pair, interval,
-                                                            start_time=int(start_time.timestamp()),
-                                                            end_time=int(end_time.timestamp())))
-    df.index = pd.to_datetime(df.timestamp, unit='s')
+    
+    # Use the market_data.get_candles_last_days method
+    candles = backend_client.market_data.get_candles_last_days(
+        connector=connector_name,
+        trading_pair=trading_pair,
+        days=days,
+        interval=interval
+    )
+    
+    # Convert the response to DataFrame (response is a list of candles)
+    df = pd.DataFrame(candles)
+    if not df.empty and 'timestamp' in df.columns:
+        df.index = pd.to_datetime(df.timestamp, unit='s')
     return df

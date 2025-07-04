@@ -6,10 +6,8 @@ from frontend.st_utils import auth_system
 def patch_modules_streamlit_elements(file_path: str, old_line: str, new_line: str):
     import os
 
-    import streamlit_elements
 
     relative_file_path = "core/callback.py"
-    library_root = list(streamlit_elements.__path__)[0]
     file_path = os.path.join(library_root, relative_file_path)
 
     with open(file_path, "r") as file:
