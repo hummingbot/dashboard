@@ -513,12 +513,16 @@ with col5:
 
 @st.fragment(run_every=REFRESH_INTERVAL if st.session_state.auto_refresh_enabled else None)
 def show_trading_data():
-    """Fragment to display trading data with auto-refresh."""
+    """Fragment to display trading data with real-time cached candles."""
     connector = st.session_state.selected_market["connector"]
     trading_pair = st.session_state.selected_market["trading_pair"]
+    interval = st.session_state.chart_interval
+    max_candles = st.session_state.max_candles
     
-    # Get market data
-    candles, order_book, prices = asyncio.run(get_market_data(connector, trading_pair))
+    # Get real-time market data from memory cache
+    candles, order_book, prices = asyncio.run(get_market_data(
+        connector, trading_pair, interval, max_candles
+    ))
     
     # Show current price and refresh status
     price_col1, price_col2, price_col3 = st.columns([2, 2, 2])
