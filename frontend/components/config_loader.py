@@ -16,10 +16,6 @@ def get_default_config_loader(controller_name: str):
     config_key = f"config_{controller_name}"
     loader_key = f"config_loader_initialized_{controller_name}"
     
-    # Only run the config loader once per controller per session
-    if st.session_state.get(loader_key, False):
-        return
-    
     try:
         all_configs = backend_api_client.controllers.list_controller_configs()
     except Exception as e:
@@ -48,7 +44,7 @@ def get_default_config_loader(controller_name: str):
         with c1:
             use_default_config = st.checkbox(
                 "Use default config", 
-                value=True, 
+                value=st.session_state.get(f"use_default_{controller_name}", True), 
                 key=f"use_default_{controller_name}"
             )
         with c2:
@@ -83,9 +79,6 @@ def get_default_config_loader(controller_name: str):
                         st.session_state[config_key]["controller_name"] = controller_name
                 else:
                     st.warning("No existing configs found for this controller.")
-    
-    # Mark loader as initialized for this controller
-    st.session_state[loader_key] = True
     
     # Set legacy key for backward compatibility (but with deep copy)
     st.session_state["default_config"] = copy.deepcopy(st.session_state[config_key])
