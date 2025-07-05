@@ -31,7 +31,7 @@ if get_data_button:
         st.error("End Date should be greater than Start Date.")
         st.stop()
 
-    candles = backend_api_client.get_historical_candles(
+    candles = backend_api_client.market_data.get_historical_candles(
         connector=connector,
         trading_pair=trading_pair,
         interval=interval,
