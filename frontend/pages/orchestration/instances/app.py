@@ -4,7 +4,7 @@ import streamlit as st
 
 from frontend.st_utils import get_backend_api_client, initialize_st_page
 
-initialize_st_page(title="Instances", icon="🦅")
+initialize_st_page(icon="🦅", show_readme=False)
 
 # Initialize backend client
 backend_api_client = get_backend_api_client()
@@ -477,7 +477,7 @@ st.markdown("""
     -webkit-text-fill-color: transparent;
     background-clip: text;
     text-shadow: 0 0 30px rgba(100, 255, 218, 0.5);
-">🏠 Local Instances</h1>
+">🏠 Hummingbot Instances</h1>
 <p style="
     margin: 15px 0 0 0; 
     font-size: 1.3rem; 
@@ -536,8 +536,7 @@ def show_bot_instances():
                 for bot_name in truly_active_bots.keys():
                     render_bot_card(bot_name)
             else:
-                status_placeholder.empty()
-                st.info("No active bot instances found. Deploy a bot to see it here.")
+                status_placeholder.info("No active bot instances found. Deploy a bot to see it here.")
         else:
             st.error("Failed to fetch active bots status.")
             
