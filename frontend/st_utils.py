@@ -14,7 +14,9 @@ from CONFIG import AUTH_SYSTEM_ENABLED
 from frontend.pages.permissions import main_page, private_pages, public_pages
 
 
-def initialize_st_page(title: str, icon: str, layout: Layout = 'wide', initial_sidebar_state: InitialSideBarState = "expanded"):
+def initialize_st_page(title: Optional[str] = None, icon: str = "🤖", layout: Layout = 'wide',
+                       initial_sidebar_state: InitialSideBarState = "expanded",
+                       show_readme: bool = True):
     st.set_page_config(
         page_title=title,
         page_icon=icon,
@@ -23,7 +25,8 @@ def initialize_st_page(title: str, icon: str, layout: Layout = 'wide', initial_s
     )
     
     # Add page title
-    st.title(title)
+    if title:
+        st.title(title)
     
     # Get caller frame info safely
     frame: Optional[Union[inspect.FrameInfo, inspect.Traceback]] = None
@@ -36,7 +39,7 @@ def initialize_st_page(title: str, icon: str, layout: Layout = 'wide', initial_s
     except Exception:
         pass
 
-    if frame is not None:
+    if frame is not None and show_readme:
         current_directory = Path(os.path.dirname(frame.filename))
         readme_path = current_directory / "README.md"
         with st.expander("About This Page"):
