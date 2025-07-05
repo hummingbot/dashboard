@@ -45,6 +45,7 @@ def render_save_config(config_base_default: str, config_data: dict):
         upload_config_to_backend = st.button("Upload")
     if upload_config_to_backend:
         config_name = f"{config_base}_{config_tag}"
+        config_data["id"] = config_name
         try:
             backend_api_client.controllers.create_or_update_controller_config(
                 config_name=config_name,

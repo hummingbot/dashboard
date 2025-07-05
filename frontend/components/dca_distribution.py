@@ -1,11 +1,16 @@
 import streamlit as st
 
+from frontend.components.config_loader import get_controller_config
 from frontend.components.st_inputs import distribution_inputs, get_distribution, normalize
 
 
-def get_dca_distribution_inputs():
+def get_dca_distribution_inputs(controller_name: str = None):
     with st.expander("DCA Builder", expanded=True):
-        default_config = st.session_state.get("default_config", {})
+        if controller_name:
+            default_config = get_controller_config(controller_name)
+        else:
+            # Fallback for backward compatibility
+            default_config = st.session_state.get("default_config", {})
         dca_spreads = default_config.get("dca_spreads", [0.01, 0.02, 0.03])
         dca_amounts = default_config.get("dca_amounts", [0.2, 0.5, 0.3])
         tp = default_config.get("take_profit", 0.01) * 100
