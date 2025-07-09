@@ -21,10 +21,11 @@ The Trading Hub provides a comprehensive interface for executing trades, monitor
 - **Active Orders**: Monitor pending orders with one-click cancellation
 - **Account Overview**: Multi-account position and order management
 
-### 🔄 Auto-Refresh
-- **Real-time Updates**: Configurable auto-refresh (5-second intervals)
-- **Manual Refresh**: On-demand data updates
-- **Live Market Data**: Continuous price and order book updates
+### 🔄 Real-time Performance
+- **Memory-Cached Candles**: Ultra-fast updates from backend memory cache (typically <100ms)
+- **Configurable Intervals**: 2-second auto-refresh for real-time trading experience
+- **Performance Monitoring**: Live display of data fetch times
+- **Optimized Updates**: Efficient data streaming for minimal latency
 
 ## How to Use
 
@@ -55,10 +56,11 @@ The Trading Hub provides a comprehensive interface for executing trades, monitor
 ## Technical Features
 
 ### Market Data Integration
-- **Real-time Candles**: Live OHLC data with 5-minute intervals
-- **Order Book Depth**: Configurable bid/ask level display
-- **Price Feeds**: Live price updates across multiple exchanges
-- **Volume Analysis**: Trading volume visualization and analysis
+- **Memory-Cached Candles**: Real-time OHLC data from backend memory (1m, 3m, 5m, 15m, 1h intervals)
+- **Ultra-Fast Updates**: Sub-100ms data fetching from cached candle streams
+- **Order Book Depth**: Configurable bid/ask level display (10-100 levels)
+- **Live Price Feeds**: Real-time price updates across multiple exchanges
+- **Performance Metrics**: Live monitoring of data fetch speeds
 
 ### Chart Visualization
 - **Candlestick Chart**: Interactive price action with zoom and pan
