@@ -1,4 +1,5 @@
 import time
+import datetime
 
 import pandas as pd
 import plotly.graph_objects as go
@@ -7,8 +8,6 @@ import streamlit as st
 from frontend.st_utils import get_backend_api_client, initialize_st_page
 
 initialize_st_page(
-    title="Trading Hub",
-    icon="💹",
     layout="wide",
     show_readme=False
 )
@@ -552,47 +551,7 @@ with selection_col:
     if connector and trading_pair:
         st.session_state.selected_market = {"connector": connector, "trading_pair": trading_pair}
 
-    # Second row: Chart settings and candles connector
-    col1, col2, col3, col4 = st.columns([1, 1, 1, 1])
-
-    with col1:
-        interval = st.selectbox(
-            "⏱️ Chart Interval",
-            ["1m", "3m", "5m", "15m", "1h", "4h", "1d"],
-            index=0,
-            key="interval_selector"
-        )
-        st.session_state.chart_interval = interval
-
-    with col2:
-        if candles_connectors:
-            # Add option to use same connector as trading
-            candles_options = ["Same as trading"] + candles_connectors
-            selected_candles = st.selectbox(
-                "📊 Candles Source",
-                candles_options,
-                index=0,
-                key="candles_connector_selector",
-                help="Some exchanges don't provide candles. Select an alternative source."
-            )
-            st.session_state.candles_connector = None if selected_candles == "Same as trading" else selected_candles
-        else:
-            st.session_state.candles_connector = None
-
-    with col3:
-        max_candles = st.number_input(
-            "📈 Max Candles",
-            min_value=50,
-            max_value=500,
-            value=100,
-            step=50,
-            key="max_candles_input"
-        )
-        st.session_state.max_candles = max_candles
-
-    with col4:
-        if st.button("🔄 Refresh Data", use_container_width=True, type="primary"):
-            st.rerun()
+    # Chart settings have been moved to the chart fragment below
 
 with metrics_col:
     st.subheader("📊 Market Data")
@@ -620,45 +579,84 @@ with metrics_col:
         else:
             st.metric(f"💰 {trading_pair}", "Loading...")
         
-        # Show candles info
+        # Show candles info and fetch time in same metric
         if candles:
             st.metric("📈 Candles", f"{len(candles)} records")
         
-        # Show fetch time
+        # Show fetch time and refresh button together
         if "last_fetch_time" in st.session_state:
             fetch_time = st.session_state["last_fetch_time"]
             st.caption(f"⚡ Fetch: {fetch_time:.0f}ms")
+        
+        # Refresh button
+        if st.button("🔄 Refresh", use_container_width=True, type="primary"):
+            st.rerun()
     else:
         st.info("Select account and pair to view metrics")
 
-st.divider()
 
-
-# Simplified display function without auto-refresh
+# Chart fragment with auto-refresh
+@st.fragment(run_every=60)  # Auto-refresh every 60 seconds
 def show_trading_data():
-    """Fragment to display trading data with simplified layout."""
+    """Fragment to display trading data with auto-refresh and chart controls."""
     connector = st.session_state.selected_market.get("connector")
     trading_pair = st.session_state.selected_market.get("trading_pair")
-    interval = st.session_state.chart_interval
-    max_candles = st.session_state.max_candles
-    candles_connector = st.session_state.candles_connector
 
     if not connector or not trading_pair:
         st.warning("Please select an account and trading pair")
         return
-
-    # Get market data
-    candles, prices = get_market_data(
-        connector, trading_pair, interval, max_candles, candles_connector
-    )
-
-    # Metrics are now shown in the top-right metrics column
 
     # Chart and Trade Execution section
     st.divider()
     chart_col, trade_col = st.columns([4, 1])
 
     with chart_col:
+        st.subheader("📈 Price Chart")
+        
+        # Chart controls in the same fragment
+        controls_col1, controls_col2, controls_col3 = st.columns([1, 1, 1])
+        
+        with controls_col1:
+            interval = st.selectbox(
+                "⏱️ Chart Interval",
+                ["1m", "3m", "5m", "15m", "1h", "4h", "1d"],
+                index=0,
+                key="chart_interval_selector"
+            )
+            st.session_state.chart_interval = interval
+
+        with controls_col2:
+            candles_connectors = get_candles_connectors()
+            if candles_connectors:
+                # Add option to use same connector as trading
+                candles_options = ["Same as trading"] + candles_connectors
+                selected_candles = st.selectbox(
+                    "📊 Candles Source",
+                    candles_options,
+                    index=0,
+                    key="chart_candles_connector_selector",
+                    help="Some exchanges don't provide candles. Select an alternative source."
+                )
+                st.session_state.candles_connector = None if selected_candles == "Same as trading" else selected_candles
+            else:
+                st.session_state.candles_connector = None
+
+        with controls_col3:
+            max_candles = st.number_input(
+                "📈 Max Candles",
+                min_value=50,
+                max_value=500,
+                value=100,
+                step=50,
+                key="chart_max_candles_input"
+            )
+            st.session_state.max_candles = max_candles
+
+        # Get market data
+        candles, prices = get_market_data(
+            connector, trading_pair, interval, max_candles, st.session_state.candles_connector
+        )
+
         # Get trade history for the selected account/connector/pair
         trades = []
         if st.session_state.selected_account and st.session_state.selected_connector:
@@ -668,73 +666,106 @@ def show_trading_data():
                 trading_pair
             )
         
-        candles_source = candles_connector if candles_connector else connector
+        # Add small gap before chart
+        st.write("")
+        
+        # Create and display chart
+        candles_source = st.session_state.candles_connector if st.session_state.candles_connector else connector
         fig = create_candlestick_chart(candles, candles_source, trading_pair, interval, trades)
         st.plotly_chart(fig, use_container_width=True)
+        
+        # Show last update time
+        current_time = datetime.datetime.now().strftime("%H:%M:%S")
+        st.caption(f"🔄 Last updated: {current_time} (auto-refresh every 60s)")
 
     with trade_col:
         st.subheader("💸 Execute Trade")
         
         if st.session_state.selected_account and st.session_state.selected_connector:
-            # Get current price for default limit price
+            # Get current price for calculations
             current_price = 0.0
             if prices and trading_pair in prices:
                 current_price = float(prices[trading_pair])
             
-            # Vertical layout for trade execution
+            # Extract base and quote tokens from trading pair
+            base_token, quote_token = trading_pair.split('-')
+            
+            # Order type selection
             order_type = st.selectbox(
                 "Order Type",
                 ["market", "limit"],
-                key="order_type"
+                key="trade_order_type"
             )
             
+            # Side selection
             side = st.selectbox(
                 "Side",
                 ["buy", "sell"],
-                key="order_side"
+                key="trade_side"
             )
             
-            # Amount section with base/quote toggle
-            amount_col1, amount_col2 = st.columns([3, 1])
-            with amount_col1:
-                amount = st.number_input(
-                    "Amount",
-                    min_value=0.0,
-                    value=0.001,
-                    format="%.6f",
-                    key="order_amount"
-                )
-            with amount_col2:
-                # Base/Quote toggle
-                amount_type = st.selectbox(
-                    "Type",
-                    ["Base", "Quote"],
-                    key="amount_type",
-                    help="Base = first token (e.g., BTC in BTC-USDT)\nQuote = second token (e.g., USDT in BTC-USDT)"
-                )
+            # Amount input
+            amount = st.number_input(
+                "Amount",
+                min_value=0.0,
+                value=0.001,
+                format="%.6f",
+                key="trade_amount"
+            )
             
+            # Base/Quote toggle switch
+            is_quote = st.toggle(
+                f"Amount in {quote_token}",
+                value=False,
+                help=f"Toggle to enter amount in {quote_token} instead of {base_token}",
+                key="trade_is_quote"
+            )
+            
+            # Show conversion line
+            if current_price > 0 and amount > 0:
+                if is_quote:
+                    # User entered quote amount, show base equivalent
+                    base_equivalent = amount / current_price
+                    st.caption(f"≈ {base_equivalent:.6f} {base_token}")
+                else:
+                    # User entered base amount, show quote equivalent
+                    quote_equivalent = amount * current_price
+                    st.caption(f"≈ {quote_equivalent:.2f} {quote_token}")
+            
+            # Price input for limit orders
             if order_type == "limit":
-                # Default to current price for limit orders
                 default_price = current_price if current_price > 0 else 0.0
                 price = st.number_input(
                     "Price",
                     min_value=0.0,
                     value=default_price,
                     format="%.4f",
-                    key="order_price"
+                    key="trade_price"
                 )
+                
+                # Show updated conversion for limit orders
+                if price > 0 and amount > 0:
+                    if is_quote:
+                        base_equivalent = amount / price
+                        st.caption(f"At limit price: ≈ {base_equivalent:.6f} {base_token}")
+                    else:
+                        quote_equivalent = amount * price
+                        st.caption(f"At limit price: ≈ {quote_equivalent:.2f} {quote_token}")
             else:
                 price = None
             
+            # Submit button
             st.write("")
-            if st.button("🚀 Place Order", type="primary", use_container_width=True):
+            if st.button("🚀 Place Order", type="primary", use_container_width=True, key="place_order_btn"):
                 if amount > 0:
-                    # Convert amount if needed
+                    # Convert amount to base if needed
                     final_amount = amount
-                    if amount_type == "Quote" and current_price > 0:
+                    conversion_price = price if order_type == "limit" and price else current_price
+                    
+                    if is_quote and conversion_price > 0:
                         # Convert quote amount to base amount
-                        final_amount = amount / current_price
-                        st.info(f"Converting {amount} {trading_pair.split('-')[1]} to {final_amount:.6f} {trading_pair.split('-')[0]}")
+                        final_amount = amount / conversion_price
+                        st.success(f"Converting {amount} {quote_token} to {final_amount:.6f} {base_token}")
                     
                     order_data = {
                         "account_name": st.session_state.selected_account,
@@ -747,7 +778,8 @@ def show_trading_data():
                     if order_type == "limit" and price:
                         order_data["price"] = price
                     
-                    place_order(order_data)
+                    with st.spinner("Placing order..."):
+                        place_order(order_data)
                 else:
                     st.error("Please enter a valid amount")
             
