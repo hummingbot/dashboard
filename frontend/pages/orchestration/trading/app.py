@@ -42,7 +42,7 @@ def get_accounts_and_credentials():
         accounts_list = backend_api_client.accounts.list_accounts()
         credentials_list = {}
         for account in accounts_list:
-            credentials = backend_api_client.accounts.list_credentials(account)
+            credentials = backend_api_client.accounts.list_account_credentials(account_name=account)
             credentials_list[account] = credentials
         return accounts_list, credentials_list
     except Exception as e:
@@ -53,7 +53,8 @@ def get_accounts_and_credentials():
 def get_candles_connectors():
     """Get available candles feed connectors."""
     try:
-        return backend_api_client.market_data.get_available_candles_feed()
+        # For now, return a hardcoded list of known exchanges that provide candles
+        return ["binance", "binance_perpetual", "kucoin", "okx", "okx_perpetual", "gate_io"]
     except Exception as e:
         st.warning(f"Could not fetch candles feed connectors: {e}")
         return []
@@ -103,6 +104,38 @@ def get_order_history():
     except Exception:
         # If get_orders doesn't exist either, just return empty list without warning
         return []
+
+
+def get_trade_history(account_name, connector_name, trading_pair):
+    """Get trade history for the selected account and trading pair."""
+    try:
+        # Try to get trades for this specific account/connector/pair
+        response = backend_api_client.trading.get_trades(
+            account_name=account_name,
+            connector_name=connector_name,
+            trading_pair=trading_pair,
+            limit=100
+        )
+        # Handle both response formats
+        if isinstance(response, list):
+            return response
+        elif isinstance(response, dict) and response.get("status") == "success":
+            return response.get("data", [])
+        return []
+    except Exception:
+        # If method doesn't exist, try alternative approach
+        try:
+            # Get all orders and filter for filled ones
+            orders = get_order_history()
+            trades = []
+            for order in orders:
+                if (order.get("status") == "FILLED" and 
+                    order.get("trading_pair") == trading_pair and
+                    order.get("connector_name") == connector_name):
+                    trades.append(order)
+            return trades
+        except Exception:
+            return []
 
 
 def get_market_data(connector, trading_pair, interval="1m", max_records=100, candles_connector=None):
@@ -217,8 +250,8 @@ def get_default_layout(title=None, height=800, width=1100):
     return layout
 
 
-def create_candlestick_chart(candles_data, connector_name="", trading_pair="", interval=""):
-    """Create a candlestick chart with custom theme."""
+def create_candlestick_chart(candles_data, connector_name="", trading_pair="", interval="", trades_data=None):
+    """Create a candlestick chart with custom theme and trade markers."""
     if not candles_data:
         fig = go.Figure()
         fig.add_annotation(
@@ -256,6 +289,73 @@ def create_candlestick_chart(candles_data, connector_name="", trading_pair="", i
                 decreasing_line_color='#E74C3C'
             )
         )
+
+        # Add trade markers if trade data is provided
+        if trades_data:
+            try:
+                trades_df = pd.DataFrame(trades_data)
+                if not trades_df.empty:
+                    # Convert trade timestamps to datetime
+                    if 'timestamp' in trades_df.columns:
+                        trades_df['datetime'] = pd.to_datetime(trades_df['timestamp'], unit='s')
+                    elif 'created_at' in trades_df.columns:
+                        trades_df['datetime'] = pd.to_datetime(trades_df['created_at'])
+                    elif 'execution_time' in trades_df.columns:
+                        trades_df['datetime'] = pd.to_datetime(trades_df['execution_time'])
+                    
+                    # Filter trades to chart time range if datetime column exists
+                    if 'datetime' in trades_df.columns and 'datetime' in df.columns:
+                        chart_start = df['datetime'].min()
+                        chart_end = df['datetime'].max()
+                        
+                        trades_in_range = trades_df[
+                            (trades_df['datetime'] >= chart_start) & 
+                            (trades_df['datetime'] <= chart_end)
+                        ]
+                        
+                        if not trades_in_range.empty:
+                            # Separate buy and sell trades
+                            buy_trades = trades_in_range[trades_in_range.get('trade_type', trades_in_range.get('side', '')) == 'buy']
+                            sell_trades = trades_in_range[trades_in_range.get('trade_type', trades_in_range.get('side', '')) == 'sell']
+                            
+                            # Add buy markers (green triangles pointing up)
+                            if not buy_trades.empty:
+                                fig.add_trace(
+                                    go.Scatter(
+                                        x=buy_trades['datetime'],
+                                        y=buy_trades.get('price', buy_trades.get('avg_price', 0)),
+                                        mode='markers',
+                                        marker=dict(
+                                            symbol='triangle-up',
+                                            size=10,
+                                            color='#2ECC71',
+                                            line=dict(width=1, color='white')
+                                        ),
+                                        name='Buy Trades',
+                                        hovertemplate='<b>BUY</b><br>Price: $%{y:.4f}<br>Time: %{x}<extra></extra>'
+                                    )
+                                )
+                            
+                            # Add sell markers (red triangles pointing down)
+                            if not sell_trades.empty:
+                                fig.add_trace(
+                                    go.Scatter(
+                                        x=sell_trades['datetime'],
+                                        y=sell_trades.get('price', sell_trades.get('avg_price', 0)),
+                                        mode='markers',
+                                        marker=dict(
+                                            symbol='triangle-down',
+                                            size=10,
+                                            color='#E74C3C',
+                                            line=dict(width=1, color='white')
+                                        ),
+                                        name='Sell Trades',
+                                        hovertemplate='<b>SELL</b><br>Price: $%{y:.4f}<br>Time: %{x}<extra></extra>'
+                                    )
+                                )
+            except Exception:
+                # If trade markers fail, continue without them
+                pass
 
         # Create title
         title = f"{connector_name}: {trading_pair} ({interval})" if connector_name else "Price Chart"
@@ -370,7 +470,7 @@ def render_orders_table(orders_data):
 
 
 # Page Header
-st.header("💹 Trading Hub")
+st.title("💹 Trading Hub")
 st.caption("Execute trades, monitor positions, and analyze markets")
 
 # Get accounts and credentials
@@ -378,109 +478,158 @@ accounts_list, credentials_dict = get_accounts_and_credentials()
 candles_connectors = get_candles_connectors()
 
 # Account and Trading Selection Section
-st.subheader("🏦 Account & Market Selection")
+selection_col, metrics_col = st.columns([4, 1])
 
-# First row: Account and credentials selection
-col1, col2, col3 = st.columns([1, 1, 1])
+with selection_col:
+    st.subheader("🏦 Account & Market Selection")
+    
+    # First row: Account and credentials selection
+    col1, col2, col3 = st.columns([1, 1, 1])
 
-with col1:
-    if accounts_list:
-        # Default to first account if not set
-        if st.session_state.selected_account is None:
-            st.session_state.selected_account = accounts_list[0]
+    with col1:
+        if accounts_list:
+            # Default to first account if not set
+            if st.session_state.selected_account is None:
+                st.session_state.selected_account = accounts_list[0]
 
-        selected_account = st.selectbox(
-            "📱 Account",
-            accounts_list,
-            index=accounts_list.index(
-                st.session_state.selected_account) if st.session_state.selected_account in accounts_list else 0,
-            key="account_selector"
-        )
-        st.session_state.selected_account = selected_account
-    else:
-        st.error("No accounts found")
-        st.stop()
-
-with col2:
-    if selected_account and credentials_dict.get(selected_account):
-        credentials = credentials_dict[selected_account]
-        # Filter for BTC-USDT trading pair
-        btc_credentials = [cred for cred in credentials if "BTC-USDT" in cred.get("trading_pairs", [])]
-
-        if btc_credentials:
-            # Default to first BTC-USDT credential
-            default_cred = btc_credentials[0]
+            selected_account = st.selectbox(
+                "📱 Account",
+                accounts_list,
+                index=accounts_list.index(
+                    st.session_state.selected_account) if st.session_state.selected_account in accounts_list else 0,
+                key="account_selector"
+            )
+            st.session_state.selected_account = selected_account
         else:
-            # Fallback to first credential
+            st.error("No accounts found")
+            st.stop()
+
+    with col2:
+        if selected_account and credentials_dict.get(selected_account):
+            credentials = credentials_dict[selected_account]
+            
+            # Handle different credential formats
+            if isinstance(credentials, list) and credentials:
+                # If credentials is a list of strings (connector names)
+                if isinstance(credentials[0], str):
+                    # Convert string list to dict format
+                    credentials = [{"connector_name": cred} for cred in credentials]
+                # If credentials is already a list of dicts, use as is
+                elif isinstance(credentials[0], dict):
+                    credentials = credentials
+            elif isinstance(credentials, dict):
+                # If credentials is a dict, convert to list of dicts
+                credentials = [{"connector_name": k, **v} for k, v in credentials.items()]
+            else:
+                credentials = []
+            
+            # For simplicity, just use the first credential available
             default_cred = credentials[0] if credentials else None
 
-        if default_cred:
-            connector = st.selectbox(
-                "📡 Exchange",
-                [cred["connector_name"] for cred in credentials],
-                index=[cred["connector_name"] for cred in credentials].index(default_cred["connector_name"]),
-                key="connector_selector"
-            )
-            st.session_state.selected_connector = connector
+            if default_cred and credentials:
+                connector = st.selectbox(
+                    "📡 Exchange",
+                    [cred["connector_name"] for cred in credentials],
+                    index=0,
+                    key="connector_selector"
+                )
+                st.session_state.selected_connector = connector
+            else:
+                st.error("No credentials found for this account")
+                connector = None
         else:
-            st.error("No credentials found for this account")
+            st.error("No credentials available")
             connector = None
-    else:
-        st.error("No credentials available")
-        connector = None
 
-with col3:
-    trading_pair = st.text_input(
-        "💱 Trading Pair",
-        value="BTC-USDT",
-        key="trading_pair_input"
-    )
-
-# Update selected market
-if connector and trading_pair:
-    st.session_state.selected_market = {"connector": connector, "trading_pair": trading_pair}
-
-# Second row: Chart settings and candles connector
-col1, col2, col3, col4 = st.columns([1, 1, 1, 1])
-
-with col1:
-    interval = st.selectbox(
-        "⏱️ Chart Interval",
-        ["1m", "3m", "5m", "15m", "1h", "4h", "1d"],
-        index=0,
-        key="interval_selector"
-    )
-    st.session_state.chart_interval = interval
-
-with col2:
-    if candles_connectors:
-        # Add option to use same connector as trading
-        candles_options = ["Same as trading"] + candles_connectors
-        selected_candles = st.selectbox(
-            "📊 Candles Source",
-            candles_options,
-            index=0,
-            key="candles_connector_selector",
-            help="Some exchanges don't provide candles. Select an alternative source."
+    with col3:
+        trading_pair = st.text_input(
+            "💱 Trading Pair",
+            value="BTC-USDT",
+            key="trading_pair_input"
         )
-        st.session_state.candles_connector = None if selected_candles == "Same as trading" else selected_candles
+
+    # Update selected market
+    if connector and trading_pair:
+        st.session_state.selected_market = {"connector": connector, "trading_pair": trading_pair}
+
+    # Second row: Chart settings and candles connector
+    col1, col2, col3, col4 = st.columns([1, 1, 1, 1])
+
+    with col1:
+        interval = st.selectbox(
+            "⏱️ Chart Interval",
+            ["1m", "3m", "5m", "15m", "1h", "4h", "1d"],
+            index=0,
+            key="interval_selector"
+        )
+        st.session_state.chart_interval = interval
+
+    with col2:
+        if candles_connectors:
+            # Add option to use same connector as trading
+            candles_options = ["Same as trading"] + candles_connectors
+            selected_candles = st.selectbox(
+                "📊 Candles Source",
+                candles_options,
+                index=0,
+                key="candles_connector_selector",
+                help="Some exchanges don't provide candles. Select an alternative source."
+            )
+            st.session_state.candles_connector = None if selected_candles == "Same as trading" else selected_candles
+        else:
+            st.session_state.candles_connector = None
+
+    with col3:
+        max_candles = st.number_input(
+            "📈 Max Candles",
+            min_value=50,
+            max_value=500,
+            value=100,
+            step=50,
+            key="max_candles_input"
+        )
+        st.session_state.max_candles = max_candles
+
+    with col4:
+        if st.button("🔄 Refresh Data", use_container_width=True, type="primary"):
+            st.rerun()
+
+with metrics_col:
+    st.subheader("📊 Market Data")
+    
+    # Only show metrics if we have a selected market
+    if st.session_state.selected_market.get("connector") and st.session_state.selected_market.get("trading_pair"):
+        # Get market data for metrics
+        connector = st.session_state.selected_market["connector"]
+        trading_pair = st.session_state.selected_market["trading_pair"]
+        interval = st.session_state.chart_interval
+        max_candles = st.session_state.max_candles
+        candles_connector = st.session_state.candles_connector
+        
+        candles, prices = get_market_data(
+            connector, trading_pair, interval, max_candles, candles_connector
+        )
+        
+        # Show current price
+        if prices and trading_pair in prices:
+            current_price = prices[trading_pair]
+            st.metric(
+                f"💰 {trading_pair}",
+                f"${float(current_price):,.2f}"
+            )
+        else:
+            st.metric(f"💰 {trading_pair}", "Loading...")
+        
+        # Show candles info
+        if candles:
+            st.metric("📈 Candles", f"{len(candles)} records")
+        
+        # Show fetch time
+        if "last_fetch_time" in st.session_state:
+            fetch_time = st.session_state["last_fetch_time"]
+            st.caption(f"⚡ Fetch: {fetch_time:.0f}ms")
     else:
-        st.session_state.candles_connector = None
-
-with col3:
-    max_candles = st.number_input(
-        "📈 Max Candles",
-        min_value=50,
-        max_value=500,
-        value=100,
-        step=50,
-        key="max_candles_input"
-    )
-    st.session_state.max_candles = max_candles
-
-with col4:
-    if st.button("🔄 Refresh Data", use_container_width=True, type="primary"):
-        st.rerun()
+        st.info("Select account and pair to view metrics")
 
 st.divider()
 
@@ -503,34 +652,109 @@ def show_trading_data():
         connector, trading_pair, interval, max_candles, candles_connector
     )
 
-    # Show current price and status
-    price_col1, price_col2, price_col3 = st.columns([2, 2, 2])
+    # Metrics are now shown in the top-right metrics column
 
-    with price_col1:
-        if prices and trading_pair in prices:
-            current_price = prices[trading_pair]
-            st.metric(
-                f"💰 {trading_pair} Price",
-                f"${float(current_price):,.2f}"
-            )
-        else:
-            st.metric(f"💰 {trading_pair} Price", "Loading...")
-
-    with price_col2:
-        st.metric("⏱️ Interval", f"{interval}")
-        if candles:
-            st.caption(f"📈 {len(candles)} candles")
-
-    with price_col3:
-        if "last_fetch_time" in st.session_state:
-            fetch_time = st.session_state["last_fetch_time"]
-            st.metric("⚡ Fetch Time", f"{fetch_time:.0f}ms")
-
-    # Chart section
+    # Chart and Trade Execution section
     st.divider()
-    candles_source = candles_connector if candles_connector else connector
-    fig = create_candlestick_chart(candles, candles_source, trading_pair, interval)
-    st.plotly_chart(fig, use_container_width=True)
+    chart_col, trade_col = st.columns([4, 1])
+
+    with chart_col:
+        # Get trade history for the selected account/connector/pair
+        trades = []
+        if st.session_state.selected_account and st.session_state.selected_connector:
+            trades = get_trade_history(
+                st.session_state.selected_account,
+                st.session_state.selected_connector,
+                trading_pair
+            )
+        
+        candles_source = candles_connector if candles_connector else connector
+        fig = create_candlestick_chart(candles, candles_source, trading_pair, interval, trades)
+        st.plotly_chart(fig, use_container_width=True)
+
+    with trade_col:
+        st.subheader("💸 Execute Trade")
+        
+        if st.session_state.selected_account and st.session_state.selected_connector:
+            # Get current price for default limit price
+            current_price = 0.0
+            if prices and trading_pair in prices:
+                current_price = float(prices[trading_pair])
+            
+            # Vertical layout for trade execution
+            order_type = st.selectbox(
+                "Order Type",
+                ["market", "limit"],
+                key="order_type"
+            )
+            
+            side = st.selectbox(
+                "Side",
+                ["buy", "sell"],
+                key="order_side"
+            )
+            
+            # Amount section with base/quote toggle
+            amount_col1, amount_col2 = st.columns([3, 1])
+            with amount_col1:
+                amount = st.number_input(
+                    "Amount",
+                    min_value=0.0,
+                    value=0.001,
+                    format="%.6f",
+                    key="order_amount"
+                )
+            with amount_col2:
+                # Base/Quote toggle
+                amount_type = st.selectbox(
+                    "Type",
+                    ["Base", "Quote"],
+                    key="amount_type",
+                    help="Base = first token (e.g., BTC in BTC-USDT)\nQuote = second token (e.g., USDT in BTC-USDT)"
+                )
+            
+            if order_type == "limit":
+                # Default to current price for limit orders
+                default_price = current_price if current_price > 0 else 0.0
+                price = st.number_input(
+                    "Price",
+                    min_value=0.0,
+                    value=default_price,
+                    format="%.4f",
+                    key="order_price"
+                )
+            else:
+                price = None
+            
+            st.write("")
+            if st.button("🚀 Place Order", type="primary", use_container_width=True):
+                if amount > 0:
+                    # Convert amount if needed
+                    final_amount = amount
+                    if amount_type == "Quote" and current_price > 0:
+                        # Convert quote amount to base amount
+                        final_amount = amount / current_price
+                        st.info(f"Converting {amount} {trading_pair.split('-')[1]} to {final_amount:.6f} {trading_pair.split('-')[0]}")
+                    
+                    order_data = {
+                        "account_name": st.session_state.selected_account,
+                        "connector_name": st.session_state.selected_connector,
+                        "trading_pair": st.session_state.selected_market["trading_pair"],
+                        "order_type": order_type,
+                        "trade_type": side,
+                        "amount": final_amount
+                    }
+                    if order_type == "limit" and price:
+                        order_data["price"] = price
+                    
+                    place_order(order_data)
+                else:
+                    st.error("Please enter a valid amount")
+            
+            st.write("")
+            st.info(f"🎯 {st.session_state.selected_connector}\n{st.session_state.selected_market['trading_pair']}")
+        else:
+            st.warning("Please select an account and exchange to execute trades")
 
     # Data tables section
     st.divider()
@@ -662,73 +886,7 @@ def render_balances_table():
     )
 
 
-# Trade Execution Section
-st.subheader("💸 Execute Trade")
-
-if st.session_state.selected_account and st.session_state.selected_connector:
-    exec_col1, exec_col2, exec_col3, exec_col4 = st.columns([1, 1, 1, 1])
-
-    with exec_col1:
-        order_type = st.selectbox(
-            "Order Type",
-            ["market", "limit"],
-            key="order_type"
-        )
-
-    with exec_col2:
-        side = st.selectbox(
-            "Side",
-            ["buy", "sell"],
-            key="order_side"
-        )
-
-    with exec_col3:
-        amount = st.number_input(
-            "Amount",
-            min_value=0.0,
-            value=0.001,
-            format="%.6f",
-            key="order_amount"
-        )
-
-    with exec_col4:
-        if order_type == "limit":
-            price = st.number_input(
-                "Price",
-                min_value=0.0,
-                value=0.0,
-                format="%.4f",
-                key="order_price"
-            )
-        else:
-            price = None
-
-    col1, col2, col3 = st.columns([1, 1, 2])
-    with col1:
-        if st.button("🚀 Place Order", type="primary", use_container_width=True):
-            if amount > 0:
-                order_data = {
-                    "account_name": st.session_state.selected_account,
-                    "connector_name": st.session_state.selected_connector,
-                    "trading_pair": st.session_state.selected_market["trading_pair"],
-                    "order_type": order_type,
-                    "trade_type": side,
-                    "amount": amount
-                }
-                if order_type == "limit" and price:
-                    order_data["price"] = price
-
-                place_order(order_data)
-            else:
-                st.error("Please enter a valid amount")
-
-    with col3:
-        st.info(
-            f"🎯 Trading on {st.session_state.selected_connector} with {st.session_state.selected_market['trading_pair']}")
-else:
-    st.warning("Please select an account and exchange to execute trades")
-
-st.divider()
+# Trade execution is now integrated with the chart above
 
 # Call the fragment
 show_trading_data()
