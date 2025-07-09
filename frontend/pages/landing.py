@@ -1,17 +1,71 @@
 import streamlit as st
 
-# readme section
-st.markdown("# 📊 Hummingbot Dashboard")
-st.markdown("Hummingbot Dashboard is an open source application that helps you create, backtest, and optimize "
-            "various types of algo trading strategies. Afterwards, you can deploy them as "
-            "[Hummingbot](http://hummingbot.org)")
-st.write("---")
-st.header("Watch the Hummingbot Dashboard Tutorial!")
+from frontend.components.styling import create_page_header
+from frontend.st_utils import initialize_st_page
+
+initialize_st_page(
+    layout="wide",
+    show_readme=False
+)
+
+create_page_header(
+    title="Hummingbot Dashboard",
+    subtitle="An open-source platform for creating, backtesting, and optimizing algorithmic trading strategies. "
+             "Deploy your strategies with Hummingbot.",
+    icon="🤖"
+)
+
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    st.markdown("""
+        <div class="metric-card">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">🎯</div>
+            <h3 class="highlight-text">Strategy Development</h3>
+            <p class="secondary-text">
+                Create and configure advanced trading strategies with intuitive interfaces and powerful customization options.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+with col2:
+    st.markdown("""
+        <div class="metric-card">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">📊</div>
+            <h3 class="highlight-text">Backtesting & Analytics</h3>
+            <p class="secondary-text">
+                Test your strategies against historical data and analyze performance with comprehensive metrics and
+                visualizations.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+with col3:
+    st.markdown("""
+        <div class="metric-card">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">⚡</div>
+            <h3 class="highlight-text">Live Trading</h3>
+            <p class="secondary-text">
+                Deploy and monitor your strategies in real-time with advanced orchestration and performance tracking.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+st.markdown('<h2 class="section-header">🎬 Watch the Dashboard Tutorial</h2>', unsafe_allow_html=True)
+
 st.video("https://youtu.be/7eHiMPRBQLQ?si=PAvCq0D5QDZz1h1D")
-st.header("Feedback and issues")
-st.write(
-    "Please give us feedback in the **#dashboard** channel of the "
-    "[hummingbot discord](https://discord.gg/hummingbot)! 🙏")
-st.write(
-    "If you encounter any bugs or have suggestions for improvement, please create an issue in the "
-    "[hummingbot dashboard github](https://github.com/hummingbot/dashboard).")
+
+st.markdown('<h2 class="section-header">💬 Feedback & Community</h2>', unsafe_allow_html=True)
+
+st.markdown("""
+    <div class="info-card">
+        <p style="color: #a0aec0; font-size: 1.1rem; line-height: 1.6; margin-bottom: 1rem;">
+            Join our community and share your feedback in the <strong>#dashboard</strong> channel of the
+            <a href="https://discord.gg/hummingbot" class="highlight-text">Hummingbot Discord</a>! 🙏
+        </p>
+        <p style="color: #a0aec0; font-size: 1.1rem; line-height: 1.6; margin: 0;">
+            Found a bug or have suggestions? Create an issue in the
+            <a href="https://github.com/hummingbot/dashboard" class="highlight-text">GitHub repository</a>.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
