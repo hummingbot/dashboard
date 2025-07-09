@@ -19,7 +19,7 @@ def get_candles(connector_name="binance", trading_pair="BTC-USDT", interval="1m"
     
     # Use the market_data.get_candles_last_days method
     candles = backend_client.market_data.get_candles_last_days(
-        connector=connector_name,
+        connector_name=connector_name,
         trading_pair=trading_pair,
         days=days,
         interval=interval

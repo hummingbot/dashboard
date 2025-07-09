@@ -32,7 +32,7 @@ if get_data_button:
         st.stop()
 
     candles = backend_api_client.market_data.get_historical_candles(
-        connector=connector,
+        connector_name=connector,
         trading_pair=trading_pair,
         interval=interval,
         start_time=int(start_datetime.timestamp()),

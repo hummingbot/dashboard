@@ -1,11 +1,16 @@
 import time
 import datetime
+import nest_asyncio
 
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
 from frontend.st_utils import get_backend_api_client, initialize_st_page
+
+# Enable nested async
+nest_asyncio.apply()
+
 
 initialize_st_page(
     layout="wide",
@@ -112,7 +117,7 @@ def get_order_book(connector, trading_pair, depth=10):
     """Get order book data for the selected trading pair."""
     try:
         response = backend_api_client.market_data.get_order_book(
-            connector=connector,
+            connector_name=connector,
             trading_pair=trading_pair,
             depth=depth
         )
@@ -135,7 +140,7 @@ def get_funding_rate(connector, trading_pair):
         # Only try to get funding rate for perpetual connectors
         if "perpetual" in connector.lower():
             response = backend_api_client.market_data.get_funding_info(
-                connector=connector,
+                connector_name=connector,
                 trading_pair=trading_pair
             )
             # Handle both response formats
@@ -192,7 +197,7 @@ def get_market_data(connector, trading_pair, interval="1m", max_records=100, can
             # Use candles_connector if provided, otherwise use main connector
             candles_conn = candles_connector if candles_connector else connector
             candles_response = backend_api_client.market_data.get_candles(
-                connector=candles_conn,
+                connector_name=candles_conn,
                 trading_pair=trading_pair,
                 interval=interval,
                 max_records=max_records
@@ -211,7 +216,7 @@ def get_market_data(connector, trading_pair, interval="1m", max_records=100, can
         prices = {}
         try:
             price_response = backend_api_client.market_data.get_prices(
-                connector=connector,
+                connector_name=connector,
                 trading_pairs=[trading_pair]
             )
             # Handle both response formats
@@ -459,9 +464,17 @@ def create_order_book_chart(order_book_data, current_price=None, depth_percentag
         asks_df['price'] = asks_df['price'].astype(float)
         asks_df['amount'] = asks_df['amount'].astype(float)
         
+        # Convert amounts to quote asset (USDT) for better normalization
+        bids_df['quote_volume'] = bids_df['price'] * bids_df['amount']
+        asks_df['quote_volume'] = asks_df['price'] * asks_df['amount']
+        
         # Sort bids descending (highest price first) and asks ascending (lowest price first)
         bids_df = bids_df.sort_values('price', ascending=False)
         asks_df = asks_df.sort_values('price', ascending=True)
+        
+        # Calculate cumulative volumes for better visualization
+        bids_df['cumulative_volume'] = bids_df['quote_volume'].cumsum()
+        asks_df['cumulative_volume'] = asks_df['quote_volume'].cumsum()
         
         # Filter by depth percentage if current price is available
         if current_price:
@@ -475,63 +488,58 @@ def create_order_book_chart(order_book_data, current_price=None, depth_percentag
         # Create order book chart
         fig = go.Figure()
         
-        # Add bid bars (green, negative values for left side)
+        # Add bid bars (green, all positive values) - using cumulative volume
         if not bids_df.empty:
             fig.add_trace(
                 go.Bar(
-                    x=-bids_df['amount'],  # Negative for left side
+                    x=bids_df['cumulative_volume'],  # Using cumulative volume
                     y=bids_df['price'],
                     orientation='h',
                     name='Bids',
                     marker=dict(color='#2ECC71', opacity=0.8),
-                    hovertemplate='<b>BID</b><br>Price: $%{y:.4f}<br>Volume: %{customdata:.4f}<extra></extra>',
-                    customdata=bids_df['amount'],
-                    width=0.8
+                    hovertemplate='<b>BID</b><br>Price: $%{y:.4f}<br>Cumulative Volume: $%{x:,.0f}<br>Level Volume: $%{customdata:,.0f}<extra></extra>',
+                    customdata=bids_df['quote_volume'],  # Show individual level volume in hover
+                    offsetgroup='bids'
                 )
             )
         
-        # Add ask bars (red, positive values for right side)
+        # Add ask bars (red, all positive values) - using cumulative volume
         if not asks_df.empty:
             fig.add_trace(
                 go.Bar(
-                    x=asks_df['amount'],  # Positive for right side
+                    x=asks_df['cumulative_volume'],  # Using cumulative volume
                     y=asks_df['price'],
                     orientation='h',
                     name='Asks',
                     marker=dict(color='#E74C3C', opacity=0.8),
-                    hovertemplate='<b>ASK</b><br>Price: $%{y:.4f}<br>Volume: %{x:.4f}<extra></extra>',
-                    width=0.8
+                    hovertemplate='<b>ASK</b><br>Price: $%{y:.4f}<br>Cumulative Volume: $%{x:,.0f}<br>Level Volume: $%{customdata:,.0f}<extra></extra>',
+                    customdata=asks_df['quote_volume'],  # Show individual level volume in hover
+                    offsetgroup='asks'
                 )
             )
         
-        # Add current price line if available
-        if current_price:
-            fig.add_hline(
-                y=current_price,
-                line_dash="dash",
-                line_color="yellow",
-                line_width=2,
-                annotation_text=f"${current_price:.4f}",
-                annotation_position="right",
-                annotation=dict(font=dict(color="yellow", size=12))
-            )
         
         # Update layout for histogram style
         layout = get_default_layout(title="Order Book Depth", height=600, width=300)
         layout.update({
             "xaxis": {
-                "title": "Volume",
+                "title": "Cumulative Volume (USDT)",
                 "color": "white",
                 "showgrid": True,
-                "gridcolor": "rgba(255,255,255,0.1)"
+                "gridcolor": "rgba(255,255,255,0.1)",
+                "zeroline": True,
+                "zerolinecolor": "rgba(255,255,255,0.3)",
+                "zerolinewidth": 1
             },
             "yaxis": {
                 "title": "Price ($)",
                 "color": "white",
                 "showgrid": True,
-                "gridcolor": "rgba(255,255,255,0.1)"
+                "gridcolor": "rgba(255,255,255,0.1)",
+                "type": "linear"
             },
-            "bargap": 0.1,
+            "bargap": 0.02,
+            "bargroupgap": 0.02,
             "showlegend": False,
             "hovermode": "closest"
         })
@@ -755,7 +763,7 @@ with market_data_col:
             )
             
             # Get order book data for bid/ask prices and volumes
-            order_book = get_order_book(connector, trading_pair, depth=20)
+            order_book = get_order_book(connector, trading_pair, depth=1000)
             
             if order_book and "bids" in order_book and "asks" in order_book:
                 bid_price = float(order_book["bids"][0]["price"]) if order_book["bids"] else 0
@@ -826,17 +834,25 @@ with market_data_col:
                             sell_vol = sell_response["result_quote_volume"]
 
                         st.metric(
-                            f"📊 Depth ±{depth_percentage:.1f}%",
-                            f"${float(buy_vol):,.0f} | ${float(sell_vol):,.0f}"
+                            f"📊 Asks Depth in quote",
+                            f"${float(buy_vol):,.0f}"
+                        )
+                        st.metric(
+                            f"📊 Bids Depth in quote",
+                            f"${float(sell_vol):,.0f}"
                         )
                     except Exception as e:
                         # Fallback to simple calculation if API fails
-                        total_bid_volume = sum(float(bid["amount"]) for bid in order_book["bids"])
-                        total_ask_volume = sum(float(ask["amount"]) for ask in order_book["asks"])
+                        total_bid_volume = sum(float(bid["amount"] * bid["price"]) for bid in order_book["bids"])
+                        total_ask_volume = sum(float(ask["amount"] * ask["price"]) for ask in order_book["asks"])
                         
                         st.metric(
-                            f"📊 Depth ±{depth_percentage:.1f}%",
-                            f"B:{total_bid_volume:.0f} | A:{total_ask_volume:.0f}"
+                            f"📊 Asks Depth in quote",
+                            f"${total_bid_volume:,.0f}"
+                        )
+                        st.metric(
+                            f"📊 Bids Depth in quote",
+                            f"${total_ask_volume:,.0f}"
                         )
                 else:
                     st.metric(f"📊 Depth ±{depth_percentage:.1f}%", "No data")
@@ -872,7 +888,7 @@ with market_data_col:
 
 
 # Chart fragment with auto-refresh
-@st.fragment(run_every=60)  # Auto-refresh every 60 seconds
+@st.fragment(run_every=30)  # Auto-refresh every 30 seconds
 def show_trading_data():
     """Fragment to display trading data with auto-refresh and chart controls."""
     connector = st.session_state.selected_market.get("connector")
@@ -885,6 +901,21 @@ def show_trading_data():
     # Chart and Trade Execution section
     st.divider()
     chart_col, orderbook_col, trade_col = st.columns([3, 1, 1])
+
+    # Get market data first (needed for both charts)
+    candles, prices = get_market_data(
+        connector, trading_pair, st.session_state.chart_interval, 
+        st.session_state.max_candles, st.session_state.candles_connector
+    )
+    
+    # Get order book data
+    order_book = get_order_book(connector, trading_pair, depth=20)
+    
+    # Get current price and depth percentage
+    current_price = 0.0
+    if prices and trading_pair in prices:
+        current_price = float(prices[trading_pair])
+    depth_percentage = st.session_state.get("depth_percentage", 1.0)
 
     with chart_col:
         st.subheader("📈 Price Chart")
@@ -928,11 +959,6 @@ def show_trading_data():
             )
             st.session_state.max_candles = max_candles
 
-        # Get market data
-        candles, prices = get_market_data(
-            connector, trading_pair, interval, max_candles, st.session_state.candles_connector
-        )
-
         # Get trade history for the selected account/connector/pair
         trades = []
         if st.session_state.selected_account and st.session_state.selected_connector:
@@ -945,56 +971,29 @@ def show_trading_data():
         # Add small gap before chart
         st.write("")
         
-        # Create and display chart
+        # Create candlestick chart
         candles_source = st.session_state.candles_connector if st.session_state.candles_connector else connector
-        fig = create_candlestick_chart(candles, candles_source, trading_pair, interval, trades)
-        st.plotly_chart(fig, use_container_width=True)
-        
-        # Show last update time
-        current_time = datetime.datetime.now().strftime("%H:%M:%S")
-        st.caption(f"🔄 Last updated: {current_time} (auto-refresh every 60s)")
+        candlestick_fig = create_candlestick_chart(candles, candles_source, trading_pair, interval, trades)
 
     with orderbook_col:
         st.subheader("📊 Order Book Depth")
         
-        # Get order book data
-        order_book = get_order_book(connector, trading_pair, depth=20)
-        
-        # Get current price and depth percentage from session state
-        current_price = 0.0
-        if prices and trading_pair in prices:
-            current_price = float(prices[trading_pair])
-        
-        depth_percentage = st.session_state.get("depth_percentage", 1.0)
         
         # Create and display order book chart
         orderbook_fig, price_min, price_max = create_order_book_chart(
             order_book, current_price, depth_percentage, trading_pair
         )
         
-        # Sync Y-axis with candles chart if we have price data
-        if price_min is not None and price_max is not None and candles:
-            # Get price range from candles
-            candles_df = pd.DataFrame(candles)
-            if not candles_df.empty:
-                candles_min = candles_df['low'].min()
-                candles_max = candles_df['high'].max()
-                
-                # Use the overlapping range or extend as needed
-                y_min = min(price_min, candles_min)
-                y_max = max(price_max, candles_max)
-                
-                # Apply same Y-axis range to both charts
-                orderbook_fig.update_layout(
-                    yaxis=dict(range=[y_min, y_max])
-                )
-                fig.update_layout(
-                    yaxis=dict(range=[y_min, y_max])
-                )
+    
+    # Display both charts
+    with chart_col:
+        st.plotly_chart(candlestick_fig, use_container_width=True)
+        # Show last update time
+        current_time = datetime.datetime.now().strftime("%H:%M:%S")
+        st.caption(f"🔄 Last updated: {current_time} (auto-refresh every 30s)")
         
+    with orderbook_col:
         st.plotly_chart(orderbook_fig, use_container_width=True)
-        
-        # Order book chart is displayed above without additional captions
 
     with trade_col:
         st.subheader("💸 Execute Trade")
