@@ -68,6 +68,9 @@ def get_positions():
             return response
         elif isinstance(response, dict) and response.get("status") == "success":
             return response.get("data", [])
+        elif isinstance(response, dict) and "data" in response:
+            # Handle the actual API response format
+            return response.get("data", [])
         return []
     except Exception as e:
         st.error(f"Failed to fetch positions: {e}")
@@ -103,6 +106,48 @@ def get_order_history():
     except Exception:
         # If get_orders doesn't exist either, just return empty list without warning
         return []
+
+
+def get_order_book(connector, trading_pair, depth=10):
+    """Get order book data for the selected trading pair."""
+    try:
+        response = backend_api_client.market_data.get_order_book(
+            connector=connector,
+            trading_pair=trading_pair,
+            depth=depth
+        )
+
+        # Handle both response formats
+        if isinstance(response, dict):
+            if "status" in response and response.get("status") == "success":
+                return response.get("data", {})
+            elif "bids" in response and "asks" in response:
+                return response
+        return {}
+    except Exception as e:
+        st.warning(f"Could not fetch order book: {e}")
+        return {}
+
+
+def get_funding_rate(connector, trading_pair):
+    """Get funding rate for perpetual contracts."""
+    try:
+        # Only try to get funding rate for perpetual connectors
+        if "perpetual" in connector.lower():
+            response = backend_api_client.market_data.get_funding_info(
+                connector=connector,
+                trading_pair=trading_pair
+            )
+            # Handle both response formats
+            if isinstance(response, dict):
+                if "status" in response and response.get("status") == "success":
+                    return response.get("data", {})
+                elif "funding_rate" in response:
+                    return response
+            return {}
+        return {}
+    except Exception as e:
+        return {}
 
 
 def get_trade_history(account_name, connector_name, trading_pair):
@@ -376,6 +421,149 @@ def create_candlestick_chart(candles_data, connector_name="", trading_pair="", i
         return fig
 
 
+def create_order_book_chart(order_book_data, current_price=None, depth_percentage=1.0, trading_pair=""):
+    """Create an order book histogram with price on Y-axis and volume on X-axis."""
+    if not order_book_data or not order_book_data.get("bids") or not order_book_data.get("asks"):
+        fig = go.Figure()
+        fig.add_annotation(
+            text="No order book data available",
+            xref="paper", yref="paper",
+            x=0.5, y=0.5,
+            showarrow=False
+        )
+        fig.update_layout(**get_default_layout(title="Order Book", height=600, width=300))
+        return fig, None, None
+
+    try:
+        bids = order_book_data.get("bids", [])
+        asks = order_book_data.get("asks", [])
+        
+        if not bids or not asks:
+            fig = go.Figure()
+            fig.add_annotation(
+                text="Insufficient order book data",
+                xref="paper", yref="paper",
+                x=0.5, y=0.5,
+                showarrow=False
+            )
+            fig.update_layout(**get_default_layout(title="Order Book", height=600, width=300))
+            return fig, None, None
+
+        # Process bids and asks - they're already objects with price/amount keys
+        bids_df = pd.DataFrame(bids)
+        asks_df = pd.DataFrame(asks)
+        
+        # Convert to float
+        bids_df['price'] = bids_df['price'].astype(float)
+        bids_df['amount'] = bids_df['amount'].astype(float)
+        asks_df['price'] = asks_df['price'].astype(float)
+        asks_df['amount'] = asks_df['amount'].astype(float)
+        
+        # Sort bids descending (highest price first) and asks ascending (lowest price first)
+        bids_df = bids_df.sort_values('price', ascending=False)
+        asks_df = asks_df.sort_values('price', ascending=True)
+        
+        # Filter by depth percentage if current price is available
+        if current_price:
+            price_range = current_price * (depth_percentage / 100)
+            min_price = current_price - price_range
+            max_price = current_price + price_range
+            
+            bids_df = bids_df[bids_df['price'] >= min_price]
+            asks_df = asks_df[asks_df['price'] <= max_price]
+        
+        # Create order book chart
+        fig = go.Figure()
+        
+        # Add bid bars (green, negative values for left side)
+        if not bids_df.empty:
+            fig.add_trace(
+                go.Bar(
+                    x=-bids_df['amount'],  # Negative for left side
+                    y=bids_df['price'],
+                    orientation='h',
+                    name='Bids',
+                    marker=dict(color='#2ECC71', opacity=0.8),
+                    hovertemplate='<b>BID</b><br>Price: $%{y:.4f}<br>Volume: %{customdata:.4f}<extra></extra>',
+                    customdata=bids_df['amount'],
+                    width=0.8
+                )
+            )
+        
+        # Add ask bars (red, positive values for right side)
+        if not asks_df.empty:
+            fig.add_trace(
+                go.Bar(
+                    x=asks_df['amount'],  # Positive for right side
+                    y=asks_df['price'],
+                    orientation='h',
+                    name='Asks',
+                    marker=dict(color='#E74C3C', opacity=0.8),
+                    hovertemplate='<b>ASK</b><br>Price: $%{y:.4f}<br>Volume: %{x:.4f}<extra></extra>',
+                    width=0.8
+                )
+            )
+        
+        # Add current price line if available
+        if current_price:
+            fig.add_hline(
+                y=current_price,
+                line_dash="dash",
+                line_color="yellow",
+                line_width=2,
+                annotation_text=f"${current_price:.4f}",
+                annotation_position="right",
+                annotation=dict(font=dict(color="yellow", size=12))
+            )
+        
+        # Update layout for histogram style
+        layout = get_default_layout(title="Order Book Depth", height=600, width=300)
+        layout.update({
+            "xaxis": {
+                "title": "Volume",
+                "color": "white",
+                "showgrid": True,
+                "gridcolor": "rgba(255,255,255,0.1)"
+            },
+            "yaxis": {
+                "title": "Price ($)",
+                "color": "white",
+                "showgrid": True,
+                "gridcolor": "rgba(255,255,255,0.1)"
+            },
+            "bargap": 0.1,
+            "showlegend": False,
+            "hovermode": "closest"
+        })
+        
+        fig.update_layout(**layout)
+        
+        # Return price range for syncing with candles chart
+        price_min = None
+        price_max = None
+        
+        if not bids_df.empty and not asks_df.empty:
+            price_min = min(bids_df['price'].min(), asks_df['price'].min())
+            price_max = max(bids_df['price'].max(), asks_df['price'].max())
+        elif not bids_df.empty:
+            price_min = price_max = bids_df['price'].min()
+        elif not asks_df.empty:
+            price_min = price_max = asks_df['price'].max()
+        
+        return fig, price_min, price_max
+    except Exception as e:
+        # Fallback chart with error message
+        fig = go.Figure()
+        fig.add_annotation(
+            text=f"Error creating order book: {str(e)}",
+            xref="paper", yref="paper",
+            x=0.5, y=0.5,
+            showarrow=False
+        )
+        fig.update_layout(**get_default_layout(title="Order Book", height=600, width=300))
+        return fig, None, None
+
+
 def render_positions_table(positions_data):
     """Render positions table."""
     if not positions_data:
@@ -476,84 +664,77 @@ st.caption("Execute trades, monitor positions, and analyze markets")
 accounts_list, credentials_dict = get_accounts_and_credentials()
 candles_connectors = get_candles_connectors()
 
-# Account and Trading Selection Section
-selection_col, metrics_col = st.columns([4, 1])
+# Account and Trading Selection Section - Reorganized
+selection_col, market_data_col = st.columns([1, 3])
 
 with selection_col:
-    st.subheader("🏦 Account & Market Selection")
+    st.subheader("🏦 Account & Market")
     
-    # First row: Account and credentials selection
-    col1, col2, col3 = st.columns([1, 1, 1])
+    # All selection in one column
+    if accounts_list:
+        # Default to first account if not set
+        if st.session_state.selected_account is None:
+            st.session_state.selected_account = accounts_list[0]
 
-    with col1:
-        if accounts_list:
-            # Default to first account if not set
-            if st.session_state.selected_account is None:
-                st.session_state.selected_account = accounts_list[0]
-
-            selected_account = st.selectbox(
-                "📱 Account",
-                accounts_list,
-                index=accounts_list.index(
-                    st.session_state.selected_account) if st.session_state.selected_account in accounts_list else 0,
-                key="account_selector"
-            )
-            st.session_state.selected_account = selected_account
-        else:
-            st.error("No accounts found")
-            st.stop()
-
-    with col2:
-        if selected_account and credentials_dict.get(selected_account):
-            credentials = credentials_dict[selected_account]
-            
-            # Handle different credential formats
-            if isinstance(credentials, list) and credentials:
-                # If credentials is a list of strings (connector names)
-                if isinstance(credentials[0], str):
-                    # Convert string list to dict format
-                    credentials = [{"connector_name": cred} for cred in credentials]
-                # If credentials is already a list of dicts, use as is
-                elif isinstance(credentials[0], dict):
-                    credentials = credentials
-            elif isinstance(credentials, dict):
-                # If credentials is a dict, convert to list of dicts
-                credentials = [{"connector_name": k, **v} for k, v in credentials.items()]
-            else:
-                credentials = []
-            
-            # For simplicity, just use the first credential available
-            default_cred = credentials[0] if credentials else None
-
-            if default_cred and credentials:
-                connector = st.selectbox(
-                    "📡 Exchange",
-                    [cred["connector_name"] for cred in credentials],
-                    index=0,
-                    key="connector_selector"
-                )
-                st.session_state.selected_connector = connector
-            else:
-                st.error("No credentials found for this account")
-                connector = None
-        else:
-            st.error("No credentials available")
-            connector = None
-
-    with col3:
-        trading_pair = st.text_input(
-            "💱 Trading Pair",
-            value="BTC-USDT",
-            key="trading_pair_input"
+        selected_account = st.selectbox(
+            "📱 Account",
+            accounts_list,
+            index=accounts_list.index(
+                st.session_state.selected_account) if st.session_state.selected_account in accounts_list else 0,
+            key="account_selector"
         )
+        st.session_state.selected_account = selected_account
+    else:
+        st.error("No accounts found")
+        st.stop()
+
+    if selected_account and credentials_dict.get(selected_account):
+        credentials = credentials_dict[selected_account]
+        
+        # Handle different credential formats
+        if isinstance(credentials, list) and credentials:
+            # If credentials is a list of strings (connector names)
+            if isinstance(credentials[0], str):
+                # Convert string list to dict format
+                credentials = [{"connector_name": cred} for cred in credentials]
+            # If credentials is already a list of dicts, use as is
+            elif isinstance(credentials[0], dict):
+                credentials = credentials
+        elif isinstance(credentials, dict):
+            # If credentials is a dict, convert to list of dicts
+            credentials = [{"connector_name": k, **v} for k, v in credentials.items()]
+        else:
+            credentials = []
+        
+        # For simplicity, just use the first credential available
+        default_cred = credentials[0] if credentials else None
+
+        if default_cred and credentials:
+            connector = st.selectbox(
+                "📡 Exchange",
+                [cred["connector_name"] for cred in credentials],
+                index=0,
+                key="connector_selector"
+            )
+            st.session_state.selected_connector = connector
+        else:
+            st.error("No credentials found for this account")
+            connector = None
+    else:
+        st.error("No credentials available")
+        connector = None
+
+    trading_pair = st.text_input(
+        "💱 Trading Pair",
+        value="BTC-USDT",
+        key="trading_pair_input"
+    )
 
     # Update selected market
     if connector and trading_pair:
         st.session_state.selected_market = {"connector": connector, "trading_pair": trading_pair}
 
-    # Chart settings have been moved to the chart fragment below
-
-with metrics_col:
+with market_data_col:
     st.subheader("📊 Market Data")
     
     # Only show metrics if we have a selected market
@@ -565,34 +746,129 @@ with metrics_col:
         max_candles = st.session_state.max_candles
         candles_connector = st.session_state.candles_connector
         
-        candles, prices = get_market_data(
-            connector, trading_pair, interval, max_candles, candles_connector
-        )
+        # Create sub-columns for organized display
+        price_col, depth_col, funding_col, controls_col = st.columns([1, 1, 1, 1])
         
-        # Show current price
-        if prices and trading_pair in prices:
-            current_price = prices[trading_pair]
-            st.metric(
-                f"💰 {trading_pair}",
-                f"${float(current_price):,.2f}"
+        with price_col:
+            candles, prices = get_market_data(
+                connector, trading_pair, interval, max_candles, candles_connector
             )
-        else:
-            st.metric(f"💰 {trading_pair}", "Loading...")
+            
+            # Get order book data for bid/ask prices and volumes
+            order_book = get_order_book(connector, trading_pair, depth=20)
+            
+            if order_book and "bids" in order_book and "asks" in order_book:
+                bid_price = float(order_book["bids"][0]["price"]) if order_book["bids"] else 0
+                ask_price = float(order_book["asks"][0]["price"]) if order_book["asks"] else 0
+                mid_price = (bid_price + ask_price) / 2 if bid_price > 0 and ask_price > 0 else 0
+                
+                st.metric(f"💰 {trading_pair}", f"${mid_price:.4f}")
+                st.metric("📈 Bid Price", f"${bid_price:.4f}")
+                st.metric("📉 Ask Price", f"${ask_price:.4f}")
+            else:
+                # Fallback to current price if no order book
+                if prices and trading_pair in prices:
+                    current_price = prices[trading_pair]
+                    st.metric(
+                        f"💰 {trading_pair}",
+                        f"${float(current_price):,.4f}"
+                    )
+                else:
+                    st.metric(f"💰 {trading_pair}", "Loading...")
+        with depth_col:
+            # Order book depth configuration
+            depth_percentage = st.number_input(
+                "📊 Depth ±%",
+                min_value=0.1,
+                max_value=10.0,
+                value=1.0,
+                step=0.1,
+                format="%.1f",
+                key="depth_percentage"
+            )
+            
+            # Calculate depth using the actual API method
+            if order_book and "bids" in order_book and "asks" in order_book:
+                bid_price = float(order_book["bids"][0]["price"]) if order_book["bids"] else 0
+                ask_price = float(order_book["asks"][0]["price"]) if order_book["asks"] else 0
+                
+                if bid_price > 0 and ask_price > 0:
+                    # Calculate prices at depth percentage
+                    depth_factor = depth_percentage / 100
+                    buy_price = bid_price * (1 - depth_factor)  # Price below current bid
+                    sell_price = ask_price * (1 + depth_factor)  # Price above current ask
+                    
+                    try:
+                        # Get buy depth (volume available up to buy_price)
+                        buy_response = backend_api_client.market_data.get_quote_volume_for_price(
+                            connector_name=connector,
+                            trading_pair=trading_pair,
+                            price=buy_price,
+                            is_buy=True
+                        )
+
+                        # Get sell depth (volume available up to sell_price)
+                        sell_response = backend_api_client.market_data.get_quote_volume_for_price(
+                            connector_name=connector,
+                            trading_pair=trading_pair,
+                            price=sell_price,
+                            is_buy=False
+                        )
+                            
+                        # Handle response format based on your example
+                        buy_vol = 0
+                        sell_vol = 0
+
+                        if isinstance(buy_response, dict) and "result_quote_volume" in buy_response:
+                            buy_vol = buy_response["result_quote_volume"]
+
+                        if isinstance(sell_response, dict) and "result_quote_volume" in sell_response:
+                            sell_vol = sell_response["result_quote_volume"]
+
+                        st.metric(
+                            f"📊 Depth ±{depth_percentage:.1f}%",
+                            f"${float(buy_vol):,.0f} | ${float(sell_vol):,.0f}"
+                        )
+                    except Exception as e:
+                        # Fallback to simple calculation if API fails
+                        total_bid_volume = sum(float(bid["amount"]) for bid in order_book["bids"])
+                        total_ask_volume = sum(float(ask["amount"]) for ask in order_book["asks"])
+                        
+                        st.metric(
+                            f"📊 Depth ±{depth_percentage:.1f}%",
+                            f"B:{total_bid_volume:.0f} | A:{total_ask_volume:.0f}"
+                        )
+                else:
+                    st.metric(f"📊 Depth ±{depth_percentage:.1f}%", "No data")
+            else:
+                st.metric(f"📊 Depth ±{depth_percentage:.1f}%", "No order book")
         
-        # Show candles info and fetch time in same metric
-        if candles:
-            st.metric("📈 Candles", f"{len(candles)} records")
+        with funding_col:
+            # Funding rate for perpetual contracts
+            if "perpetual" in connector.lower():
+                funding_data = get_funding_rate(connector, trading_pair)
+                if funding_data and "funding_rate" in funding_data:
+                    funding_rate = float(funding_data["funding_rate"]) * 100
+                    st.metric(
+                        "💸 Funding Rate",
+                        f"{funding_rate:.4f}%"
+                    )
+                else:
+                    st.metric("💸 Funding Rate", "N/A")
+            else:
+                st.metric("💸 Funding Rate", "Spot")
         
-        # Show fetch time and refresh button together
-        if "last_fetch_time" in st.session_state:
-            fetch_time = st.session_state["last_fetch_time"]
-            st.caption(f"⚡ Fetch: {fetch_time:.0f}ms")
-        
-        # Refresh button
-        if st.button("🔄 Refresh", use_container_width=True, type="primary"):
-            st.rerun()
+        with controls_col:
+            # Show fetch time and refresh button together
+            if "last_fetch_time" in st.session_state:
+                fetch_time = st.session_state["last_fetch_time"]
+                st.caption(f"⚡ Fetch: {fetch_time:.0f}ms")
+            
+            # Refresh button
+            if st.button("🔄 Refresh", use_container_width=True, type="primary"):
+                st.rerun()
     else:
-        st.info("Select account and pair to view metrics")
+        st.info("Select account and pair to view extended market data")
 
 
 # Chart fragment with auto-refresh
@@ -608,7 +884,7 @@ def show_trading_data():
 
     # Chart and Trade Execution section
     st.divider()
-    chart_col, trade_col = st.columns([4, 1])
+    chart_col, orderbook_col, trade_col = st.columns([3, 1, 1])
 
     with chart_col:
         st.subheader("📈 Price Chart")
@@ -677,6 +953,48 @@ def show_trading_data():
         # Show last update time
         current_time = datetime.datetime.now().strftime("%H:%M:%S")
         st.caption(f"🔄 Last updated: {current_time} (auto-refresh every 60s)")
+
+    with orderbook_col:
+        st.subheader("📊 Order Book Depth")
+        
+        # Get order book data
+        order_book = get_order_book(connector, trading_pair, depth=20)
+        
+        # Get current price and depth percentage from session state
+        current_price = 0.0
+        if prices and trading_pair in prices:
+            current_price = float(prices[trading_pair])
+        
+        depth_percentage = st.session_state.get("depth_percentage", 1.0)
+        
+        # Create and display order book chart
+        orderbook_fig, price_min, price_max = create_order_book_chart(
+            order_book, current_price, depth_percentage, trading_pair
+        )
+        
+        # Sync Y-axis with candles chart if we have price data
+        if price_min is not None and price_max is not None and candles:
+            # Get price range from candles
+            candles_df = pd.DataFrame(candles)
+            if not candles_df.empty:
+                candles_min = candles_df['low'].min()
+                candles_max = candles_df['high'].max()
+                
+                # Use the overlapping range or extend as needed
+                y_min = min(price_min, candles_min)
+                y_max = max(price_max, candles_max)
+                
+                # Apply same Y-axis range to both charts
+                orderbook_fig.update_layout(
+                    yaxis=dict(range=[y_min, y_max])
+                )
+                fig.update_layout(
+                    yaxis=dict(range=[y_min, y_max])
+                )
+        
+        st.plotly_chart(orderbook_fig, use_container_width=True)
+        
+        # Order book chart is displayed above without additional captions
 
     with trade_col:
         st.subheader("💸 Execute Trade")
