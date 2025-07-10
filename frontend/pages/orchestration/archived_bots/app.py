@@ -688,11 +688,6 @@ if st.session_state.selected_database:
                 
                 analysis = st.session_state.trade_analysis
                 
-                # Debug info
-                if analysis:
-                    total_trades = len(analysis.get("trades_df", pd.DataFrame()))
-                    st.info(f"📊 Analysis based on {total_trades} trades")
-                
                 if analysis.get("exchanges") and analysis.get("trading_pairs"):
                     # Show exchange and trading pair info
                     col1, col2 = st.columns(2)
