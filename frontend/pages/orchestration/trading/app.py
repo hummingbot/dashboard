@@ -5,6 +5,7 @@ import nest_asyncio
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
+from plotly.subplots import make_subplots
 
 from frontend.st_utils import get_backend_api_client, initialize_st_page
 
@@ -36,6 +37,16 @@ if "max_candles" not in st.session_state:
     st.session_state.max_candles = 100  # Reduced for better performance
 if "last_api_request" not in st.session_state:
     st.session_state.last_api_request = 0  # Track last API request time
+if "last_refresh_time" not in st.session_state:
+    st.session_state.last_refresh_time = 0  # Track last refresh time
+
+# Trading form session state
+if "trade_custom_price" not in st.session_state:
+    st.session_state.trade_custom_price = None  # User's custom price input
+if "trade_price_set_by_user" not in st.session_state:
+    st.session_state.trade_price_set_by_user = False  # Track if user set custom price
+if "last_order_type" not in st.session_state:
+    st.session_state.last_order_type = "market"  # Track order type changes
 
 # Set refresh interval for real-time updates
 REFRESH_INTERVAL = 30  # seconds
@@ -90,8 +101,13 @@ def get_active_orders():
         # Handle both response formats
         if isinstance(response, list):
             return response
-        elif isinstance(response, dict) and response.get("status") == "success":
-            return response.get("data", [])
+        elif isinstance(response, dict):
+            # Check for different response formats
+            if response.get("status") == "success":
+                return response.get("data", [])
+            elif "data" in response:
+                # Handle response format like {"data": [...], "pagination": {...}}
+                return response.get("data", [])
         return []
     except Exception as e:
         st.error(f"Failed to fetch active orders: {e}")
@@ -102,12 +118,17 @@ def get_order_history():
     """Get recent order history."""
     try:
         # Try to get orders instead of order_history since that method doesn't exist
-        response = backend_api_client.trading.get_orders(limit=50)
+        response = backend_api_client.trading.search_orders(limit=50)
         # Handle both response formats
         if isinstance(response, list):
             return response
-        elif isinstance(response, dict) and response.get("status") == "success":
-            return response.get("data", [])
+        elif isinstance(response, dict):
+            # Check for different response formats
+            if response.get("status") == "success":
+                return response.get("data", [])
+            elif "data" in response:
+                # Handle response format like {"data": [...], "pagination": {...}}
+                return response.get("data", [])
         return []
     except Exception:
         # If get_orders doesn't exist either, just return empty list without warning
@@ -252,7 +273,7 @@ def place_order(order_data):
     """Place a trading order."""
     try:
         response = backend_api_client.trading.place_order(**order_data)
-        if response.get("status") == "success":
+        if response.get("status") == "submitted":
             st.success(f"Order placed successfully! Order ID: {response.get('order_id')}")
             return True
         else:
@@ -301,7 +322,7 @@ def get_default_layout(title=None, height=800, width=1100):
 
 
 def create_candlestick_chart(candles_data, connector_name="", trading_pair="", interval="", trades_data=None):
-    """Create a candlestick chart with custom theme and trade markers."""
+    """Create a candlestick chart with custom theme, trade markers, and volume bars."""
     if not candles_data:
         fig = go.Figure()
         fig.add_annotation(
@@ -310,7 +331,7 @@ def create_candlestick_chart(candles_data, connector_name="", trading_pair="", i
             x=0.5, y=0.5,
             showarrow=False
         )
-        fig.update_layout(**get_default_layout(height=600))
+        fig.update_layout(**get_default_layout(height=800))
         return fig
 
     try:
@@ -323,10 +344,22 @@ def create_candlestick_chart(candles_data, connector_name="", trading_pair="", i
         if 'timestamp' in df.columns:
             df['datetime'] = pd.to_datetime(df['timestamp'], unit='s')
 
-        # Create candlestick chart
-        fig = go.Figure()
+        # Calculate quote volume (volume * close price)
+        if 'volume' in df.columns and 'close' in df.columns:
+            df['quote_volume'] = df['volume'] * df['close']
+        else:
+            df['quote_volume'] = 0
 
-        # Add candlestick trace
+        # Create subplots with shared x-axis: candlestick chart on top, volume bars on bottom
+        fig = make_subplots(
+            rows=2, cols=1,
+            shared_xaxes=True,
+            vertical_spacing=0.01,
+            row_heights=[0.8, 0.2],
+            subplot_titles=(None, None)  # No subplot titles
+        )
+
+        # Add candlestick trace to first subplot
         fig.add_trace(
             go.Candlestick(
                 x=df['datetime'] if 'datetime' in df.columns else df.index,
@@ -335,10 +368,29 @@ def create_candlestick_chart(candles_data, connector_name="", trading_pair="", i
                 low=df['low'],
                 close=df['close'],
                 name="Candlesticks",
-            )
+            ),
+            row=1, col=1
         )
 
-        # Add trade markers if trade data is provided
+        # Add volume bars to second subplot if volume data exists
+        if 'quote_volume' in df.columns and df['quote_volume'].sum() > 0:
+            # Color volume bars based on price movement (green for up, red for down)
+            colors = ['rgba(0, 255, 0, 0.5)' if close >= open_price else 'rgba(255, 0, 0, 0.5)' 
+                     for close, open_price in zip(df['close'], df['open'])]
+            
+            fig.add_trace(
+                go.Bar(
+                    x=df['datetime'] if 'datetime' in df.columns else df.index,
+                    y=df['quote_volume'],
+                    name='Volume',
+                    marker=dict(color=colors),
+                    yaxis='y2',
+                    hovertemplate='Volume: $%{y:,.0f}<br>%{x}<extra></extra>'
+                ),
+                row=2, col=1
+            )
+
+        # Add trade markers if trade data is provided (add to first subplot)
         if trades_data:
             try:
                 trades_df = pd.DataFrame(trades_data)
@@ -368,7 +420,7 @@ def create_candlestick_chart(candles_data, connector_name="", trading_pair="", i
                             sell_trades = trades_in_range[
                                 trades_in_range.get('trade_type', trades_in_range.get('side', '')) == 'sell']
 
-                            # Add buy markers (green triangles pointing up)
+                            # Add buy markers (green triangles pointing up) to first subplot
                             if not buy_trades.empty:
                                 fig.add_trace(
                                     go.Scatter(
@@ -382,10 +434,11 @@ def create_candlestick_chart(candles_data, connector_name="", trading_pair="", i
                                         ),
                                         name='Buy Trades',
                                         hovertemplate='<b>BUY</b><br>Price: $%{y:.4f}<br>Time: %{x}<extra></extra>'
-                                    )
+                                    ),
+                                    row=1, col=1
                                 )
 
-                            # Add sell markers (red triangles pointing down)
+                            # Add sell markers (red triangles pointing down) to first subplot
                             if not sell_trades.empty:
                                 fig.add_trace(
                                     go.Scatter(
@@ -399,7 +452,8 @@ def create_candlestick_chart(candles_data, connector_name="", trading_pair="", i
                                         ),
                                         name='Sell Trades',
                                         hovertemplate='<b>SELL</b><br>Price: $%{y:.4f}<br>Time: %{x}<extra></extra>'
-                                    )
+                                    ),
+                                    row=1, col=1
                                 )
             except Exception:
                 # If trade markers fail, continue without them
@@ -408,8 +462,37 @@ def create_candlestick_chart(candles_data, connector_name="", trading_pair="", i
         # Create title
         title = f"{connector_name}: {trading_pair} ({interval})" if connector_name else "Price Chart"
 
-        # Update layout with custom theme
-        fig.update_layout(**get_default_layout(title=title, height=600))
+        # Get base layout and customize for subplots
+        layout = get_default_layout(title=title, height=700)  # Increased height for two subplots
+        
+        # Update specific layout options for subplots
+        layout.update({
+            "xaxis": {
+                "rangeslider": {"visible": False},
+                "showgrid": True,
+                "gridcolor": "rgba(255,255,255,0.1)",
+                "color": "white"
+            },
+            "yaxis": {
+                "title": "Price ($)",
+                "showgrid": True,
+                "gridcolor": "rgba(255,255,255,0.1)",
+                "color": "white"
+            },
+            "xaxis2": {
+                "showgrid": True,
+                "gridcolor": "rgba(255,255,255,0.1)",
+                "color": "white"
+            },
+            "yaxis2": {
+                "title": "Volume (Quote)",
+                "showgrid": True,
+                "gridcolor": "rgba(255,255,255,0.1)",
+                "color": "white"
+            }
+        })
+        
+        fig.update_layout(**layout)
 
         return fig
     except Exception as e:
@@ -571,7 +654,7 @@ def create_order_book_chart(order_book_data, current_price=None, depth_percentag
 
 
 def render_positions_table(positions_data):
-    """Render positions table."""
+    """Render positions table with enhanced metrics and hedging information."""
     if not positions_data:
         st.info("No open positions found.")
         return
@@ -582,31 +665,132 @@ def render_positions_table(positions_data):
         st.info("No open positions found.")
         return
 
+    # Calculate original value (amount * entry_price)
+    if 'amount' in df.columns and 'entry_price' in df.columns:
+        df['original_value'] = df['amount'] * df['entry_price']
+
     st.subheader("🎯 Open Positions")
 
+    # Calculate and display summary metrics
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        total_unrealized_pnl = df['unrealized_pnl'].sum() if 'unrealized_pnl' in df.columns else 0
+        st.metric(
+            "Total Unrealized PnL",
+            f"${total_unrealized_pnl:,.2f}",
+            delta=None,
+            delta_color="normal" if total_unrealized_pnl >= 0 else "inverse"
+        )
+    
+    with col2:
+        total_original_value = abs(df['original_value']).sum() if 'original_value' in df.columns else 0
+        st.metric(
+            "Total Position Amount",
+            f"${abs(total_original_value):,.2f}"
+        )
+    
+    # Separate long and short positions for hedging analysis
+    long_positions = df[df['amount'] > 0] if 'amount' in df.columns else pd.DataFrame()
+    short_positions = df[df['amount'] < 0] if 'amount' in df.columns else pd.DataFrame()
+    
+    with col3:
+        long_value = long_positions['original_value'].sum() if not long_positions.empty and 'original_value' in long_positions.columns else 0
+        st.metric(
+            "Long Exposure",
+            f"${abs(long_value):,.2f}",
+            help="Total value of long positions"
+        )
+    
+    with col4:
+        short_value = short_positions['original_value'].sum() if not short_positions.empty and 'original_value' in short_positions.columns else 0
+        st.metric(
+            "Short Exposure",
+            f"${abs(short_value):,.2f}",
+            help="Total value of short positions"
+        )
+
+    # Calculate hedge ratio if we have both long and short positions
+    if long_value != 0 and short_value != 0:
+        hedge_ratio = min(abs(short_value), abs(long_value)) / max(abs(short_value), abs(long_value)) * 100
+        st.info(f"📊 **Hedge Ratio**: {hedge_ratio:.1f}% (Higher = More Hedged)")
+    elif long_value > 0 and short_value == 0:
+        st.warning("⚠️ **Portfolio is fully LONG** - No short hedging")
+    elif short_value > 0 and long_value == 0:
+        st.warning("⚠️ **Portfolio is fully SHORT** - No long hedging")
+
+    # Display positions table with enhanced formatting
     st.dataframe(
         df,
         use_container_width=True,
         hide_index=True,
         column_config={
-            "unrealized_pnl": st.column_config.NumberColumn(
-                "Unrealized PnL",
-                format="$%.2f"
+            "amount": st.column_config.NumberColumn(
+                "Amount",
+                format="%.6f",
+                help="Positive = Long, Negative = Short"
             ),
             "entry_price": st.column_config.NumberColumn(
                 "Entry Price",
                 format="$%.4f"
             ),
+            "original_value": st.column_config.NumberColumn(
+                "Original Value",
+                format="$%.2f",
+                help="Amount × Entry Price"
+            ),
             "mark_price": st.column_config.NumberColumn(
                 "Mark Price",
                 format="$%.4f"
             ),
-            "amount": st.column_config.NumberColumn(
-                "Amount",
-                format="%.6f"
+            "unrealized_pnl": st.column_config.NumberColumn(
+                "Unrealized PnL",
+                format="$%.2f"
             )
         }
     )
+
+    # Show separate long/short breakdown if there are both types
+    if not long_positions.empty and not short_positions.empty:
+        st.divider()
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.subheader("🟢 Long Positions")
+            if not long_positions.empty:
+                long_pnl = long_positions['unrealized_pnl'].sum() if 'unrealized_pnl' in long_positions.columns else 0
+                st.caption(f"PnL: ${long_pnl:,.2f}")
+                st.dataframe(
+                    long_positions,
+                    use_container_width=True,
+                    hide_index=True,
+                    column_config={
+                        "amount": st.column_config.NumberColumn("Amount", format="%.6f"),
+                        "entry_price": st.column_config.NumberColumn("Entry Price", format="$%.4f"),
+                        "unrealized_pnl": st.column_config.NumberColumn("PnL", format="$%.2f")
+                    }
+                )
+        
+        with col2:
+            st.subheader("🔴 Short Positions")
+            if not short_positions.empty:
+                short_pnl = short_positions['unrealized_pnl'].sum() if 'unrealized_pnl' in short_positions.columns else 0
+                st.caption(f"PnL: ${short_pnl:,.2f}")
+                st.dataframe(
+                    short_positions,
+                    use_container_width=True,
+                    hide_index=True,
+                    column_config={
+                        "amount": st.column_config.NumberColumn("Amount", format="%.6f"),
+                        "entry_price": st.column_config.NumberColumn("Entry Price", format="$%.4f"),
+                        "unrealized_pnl": st.column_config.NumberColumn("PnL", format="$%.2f")
+                    }
+                )
+    elif not long_positions.empty:
+        st.info("📈 All positions are LONG")
+    elif not short_positions.empty:
+        st.info("📉 All positions are SHORT")
 
 
 def render_orders_table(orders_data):
@@ -623,25 +807,44 @@ def render_orders_table(orders_data):
 
     st.subheader("📋 Active Orders")
 
+    # Add cancel column to dataframe
+    df_with_cancel = df.copy()
+    df_with_cancel["cancel"] = False
+
+    # Create column configurations based on what's available in the data
+    column_config = {
+        "cancel": st.column_config.CheckboxColumn(
+            "Cancel",
+            help="Select orders to cancel",
+            default=False,
+        ),
+        "price": st.column_config.NumberColumn(
+            "Price",
+            format="$%.4f"
+        ),
+        "amount": st.column_config.NumberColumn(
+            "Amount",
+            format="%.6f"
+        ),
+        "executed_amount_base": st.column_config.NumberColumn(
+            "Executed (Base)",
+            format="%.6f"
+        ),
+        "executed_amount_quote": st.column_config.NumberColumn(
+            "Executed (Quote)",
+            format="%.6f"
+        ),
+        "last_update_timestamp": st.column_config.DatetimeColumn(
+            "Last Update",
+            format="DD/MM/YYYY HH:mm:ss"
+        )
+    }
+
     # Add cancel button functionality
     edited_df = st.data_editor(
-        df,
-        column_config={
-            "cancel": st.column_config.CheckboxColumn(
-                "Cancel",
-                help="Select orders to cancel",
-                default=False,
-            ),
-            "price": st.column_config.NumberColumn(
-                "Price",
-                format="$%.4f"
-            ),
-            "amount": st.column_config.NumberColumn(
-                "Amount",
-                format="%.6f"
-            )
-        },
-        disabled=[col for col in df.columns if col != "cancel"],
+        df_with_cancel,
+        column_config=column_config,
+        disabled=[col for col in df_with_cancel.columns if col != "cancel"],
         hide_index=True,
         use_container_width=True,
         key="orders_editor"
@@ -805,19 +1008,19 @@ with market_data_col:
                     sell_price = ask_price * (1 + depth_factor)  # Price above current ask
 
                     try:
-                        # Get buy depth (volume available up to buy_price)
+                        # Get buy depth (volume available when buying up to sell_price - hitting asks)
                         buy_response = backend_api_client.market_data.get_quote_volume_for_price(
                             connector_name=connector,
                             trading_pair=trading_pair,
-                            price=buy_price,
+                            price=sell_price,  # Use sell_price for buying (hitting asks above current price)
                             is_buy=True
                         )
 
-                        # Get sell depth (volume available up to sell_price)
+                        # Get sell depth (volume available when selling down to buy_price - hitting bids)
                         sell_response = backend_api_client.market_data.get_quote_volume_for_price(
                             connector_name=connector,
                             trading_pair=trading_pair,
-                            price=sell_price,
+                            price=buy_price,  # Use buy_price for selling (hitting bids below current price)
                             is_buy=False
                         )
 
@@ -827,30 +1030,42 @@ with market_data_col:
 
                         if isinstance(buy_response, dict) and "result_quote_volume" in buy_response:
                             buy_vol = buy_response["result_quote_volume"]
+                            # Handle NaN values more robustly
+                            import math
+                            if buy_vol is None or (isinstance(buy_vol, float) and math.isnan(buy_vol)) or str(buy_vol).lower() == 'nan':
+                                buy_vol = 0
 
                         if isinstance(sell_response, dict) and "result_quote_volume" in sell_response:
                             sell_vol = sell_response["result_quote_volume"]
+                            # Handle NaN values more robustly
+                            import math
+                            if sell_vol is None or (isinstance(sell_vol, float) and math.isnan(sell_vol)) or str(sell_vol).lower() == 'nan':
+                                sell_vol = 0
 
                         st.metric(
-                            "📊 Asks Depth in quote",
-                            f"${float(buy_vol):,.0f}"
+                            "📊 Buy Depth (USDT)",
+                            f"${float(buy_vol):,.0f}" if buy_vol != 0 else "N/A",
+                            help="Volume available when buying (hitting asks)"
                         )
                         st.metric(
-                            "📊 Bids Depth in quote",
-                            f"${float(sell_vol):,.0f}"
+                            "📊 Sell Depth (USDT)",
+                            f"${float(sell_vol):,.0f}" if sell_vol != 0 else "N/A",
+                            help="Volume available when selling (hitting bids)"
                         )
-                    except Exception as e:
+                    except Exception:
                         # Fallback to simple calculation if API fails
                         total_bid_volume = sum(float(bid["amount"] * bid["price"]) for bid in order_book["bids"])
                         total_ask_volume = sum(float(ask["amount"] * ask["price"]) for ask in order_book["asks"])
 
                         st.metric(
-                            "📊 Asks Depth in quote",
-                            f"${total_bid_volume:,.0f}"
+                            "📊 Buy Depth (USDT)",
+                            f"${total_ask_volume:,.0f}",
+                            help="Total ask volume (for buying)"
                         )
                         st.metric(
-                            "📊 Bids Depth in quote",
-                            f"${total_ask_volume:,.0f}"
+                            "📊 Sell Depth (USDT)",
+                            f"${total_bid_volume:,.0f}",
+                            help="Total bid volume (for selling)"
                         )
                 else:
                     st.metric(f"📊 Depth ±{depth_percentage:.1f}%", "No data")
@@ -878,23 +1093,25 @@ with market_data_col:
                 fetch_time = st.session_state["last_fetch_time"]
                 st.caption(f"⚡ Fetch: {fetch_time:.0f}ms")
 
+            # Auto-refresh toggle
+            auto_refresh = st.toggle(
+                "🔄 Auto-refresh",
+                value=st.session_state.auto_refresh_enabled,
+                help=f"Refresh data every {REFRESH_INTERVAL} seconds"
+            )
+            st.session_state.auto_refresh_enabled = auto_refresh
+
             # Refresh button
-            if st.button("🔄 Refresh", use_container_width=True, type="primary"):
+            if st.button("🔄 Refresh Now", use_container_width=True, type="primary"):
+                st.session_state.last_refresh_time = time.time()
                 st.rerun()
     else:
         st.info("Select account and pair to view extended market data")
 
 
-# Chart fragment with auto-refresh
-@st.fragment(run_every=30)  # Auto-refresh every 30 seconds
+# Main trading data display function
 def show_trading_data():
-    """Fragment to display trading data with auto-refresh and chart controls."""
-    # Prevent too frequent API requests (minimum 25 seconds between calls)
-    current_time = time.time()
-    if current_time - st.session_state.last_api_request < 25:
-        return
-
-    st.session_state.last_api_request = current_time
+    """Display trading data with chart controls."""
 
     connector = st.session_state.selected_market.get("connector")
     trading_pair = st.session_state.selected_market.get("trading_pair")
@@ -981,7 +1198,7 @@ def show_trading_data():
         candlestick_fig = create_candlestick_chart(candles, candles_source, trading_pair, interval, trades)
 
     with orderbook_col:
-        st.subheader("📊 Order Book Depth")
+        st.subheader("📊 Order Book")
 
         # Create and display order book chart
         orderbook_fig, price_min, price_max = create_order_book_chart(
@@ -1024,6 +1241,15 @@ def show_trading_data():
                 key="trade_side"
             )
 
+            # Position mode selection
+            position_action = st.selectbox(
+                "Position Mode",
+                ["OPEN", "CLOSE"],
+                index=0,  # Default to OPEN
+                key="trade_position_action",
+                help="OPEN creates new positions, CLOSE reduces existing positions"
+            )
+
             # Amount input
             amount = st.number_input(
                 "Amount",
@@ -1054,14 +1280,33 @@ def show_trading_data():
 
             # Price input for limit orders
             if order_type == "limit":
-                default_price = current_price if current_price > 0 else 0.0
+                # Check if order type changed or if user hasn't set a custom price
+                if (st.session_state.last_order_type != order_type or 
+                    not st.session_state.trade_price_set_by_user or 
+                    st.session_state.trade_custom_price is None):
+                    # Only set default price when switching to limit or no custom price set
+                    if current_price > 0:
+                        st.session_state.trade_custom_price = current_price
+                    else:
+                        st.session_state.trade_custom_price = 0.0
+                    st.session_state.trade_price_set_by_user = False
+                
+                # Update last order type
+                st.session_state.last_order_type = order_type
+                
                 price = st.number_input(
                     "Price",
                     min_value=0.0,
-                    value=default_price,
+                    value=st.session_state.trade_custom_price,
                     format="%.4f",
-                    key="trade_price"
+                    key="trade_price",
+                    on_change=lambda: setattr(st.session_state, 'trade_price_set_by_user', True)
                 )
+                
+                # Update custom price when user changes it
+                if price != st.session_state.trade_custom_price:
+                    st.session_state.trade_custom_price = price
+                    st.session_state.trade_price_set_by_user = True
 
                 # Show updated conversion for limit orders
                 if price > 0 and amount > 0:
@@ -1091,9 +1336,10 @@ def show_trading_data():
                         "account_name": st.session_state.selected_account,
                         "connector_name": st.session_state.selected_connector,
                         "trading_pair": st.session_state.selected_market["trading_pair"],
-                        "order_type": order_type,
-                        "trade_type": side,
-                        "amount": final_amount
+                        "order_type": order_type.upper(),
+                        "trade_type": side.upper(),
+                        "amount": final_amount,
+                        "position_action": position_action
                     }
                     if order_type == "limit" and price:
                         order_data["price"] = price
@@ -1238,7 +1484,17 @@ def render_balances_table():
     )
 
 
-# Trade execution is now integrated with the chart above
+# Auto-refresh logic - only if user is not actively trading
+if st.session_state.auto_refresh_enabled and not st.session_state.trade_price_set_by_user:
+    # Check if it's time to refresh
+    current_time = time.time()
+    time_since_last_refresh = current_time - st.session_state.last_refresh_time
+    
+    if time_since_last_refresh >= REFRESH_INTERVAL:
+        # Update last refresh time and rerun
+        st.session_state.last_refresh_time = current_time
+        time.sleep(0.1)  # Small delay to prevent rapid refreshes
+        st.rerun()
 
-# Call the fragment
+# Display trading data
 show_trading_data()

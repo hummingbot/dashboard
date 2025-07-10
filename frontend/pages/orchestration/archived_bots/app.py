@@ -1,17 +1,17 @@
 import asyncio
+import json
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
+
 import nest_asyncio
-import streamlit as st
+import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-from typing import Dict, List, Any, Optional
-from datetime import datetime
-import json
-
-from frontend.st_utils import initialize_st_page, get_backend_api_client
-from datetime import datetime, timedelta
+import streamlit as st
 from plotly.subplots import make_subplots
-import numpy as np
+
+from frontend.st_utils import get_backend_api_client, initialize_st_page
 
 # Enable nested async
 nest_asyncio.apply()
@@ -60,6 +60,39 @@ backend_client = get_backend_api_client()
 
 # Helper functions
 
+def detect_timestamp_unit(timestamps):
+    """Detect if timestamps are in seconds or milliseconds"""
+    if hasattr(timestamps, 'empty') and timestamps.empty:
+        return 'ms'  # default to milliseconds
+    if not hasattr(timestamps, '__iter__') or len(timestamps) == 0:
+        return 'ms'  # default to milliseconds
+    
+    # Take a sample timestamp
+    sample_ts = timestamps[0] if hasattr(timestamps, '__iter__') else timestamps
+    
+    # If timestamp is greater than 1e10, it's likely milliseconds
+    # (1e10 corresponds to year 2001 in seconds, year 1970 in milliseconds)
+    if sample_ts > 1e10:
+        return 'ms'
+    else:
+        return 's'
+
+def safe_to_datetime(timestamps, default_unit='ms'):
+    """Safely convert timestamps to datetime, auto-detecting unit"""
+    if pd.isna(timestamps).all():
+        return timestamps
+    
+    # Handle series/array
+    if hasattr(timestamps, '__iter__') and not isinstance(timestamps, str):
+        non_null_ts = timestamps.dropna() if hasattr(timestamps, 'dropna') else [t for t in timestamps if pd.notna(t)]
+        if len(non_null_ts) == 0:
+            return pd.to_datetime(timestamps)
+        unit = detect_timestamp_unit(non_null_ts)
+    else:
+        unit = detect_timestamp_unit([timestamps])
+    
+    return pd.to_datetime(timestamps, unit=unit)
+
 def load_databases():
     """Load available databases"""
     try:
@@ -94,14 +127,15 @@ def get_healthy_databases():
     """Get list of databases that are not corrupted"""
     healthy_dbs = []
     for db_path, status in st.session_state.databases_status.items():
-        # Handle different status formats
-        if status.get("status") == "healthy" or status.get("status") == "ok":
+        # Check if 'healthy' field exists at the top level
+        if status.get("healthy") == True:
             healthy_dbs.append(db_path)
-        elif status.get("general_status") == True:
-            # Check if all components are "Correct"
-            components = ["controllers", "executors", "order_status", "orders", "positions", "trade_fill"]
-            all_correct = all(status.get(comp) == "Correct" for comp in components)
-            if all_correct:
+        # Handle different status formats as fallback
+        elif status.get("status") == "healthy" or status.get("status") == "ok":
+            healthy_dbs.append(db_path)
+        elif "status" in status and isinstance(status["status"], dict):
+            # Check if general_status is true in nested status
+            if status["status"].get("general_status") == True:
                 healthy_dbs.append(db_path)
     return healthy_dbs
 
@@ -189,12 +223,13 @@ def get_trade_analysis(db_path: str):
         df = pd.DataFrame(trades_data)
         
         # Extract exchanges and trading pairs
-        exchanges = df["exchange"].unique().tolist() if "exchange" in df.columns else []
+        exchanges = df["connector_name"].unique().tolist() if "connector_name" in df.columns else []
         trading_pairs = df["trading_pair"].unique().tolist() if "trading_pair" in df.columns else []
         
         # Get time range
         if "timestamp" in df.columns:
-            df["timestamp"] = pd.to_datetime(df["timestamp"])
+            # Convert timestamps to datetime with auto-detection
+            df["timestamp"] = safe_to_datetime(df["timestamp"])
             start_time = df["timestamp"].min()
             end_time = df["timestamp"].max()
         else:
@@ -212,7 +247,7 @@ def get_trade_analysis(db_path: str):
         st.error(f"Failed to analyze trades: {str(e)}")
         return {"exchanges": [], "trading_pairs": [], "start_time": None, "end_time": None}
 
-def get_historical_candles(exchange: str, trading_pair: str, start_time: datetime, end_time: datetime, interval: str = "5m"):
+def get_historical_candles(connector_name: str, trading_pair: str, start_time: datetime, end_time: datetime, interval: str = "5m"):
     """Get historical candle data for the specified period"""
     try:
         # Add buffer time for candles
@@ -220,13 +255,13 @@ def get_historical_candles(exchange: str, trading_pair: str, start_time: datetim
         extended_start = start_time - buffer_time
         extended_end = end_time + buffer_time
         
-        # Call backend API to get historical candles
-        candles = backend_client.archived_bots.get_historical_candles(
-            exchange=exchange,
+        # Call backend API to get historical candles using market_data service
+        candles = backend_client.market_data.get_historical_candles(
+            connector_name=connector_name,
             trading_pair=trading_pair,
-            start_time=extended_start.isoformat(),
-            end_time=extended_end.isoformat(),
-            interval=interval
+            interval=interval,
+            start_time=int(extended_start.timestamp()),
+            end_time=int(extended_end.timestamp())
         )
         
         return candles
@@ -236,28 +271,60 @@ def get_historical_candles(exchange: str, trading_pair: str, start_time: datetim
 
 def create_performance_chart(performance_data: Dict[str, Any]):
     """Create performance visualization chart"""
-    if not performance_data or "daily_pnl" not in performance_data:
+    if not performance_data or "performance_data" not in performance_data:
         return None
     
-    daily_pnl = performance_data["daily_pnl"]
-    if not daily_pnl:
+    perf_data = performance_data["performance_data"]
+    if not perf_data:
         return None
     
-    df = pd.DataFrame(daily_pnl)
+    df = pd.DataFrame(perf_data)
+    
+    # Convert timestamp to datetime with auto-detection
+    df["timestamp"] = safe_to_datetime(df["timestamp"])
     
     fig = go.Figure()
     
-    # Add cumulative PnL line
+    # Add net PnL line
     fig.add_trace(go.Scatter(
-        x=df["date"],
-        y=df["cumulative_pnl"],
+        x=df["timestamp"],
+        y=df["net_pnl_quote"],
         mode="lines+markers",
-        name="Cumulative PnL",
-        line=dict(width=2),
+        name="Net PnL",
+        line=dict(width=2, color='#4CAF50'),
         marker=dict(size=4)
     ))
     
-    fig.update_layout(title="Daily PnL Performance", height=400)
+    # Add realized PnL line
+    if "realized_trade_pnl_quote" in df.columns:
+        # Calculate cumulative realized PnL
+        df["cumulative_realized_pnl"] = df["realized_trade_pnl_quote"].cumsum()
+        fig.add_trace(go.Scatter(
+            x=df["timestamp"],
+            y=df["cumulative_realized_pnl"],
+            mode="lines",
+            name="Cumulative Realized PnL",
+            line=dict(width=2, color='#2196F3')
+        ))
+    
+    # Add unrealized PnL line  
+    if "unrealized_trade_pnl_quote" in df.columns:
+        fig.add_trace(go.Scatter(
+            x=df["timestamp"],
+            y=df["unrealized_trade_pnl_quote"],
+            mode="lines",
+            name="Unrealized PnL",
+            line=dict(width=1, color='#FF9800')
+        ))
+    
+    fig.update_layout(
+        title="Trading Performance Over Time",
+        height=400,
+        template='plotly_dark',
+        xaxis_title="Time",
+        yaxis_title="PnL (Quote)",
+        showlegend=True
+    )
     return fig
 
 def create_trades_chart(trades_data: List[Dict[str, Any]]):
@@ -270,7 +337,7 @@ def create_trades_chart(trades_data: List[Dict[str, Any]]):
     fig = go.Figure()
     
     # Group by date and sum volume
-    df["date"] = pd.to_datetime(df["timestamp"]).dt.date
+    df["date"] = safe_to_datetime(df["timestamp"]).dt.date
     daily_volume = df.groupby("date")["amount"].sum().reset_index()
     
     fig.add_trace(go.Bar(
@@ -306,7 +373,7 @@ def add_trades_to_chart(fig, trades_data: List[Dict[str, Any]], row=1, col=1):
         return fig
     
     trades_df = pd.DataFrame(trades_data)
-    trades_df["timestamp"] = pd.to_datetime(trades_df["timestamp"])
+    trades_df["timestamp"] = safe_to_datetime(trades_df["timestamp"])
     
     # Calculate cumulative PnL for each trade
     if "pnl" in trades_df.columns:
@@ -364,7 +431,7 @@ def get_pnl_trace(trades_data: List[Dict[str, Any]]):
         return None
     
     trades_df = pd.DataFrame(trades_data)
-    trades_df["timestamp"] = pd.to_datetime(trades_df["timestamp"])
+    trades_df["timestamp"] = safe_to_datetime(trades_df["timestamp"])
     
     # Calculate cumulative PnL
     if "pnl" in trades_df.columns:
@@ -398,7 +465,7 @@ def create_enhanced_performance_chart(candles_data: List[Dict[str, Any]], trades
     
     # Add candlestick chart
     candles_df = pd.DataFrame(candles_data)
-    candles_df["timestamp"] = pd.to_datetime(candles_df["timestamp"])
+    candles_df["timestamp"] = safe_to_datetime(candles_df["timestamp"])
     
     fig.add_trace(go.Candlestick(
         x=candles_df["timestamp"],
@@ -432,113 +499,60 @@ def create_enhanced_performance_chart(candles_data: List[Dict[str, Any]], trades
 
 # Page header
 st.title("🗃️ Archived Bots")
-st.write("Access and analyze historical bot database files and trading performance")
 
 # Load databases on first run
 if not st.session_state.databases_list:
     with st.spinner("Loading databases..."):
         load_databases()
-        if st.session_state.show_database_status:
-            load_all_databases_status()
+        load_all_databases_status()
 
-# Database status toggle
-st.header("📁 Database Management")
-
+# Database selection
 col1, col2 = st.columns([3, 1])
 
 with col1:
-    show_status = st.toggle(
-        "Show Database Status",
-        value=st.session_state.show_database_status,
-        help="Toggle to view status of all databases"
-    )
-    st.session_state.show_database_status = show_status
-
-with col2:
-    if st.button("🔄 Refresh List", use_container_width=True):
-        with st.spinner("Refreshing..."):
-            load_databases()
-            if st.session_state.show_database_status:
-                load_all_databases_status()
-            st.rerun()
-
-# Show database status if toggle is enabled
-if st.session_state.show_database_status:
-    st.subheader("Database Status")
-    
     if st.session_state.databases_list:
-        # Load status if not already loaded
+        # Load status if not already loaded (needed for filtering)
         if not st.session_state.databases_status:
             with st.spinner("Loading database status..."):
                 load_all_databases_status()
         
-        # Display status table
-        if st.session_state.databases_status:
-            status_data = []
-            for db_path, status in st.session_state.databases_status.items():
-                # Determine overall status
-                overall_status = "unknown"
-                if status.get("status") in ["healthy", "ok"]:
-                    overall_status = status.get("status")
-                elif status.get("general_status") == True:
-                    components = ["controllers", "executors", "order_status", "orders", "positions", "trade_fill"]
-                    all_correct = all(status.get(comp) == "Correct" for comp in components)
-                    overall_status = "healthy" if all_correct else "partial"
-                elif status.get("error"):
-                    overall_status = "error"
-                
-                status_data.append({
-                    "Database": db_path,
-                    "Status": overall_status,
-                    "Size (MB)": status.get("size_mb", "N/A"),
-                    "Last Modified": status.get("last_modified", "N/A"),
-                    "Error": status.get("error", "")
-                })
-            
-            df = pd.DataFrame(status_data)
-            st.dataframe(df, use_container_width=True)
-    else:
-        st.warning("No databases found. Please check your archived bots directory.")
-
-# Database selection
-st.subheader("Select Database")
-
-if st.session_state.databases_list:
-    # Load status if not already loaded (needed for filtering)
-    if not st.session_state.databases_status:
-        with st.spinner("Loading database status..."):
-            load_all_databases_status()
-    
-    # Get healthy databases for selection
-    healthy_databases = get_healthy_databases()
-    
-    if healthy_databases:
-        selected_db = st.selectbox(
-            "Select Database (Healthy only)",
-            options=healthy_databases,
-            key="db_selector",
-            help="Choose a healthy database to analyze"
-        )
+        # Get healthy databases for selection
+        healthy_databases = get_healthy_databases()
         
-        if selected_db and selected_db != st.session_state.selected_database:
-            st.session_state.selected_database = selected_db
-            # Reset data when database changes
-            st.session_state.db_summary = {}
-            st.session_state.db_performance = {}
-            st.session_state.trades_data = []
-            st.session_state.orders_data = []
-            st.session_state.positions_data = []
-            st.session_state.executors_data = []
-            st.session_state.controllers_data = []
-            st.session_state.page_offset = 0
-            st.session_state.trade_analysis = {}
-            st.session_state.historical_candles = []
-            st.rerun()
+        if healthy_databases:
+            selected_db = st.selectbox(
+                "Select Database",
+                options=healthy_databases,
+                key="db_selector",
+                help="Choose a database to analyze",
+                label_visibility="collapsed"
+            )
+            
+            if selected_db and selected_db != st.session_state.selected_database:
+                st.session_state.selected_database = selected_db
+                # Reset data when database changes
+                st.session_state.db_summary = {}
+                st.session_state.db_performance = {}
+                st.session_state.trades_data = []
+                st.session_state.orders_data = []
+                st.session_state.positions_data = []
+                st.session_state.executors_data = []
+                st.session_state.controllers_data = []
+                st.session_state.page_offset = 0
+                st.session_state.trade_analysis = {}
+                st.session_state.historical_candles = []
+                st.rerun()
+        else:
+            st.warning("No healthy databases found.")
     else:
-        st.warning("No healthy databases found. Please check the database status above.")
+        st.warning("No databases found.")
 
-else:
-    st.warning("No databases found. Please check your archived bots directory.")
+with col2:
+    if st.button("🔄 Refresh", use_container_width=True):
+        with st.spinner("Refreshing..."):
+            load_databases()
+            load_all_databases_status()
+            st.rerun()
 
 # Main content - only show if database is selected
 if st.session_state.selected_database:
@@ -549,56 +563,53 @@ if st.session_state.selected_database:
         with st.spinner("Loading database summary..."):
             load_database_summary(db_path)
     
-    # Database status section
-    st.header("📊 Database Overview")
+    # Quick overview and actions in one line
+    col1, col2, col3 = st.columns([2, 2, 1])
     
-    if st.session_state.db_summary:
-        summary = st.session_state.db_summary
-        
-        # Metrics row
-        col1, col2, col3, col4 = st.columns(4)
-        
-        with col1:
-            st.metric(
-                "Total Trades",
-                value=summary.get("total_trades", 0)
-            )
-        
-        with col2:
-            st.metric(
-                "Total Orders", 
-                value=summary.get("total_orders", 0)
-            )
-        
-        with col3:
-            st.metric(
-                "Active Positions",
-                value=summary.get("active_positions", 0)
-            )
-        
-        with col4:
-            st.metric(
-                "Controllers",
-                value=summary.get("total_controllers", 0)
-            )
-        
-        # Database info
-        if "database_info" in summary:
-            db_info = summary["database_info"]
-            
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                st.metric(
-                    "Database Size",
-                    f"{db_info.get('size_mb', 0):.2f} MB"
-                )
-            
-            with col2:
-                st.metric(
-                    "Last Modified",
-                    db_info.get("last_modified", "Unknown")
-                )
+    with col1:
+        if st.session_state.db_summary:
+            summary = st.session_state.db_summary
+            st.metric("Trades", summary.get("total_trades", 0))
+    
+    with col2:
+        if st.session_state.db_summary:
+            summary = st.session_state.db_summary
+            st.metric("Orders", summary.get("total_orders", 0))
+    
+    with col3:
+        if st.button("🔄 Load All Data", use_container_width=True, type="primary"):
+            with st.spinner("Loading all data..."):
+                try:
+                    # Load performance data
+                    if not st.session_state.db_performance:
+                        load_database_performance(db_path)
+                    
+                    # Load trades data
+                    load_trades_data(db_path, st.session_state.page_limit, st.session_state.page_offset)
+                    
+                    # Load orders data  
+                    load_orders_data(db_path, st.session_state.page_limit, st.session_state.page_offset, None)
+                    
+                    # Load positions data
+                    load_positions_data(db_path, st.session_state.page_limit, st.session_state.page_offset)
+                    
+                    # Load executors data
+                    load_executors_data(db_path)
+                    
+                    # Load controllers data
+                    load_controllers_data(db_path)
+                    
+                    # Load trade analysis for enhanced charts
+                    if not st.session_state.trade_analysis:
+                        st.session_state.trade_analysis = get_trade_analysis(db_path)
+                    
+                    st.success("✅ All data loaded!")
+                    st.rerun()
+                    
+                except Exception as e:
+                    st.error(f"❌ Failed to load data: {str(e)}")
+    
+    st.divider()
     
     # Tabs for different data views
     tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
@@ -620,112 +631,146 @@ if st.session_state.selected_database:
         
         if st.session_state.db_performance:
             performance = st.session_state.db_performance
+            summary = performance.get("summary", {})
             
             # Performance metrics
             col1, col2, col3, col4 = st.columns(4)
             
             with col1:
+                net_pnl = summary.get('final_net_pnl_quote', 0)
+                realized_pnl = summary.get('final_realized_pnl_quote', 0)
                 st.metric(
-                    "Total PnL",
-                    value=f"${performance.get('total_pnl', 0):,.2f}",
-                    delta=f"{performance.get('pnl_change_pct', 0):.1f}%"
+                    "Net PnL",
+                    value=f"${net_pnl:,.6f}",
+                    delta=f"Realized: ${realized_pnl:,.6f}"
                 )
             
             with col2:
                 st.metric(
-                    "Win Rate",
-                    value=f"{performance.get('win_rate', 0):.1f}%"
+                    "Total Trades",
+                    value=summary.get('total_trades', 0)
                 )
             
             with col3:
+                fees = summary.get('total_fees_quote', 0)
                 st.metric(
-                    "Max Drawdown",
-                    value=f"${performance.get('max_drawdown', 0):,.2f}"
+                    "Total Fees",
+                    value=f"${fees:,.4f}"
                 )
             
             with col4:
+                position = summary.get('final_net_position', 0)
+                trading_pairs = ', '.join(summary.get('trading_pairs', []))
                 st.metric(
-                    "Sharpe Ratio",
-                    value=f"{performance.get('sharpe_ratio', 0):.2f}"
+                    "Net Position",
+                    value=f"{position:,.2f}",
+                    delta=trading_pairs
                 )
             
             # Enhanced performance analysis
             st.subheader("Enhanced Trading Analysis")
             
-            # Load trade analysis if not already loaded
-            if not st.session_state.trade_analysis:
-                with st.spinner("Analyzing trades..."):
-                    st.session_state.trade_analysis = get_trade_analysis(db_path)
-            
-            analysis = st.session_state.trade_analysis
-            
-            if analysis.get("exchanges") and analysis.get("trading_pairs"):
-                # Show exchange and trading pair info
-                col1, col2 = st.columns(2)
-                
+            # Check if we have trades data loaded first
+            if not st.session_state.trades_data or not st.session_state.trades_data.get("trades"):
+                col1, col2 = st.columns([3, 1])
                 with col1:
-                    st.info(f"**Exchanges:** {', '.join(analysis['exchanges'])}")
-                
+                    st.info("💡 Load trades data first to enable enhanced trading analysis")
                 with col2:
-                    st.info(f"**Trading Pairs:** {', '.join(analysis['trading_pairs'])}")
-                
-                # Select exchange and trading pair for candle analysis
-                if len(analysis["exchanges"]) > 1:
-                    selected_exchange = st.selectbox(
-                        "Select Exchange for Candle Analysis",
-                        options=analysis["exchanges"]
-                    )
-                else:
-                    selected_exchange = analysis["exchanges"][0]
-                
-                if len(analysis["trading_pairs"]) > 1:
-                    selected_pair = st.selectbox(
-                        "Select Trading Pair for Candle Analysis",
-                        options=analysis["trading_pairs"]
-                    )
-                else:
-                    selected_pair = analysis["trading_pairs"][0]
-                
-                # Candle interval selection
-                candle_interval = st.selectbox(
-                    "Candle Interval",
-                    options=["1m", "5m", "15m", "1h"],
-                    index=1,  # Default to 5m
-                    help="Select the candle interval for analysis"
-                )
-                
-                # Button to load enhanced chart
-                if st.button("🔄 Load Enhanced Chart with Candles", use_container_width=True):
-                    if analysis.get("start_time") and analysis.get("end_time"):
-                        with st.spinner("Loading historical candles..."):
-                            candles = get_historical_candles(
-                                selected_exchange,
-                                selected_pair,
-                                analysis["start_time"],
-                                analysis["end_time"],
-                                candle_interval
-                            )
-                            st.session_state.historical_candles = candles
-                
-                # Display enhanced chart if candles are available
-                if st.session_state.historical_candles:
-                    trades_data = analysis.get("trades_df", pd.DataFrame())
-                    trades_list = trades_data.to_dict("records") if not trades_data.empty else []
-                    
-                    enhanced_chart = create_enhanced_performance_chart(
-                        st.session_state.historical_candles,
-                        trades_list,
-                        selected_pair
-                    )
-                    
-                    if enhanced_chart:
-                        st.plotly_chart(enhanced_chart, use_container_width=True)
-                    else:
-                        st.warning("Unable to create enhanced chart. Check candle data format.")
-                else:
-                    st.info("Click 'Load Enhanced Chart' to view candles with trades overlay.")
+                    if st.button("🔄 Load Trades for Analysis", use_container_width=True):
+                        with st.spinner("Loading trades data..."):
+                            load_trades_data(db_path, 10000, 0)  # Load more trades for analysis
+                            st.rerun()
             else:
-                st.warning("No trade data available for enhanced analysis.")
+                # Load trade analysis if not already loaded
+                if not st.session_state.trade_analysis:
+                    with st.spinner("Analyzing trades..."):
+                        st.session_state.trade_analysis = get_trade_analysis(db_path)
+                
+                analysis = st.session_state.trade_analysis
+                
+                # Debug info
+                if analysis:
+                    total_trades = len(analysis.get("trades_df", pd.DataFrame()))
+                    st.info(f"📊 Analysis based on {total_trades} trades")
+                
+                if analysis.get("exchanges") and analysis.get("trading_pairs"):
+                    # Show exchange and trading pair info
+                    col1, col2 = st.columns(2)
+                    
+                    with col1:
+                        st.info(f"**Exchanges:** {', '.join(analysis['exchanges'])}")
+                    
+                    with col2:
+                        st.info(f"**Trading Pairs:** {', '.join(analysis['trading_pairs'])}")
+                    
+                    # Select exchange and trading pair for candle analysis
+                    if len(analysis["exchanges"]) > 1:
+                        selected_exchange = st.selectbox(
+                            "Select Exchange for Candle Analysis",
+                            options=analysis["exchanges"]
+                        )
+                    else:
+                        selected_exchange = analysis["exchanges"][0]
+                    
+                    if len(analysis["trading_pairs"]) > 1:
+                        selected_pair = st.selectbox(
+                            "Select Trading Pair for Candle Analysis",
+                            options=analysis["trading_pairs"]
+                        )
+                    else:
+                        selected_pair = analysis["trading_pairs"][0]
+                    
+                    # Candle interval selection
+                    candle_interval = st.selectbox(
+                        "Candle Interval",
+                        options=["1m", "5m", "15m", "1h"],
+                        index=1,  # Default to 5m
+                        help="Select the candle interval for analysis"
+                    )
+                    
+                    # Button to load enhanced chart
+                    if st.button("🔄 Load Enhanced Chart with Candles", use_container_width=True):
+                        if analysis.get("start_time") and analysis.get("end_time"):
+                            with st.spinner("Loading historical candles..."):
+                                candles = get_historical_candles(
+                                    selected_exchange,
+                                    selected_pair,
+                                    analysis["start_time"],
+                                    analysis["end_time"],
+                                    candle_interval
+                                )
+                                st.session_state.historical_candles = candles
+                    
+                    # Display enhanced chart if candles are available
+                    if st.session_state.historical_candles:
+                        trades_data = analysis.get("trades_df", pd.DataFrame())
+                        trades_list = trades_data.to_dict("records") if not trades_data.empty else []
+                        
+                        enhanced_chart = create_enhanced_performance_chart(
+                            st.session_state.historical_candles,
+                            trades_list,
+                            selected_pair
+                        )
+                        
+                        if enhanced_chart:
+                            st.plotly_chart(enhanced_chart, use_container_width=True)
+                        else:
+                            st.warning("Unable to create enhanced chart. Check candle data format.")
+                    else:
+                        st.info("Click 'Load Enhanced Chart' to view candles with trades overlay.")
+                else:
+                    # Better error messaging with analysis details
+                    st.warning("⚠️ No trading data found for enhanced analysis.")
+                    if analysis:
+                        if not analysis.get("exchanges"):
+                            st.warning("🔍 No exchange data found in trades")
+                        if not analysis.get("trading_pairs"):
+                            st.warning("🔍 No trading pair data found in trades")
+                    
+                    # Option to retry analysis
+                    if st.button("🔄 Retry Trade Analysis", use_container_width=True):
+                        st.session_state.trade_analysis = {}
+                        st.rerun()
             
             # Original performance chart
             st.subheader("Daily PnL Performance")
@@ -874,12 +919,16 @@ if st.session_state.selected_database:
 else:
     st.info("Please select a database to begin analysis.")
 
-# Auto-refresh fragment for database list
+# Auto-refresh fragment for database list  
 @st.fragment(run_every=30)
 def auto_refresh_databases():
     """Auto-refresh database list every 30 seconds"""
-    if st.session_state.get("auto_refresh_enabled", False):
-        load_databases()
+    try:
+        if st.session_state.get("auto_refresh_enabled", False):
+            load_databases()
+    except Exception:
+        # Gracefully handle fragment lifecycle issues
+        pass
 
 # Auto-refresh toggle
 st.sidebar.markdown("### ⚙️ Settings")
