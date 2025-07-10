@@ -318,8 +318,7 @@ def render_bot_card(bot_name):
 
 
 # Page Header
-st.title("🏠 Hummingbot Instances")
-st.subheader("Monitor and manage your active trading bot instances")
+st.title("🦅 Hummingbot Instances")
 
 # Auto-refresh controls
 col1, col2, col3 = st.columns([3, 1, 1])
