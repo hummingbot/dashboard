@@ -424,7 +424,7 @@ def get_historical_candles(connector_name: str, trading_pair: str, start_time: d
     """Get historical candle data for the specified period"""
     try:
         # Add buffer time for candles
-        buffer_time = timedelta(hours=2)  # 2 hours buffer for 20 candles at 5min = 100 minutes
+        buffer_time = timedelta(hours=1)  # 2 hours buffer for 20 candles at 5min = 100 minutes
         extended_start = start_time - buffer_time
         extended_end = end_time + buffer_time
         
@@ -624,17 +624,15 @@ def create_comprehensive_dashboard(candles_data: List[Dict[str, Any]], trades_da
     
     # Create subplots with shared x-axis
     fig = make_subplots(
-        rows=3, cols=1,
+        rows=2, cols=1,
         shared_xaxes=True,
-        vertical_spacing=0.02,
+        vertical_spacing=0.05,
         subplot_titles=(
             f'{trading_pair} Price & Trades',
-            'Net PnL & Unrealized PnL vs Position',
-            'Cumulative Fees & Volume'
+            'PnL & Fees vs Position'
         ),
-        row_heights=[0.5, 0.35, 0.15],
+        row_heights=[0.75, 0.25],
         specs=[[{"secondary_y": False}],
-               [{"secondary_y": True}],
                [{"secondary_y": True}]]
     )
     
@@ -643,6 +641,7 @@ def create_comprehensive_dashboard(candles_data: List[Dict[str, Any]], trades_da
     candles_df["timestamp"] = safe_to_datetime(candles_df["timestamp"])
     
     perf_data = performance_data.get("performance_data", [])
+    perf_df = None
     if perf_data:
         perf_df = pd.DataFrame(perf_data)
         perf_df["timestamp"] = safe_to_datetime(perf_df["timestamp"])
@@ -688,7 +687,7 @@ def create_comprehensive_dashboard(candles_data: List[Dict[str, Any]], trades_da
             ), row=1, col=1)
     
     # Add dynamic average price lines from performance data
-    if perf_data:
+    if perf_data and perf_df is not None:
         # Filter performance data to only include rows with valid average prices
         buy_avg_data = perf_df[perf_df["buy_avg_price"] > 0].copy()
         sell_avg_data = perf_df[perf_df["sell_avg_price"] > 0].copy()
@@ -741,8 +740,8 @@ def create_comprehensive_dashboard(candles_data: List[Dict[str, Any]], trades_da
                 row=1, col=1
             )
     
-    if perf_data:
-        # Row 2: Net PnL and Unrealized PnL (left y-axis) + Position (right y-axis)
+    if perf_data and perf_df is not None:
+        # Row 2: Net PnL, Unrealized PnL, and Fees (left y-axis) + Position (right y-axis)
         fig.add_trace(go.Scatter(
             x=perf_df["timestamp"],
             y=perf_df["net_pnl_quote"],
@@ -763,37 +762,25 @@ def create_comprehensive_dashboard(candles_data: List[Dict[str, Any]], trades_da
         
         fig.add_trace(go.Scatter(
             x=perf_df["timestamp"],
+            y=perf_df["fees_quote"].cumsum(),
+            mode="lines",
+            name="Cumulative Fees",
+            line=dict(color='#F44336', width=2),
+            showlegend=True
+        ), row=2, col=1, secondary_y=False)
+        
+        fig.add_trace(go.Scatter(
+            x=perf_df["timestamp"],
             y=perf_df["net_position"],
             mode="lines",
             name="Net Position",
             line=dict(color='#2196F3', width=2),
             showlegend=True
         ), row=2, col=1, secondary_y=True)
-        
-        # Row 3: Fees and Volume
-        fig.add_trace(go.Scatter(
-            x=perf_df["timestamp"],
-            y=perf_df["fees_quote"].cumsum(),
-            mode="lines",
-            name="Cumulative Fees",
-            line=dict(color='#F44336', width=2),
-            showlegend=True
-        ), row=3, col=1, secondary_y=False)
-        
-        # Add cumulative volume if available
-        if "cum_volume_quote" in perf_df.columns:
-            fig.add_trace(go.Scatter(
-                x=perf_df["timestamp"],
-                y=perf_df["cum_volume_quote"],
-                mode="lines",
-                name="Cumulative Volume",
-                line=dict(color='#9C27B0', width=2),
-                showlegend=True
-            ), row=3, col=1, secondary_y=True)
     
     # Update layout
     fig.update_layout(
-        height=900,
+        height=700,
         template='plotly_dark',
         plot_bgcolor='rgba(0, 0, 0, 0)',
         paper_bgcolor='rgba(0, 0, 0, 0.1)',
@@ -812,10 +799,8 @@ def create_comprehensive_dashboard(candles_data: List[Dict[str, Any]], trades_da
     # Update axis properties
     fig.update_xaxes(rangeslider_visible=False)
     fig.update_yaxes(title_text="Price ($)", row=1, col=1)
-    fig.update_yaxes(title_text="PnL ($)", row=2, col=1, secondary_y=False)
+    fig.update_yaxes(title_text="PnL & Fees ($)", row=2, col=1, secondary_y=False)
     fig.update_yaxes(title_text="Position", row=2, col=1, secondary_y=True)
-    fig.update_yaxes(title_text="Fees ($)", row=3, col=1, secondary_y=False)
-    fig.update_yaxes(title_text="Volume ($)", row=3, col=1, secondary_y=True)
     
     return fig
 
@@ -829,46 +814,83 @@ if not st.session_state.databases_list:
         load_all_databases_status()
         load_bot_runs()
 
-# Database selection
-col1, col2 = st.columns([3, 1])
+# Bot Runs Overview Section
+st.subheader("📊 Bot Runs Overview")
+
+# Get healthy databases for scatterplot
+if st.session_state.databases_list:
+    # Load status if not already loaded (needed for filtering)
+    if not st.session_state.databases_status:
+        with st.spinner("Loading database status..."):
+            load_all_databases_status()
+    
+    healthy_databases = get_healthy_databases()
+else:
+    healthy_databases = []
+
+# Create and display scatterplot
+if st.session_state.bot_runs:
+    scatterplot_result = create_bot_runs_scatterplot(st.session_state.bot_runs, healthy_databases)
+    if scatterplot_result:
+        fig, runs_df = scatterplot_result
+        st.plotly_chart(fig, use_container_width=True)
+        
+        # Summary statistics
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            total_runs = len(runs_df)
+            st.metric("Total Runs", total_runs)
+        
+        with col2:
+            profitable_runs = len(runs_df[runs_df["global_pnl"] > 0])
+            profit_rate = (profitable_runs / total_runs * 100) if total_runs > 0 else 0
+            st.metric("Profitable Runs", f"{profitable_runs} ({profit_rate:.1f}%)")
+        
+        with col3:
+            total_pnl = runs_df["global_pnl"].sum()
+            st.metric("Total PnL", f"${total_pnl:,.2f}")
+        
+        with col4:
+            total_volume = runs_df["volume_traded"].sum()
+            st.metric("Total Volume", f"${total_volume:,.0f}")
+    else:
+        st.warning("No bot runs data available for visualization.")
+else:
+    st.info("Loading bot runs data...")
+
+st.divider()
+
+# Database Analysis Section
+st.subheader("🔍 Database Analysis")
+
+# Database selection and controls in one row
+col1, col2, col3 = st.columns([2, 1, 1])
 
 with col1:
-    if st.session_state.databases_list:
-        # Load status if not already loaded (needed for filtering)
-        if not st.session_state.databases_status:
-            with st.spinner("Loading database status..."):
-                load_all_databases_status()
+    if healthy_databases:
+        selected_db = st.selectbox(
+            "Select Database",
+            options=healthy_databases,
+            key="db_selector",
+            help="Choose a database to analyze in detail"
+        )
         
-        # Get healthy databases for selection
-        healthy_databases = get_healthy_databases()
-        
-        if healthy_databases:
-            selected_db = st.selectbox(
-                "Select Database",
-                options=healthy_databases,
-                key="db_selector",
-                help="Choose a database to analyze",
-                label_visibility="collapsed"
-            )
-            
-            if selected_db and selected_db != st.session_state.selected_database:
-                st.session_state.selected_database = selected_db
-                # Reset data when database changes
-                st.session_state.db_summary = {}
-                st.session_state.db_performance = {}
-                st.session_state.trades_data = []
-                st.session_state.orders_data = []
-                st.session_state.positions_data = []
-                st.session_state.executors_data = []
-                st.session_state.controllers_data = []
-                st.session_state.page_offset = 0
-                st.session_state.trade_analysis = {}
-                st.session_state.historical_candles = []
-                st.rerun()
-        else:
-            st.warning("No healthy databases found.")
+        if selected_db and selected_db != st.session_state.selected_database:
+            st.session_state.selected_database = selected_db
+            # Reset data when database changes
+            st.session_state.db_summary = {}
+            st.session_state.db_performance = {}
+            st.session_state.trades_data = []
+            st.session_state.orders_data = []
+            st.session_state.positions_data = []
+            st.session_state.executors_data = []
+            st.session_state.controllers_data = []
+            st.session_state.page_offset = 0
+            st.session_state.trade_analysis = {}
+            st.session_state.historical_candles = []
+            st.rerun()
     else:
-        st.warning("No databases found.")
+        st.warning("No healthy databases found.")
 
 with col2:
     if st.button("🔄 Refresh", use_container_width=True):
@@ -877,6 +899,9 @@ with col2:
             load_all_databases_status()
             load_bot_runs()
             st.rerun()
+
+with col3:
+    load_dashboard_btn = st.button("📊 Load Dashboard", use_container_width=True, type="primary", disabled=not st.session_state.selected_database)
 
 # Main content - only show if database is selected
 if st.session_state.selected_database:
@@ -890,84 +915,29 @@ if st.session_state.selected_database:
     # Find matching bot run
     matching_bot_run = find_matching_bot_run(db_path, st.session_state.bot_runs)
     
-    # Single Load button and summary metrics
-    col1, col2 = st.columns([3, 1])
+    # Compact summary in one row
+    if st.session_state.db_summary and matching_bot_run:
+        summary = st.session_state.db_summary
+        bot_name = matching_bot_run.get('bot_name', 'N/A')
+        strategy = matching_bot_run.get('strategy_name', 'N/A')
+        deployed_date = pd.to_datetime(matching_bot_run.get('deployed_at', '')).strftime('%m/%d %H:%M') if matching_bot_run.get('deployed_at') else 'N/A'
+        
+        st.info(f"🤖 **{bot_name}** | {strategy} | Deployed: {deployed_date} | {summary.get('total_trades', 0)} trades on {summary.get('exchanges', ['N/A'])[0]} {summary.get('trading_pairs', ['N/A'])[0]}")
     
-    with col1:
-        if st.session_state.db_summary:
-            summary = st.session_state.db_summary
-            subcol1, subcol2, subcol3, subcol4 = st.columns(4)
-            with subcol1:
-                st.metric("Trades", summary.get("total_trades", 0))
-            with subcol2:
-                st.metric("Orders", summary.get("total_orders", 0))
-            with subcol3:
-                st.metric("Exchange", summary.get("exchanges", ["N/A"])[0])
-            with subcol4:
-                st.metric("Pair", summary.get("trading_pairs", ["N/A"])[0])
-    
-    # Bot run information section
-    if matching_bot_run:
-        st.divider()
-        st.subheader("🤖 Bot Run Information")
-        
-        # Parse deployment config and final status
-        import json
-        deployment_config = json.loads(matching_bot_run.get("deployment_config", "{}"))
-        final_status = json.loads(matching_bot_run.get("final_status", "{}"))
-        
-        # Bot run details
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            st.metric("Bot Name", matching_bot_run.get("bot_name", "N/A"))
-            st.metric("Strategy", matching_bot_run.get("strategy_name", "N/A"))
-            st.metric("Account", matching_bot_run.get("account_name", "N/A"))
-        
-        with col2:
-            deployed_at = matching_bot_run.get("deployed_at", "")
-            if deployed_at:
-                deployed_date = pd.to_datetime(deployed_at).strftime("%Y-%m-%d %H:%M")
-                st.metric("Deployed", deployed_date)
-            
-            stopped_at = matching_bot_run.get("stopped_at", "")
-            if stopped_at:
-                stopped_date = pd.to_datetime(stopped_at).strftime("%Y-%m-%d %H:%M")
-                st.metric("Stopped", stopped_date)
-            
-            st.metric("Status", f"{matching_bot_run.get('run_status', 'N/A')} / {matching_bot_run.get('deployment_status', 'N/A')}")
-        
-        with col3:
-            # Extract controllers from deployment config
-            controllers = deployment_config.get("controllers_config", [])
-            if controllers:
-                st.metric("Controllers", ", ".join(controllers))
-            
-            # Extract final performance if available
-            performance = final_status.get("performance", {})
-            if performance:
-                for controller_name, controller_perf in performance.items():
-                    if isinstance(controller_perf, dict) and "performance" in controller_perf:
-                        perf_data = controller_perf["performance"]
-                        global_pnl = perf_data.get("global_pnl_quote", 0)
-                        st.metric(f"{controller_name} PnL", f"${global_pnl:.4f}")
-                        break
-    
-    # Load Dashboard button
-    col1, col2 = st.columns([3, 1])
-    with col2:
-        if st.button("🔄 Load Dashboard", use_container_width=True, type="primary"):
-            with st.spinner("Loading comprehensive dashboard..."):
-                try:
-                    # Load all necessary data
-                    load_database_performance(db_path)
-                    load_trades_data(db_path, 10000, 0)  # Load more trades for analysis
-                    st.session_state.trade_analysis = get_trade_analysis(db_path)
-                    
-                    st.success("✅ Dashboard loaded!")
-                    st.rerun()
-                    
-                except Exception as e:
-                    st.error(f"❌ Failed to load dashboard: {str(e)}")
+    # Handle Load Dashboard button click
+    if load_dashboard_btn:
+        with st.spinner("Loading comprehensive dashboard..."):
+            try:
+                # Load all necessary data
+                load_database_performance(db_path)
+                load_trades_data(db_path, 10000, 0)  # Load more trades for analysis
+                st.session_state.trade_analysis = get_trade_analysis(db_path)
+                
+                st.success("✅ Dashboard loaded!")
+                st.rerun()
+                
+            except Exception as e:
+                st.error(f"❌ Failed to load dashboard: {str(e)}")
     
     st.divider()
     
