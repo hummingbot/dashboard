@@ -1,4 +1,5 @@
 import time
+
 import pandas as pd
 import streamlit as st
 
@@ -98,44 +99,7 @@ def render_bot_card(bot_name):
                     st.warning(f"Could not fetch controller configs for {bot_name}: {e}")
                     controller_configs = []
         
-        # Determine border color and dark futuristic background based on bot status
-        if bot_status.get("status") == "error":
-            border_color = "#ff6b6b"  # Red for error
-            bg_gradient = "linear-gradient(135deg, #1a0f0f 0%, #211414 100%)"
-        elif bot_status.get("status") == "success":
-            bot_data = bot_status.get("data", {})
-            is_running = bot_data.get("status") == "running"
-            if is_running:
-                border_color = "#4caf50"  # Green for running
-                bg_gradient = "linear-gradient(135deg, #0f1a0f 0%, #141f14 100%)"
-            else:
-                border_color = "#ffc107"  # Yellow for stopped
-                bg_gradient = "linear-gradient(135deg, #1a1a0f 0%, #1f1f14 100%)"
-        else:
-            border_color = "#64748b"  # Gray for unknown
-            bg_gradient = "linear-gradient(135deg, #0f1419 0%, #1a1d23 100%)"
-        
         with st.container(border=True):
-            st.markdown(f"""
-            <div style="
-                background: {bg_gradient};
-                padding: 16px 20px;
-                border-radius: 15px;
-                margin-bottom: 20px;
-                border: 1px solid rgba(100, 255, 218, 0.15);
-                position: relative;
-            ">
-            <div style="
-                position: absolute;
-                top: 0;
-                left: 0;
-                width: 4px;
-                height: 100%;
-                background: {border_color};
-                border-radius: 2px;
-            "></div>
-            </div>
-            """, unsafe_allow_html=True)
             
             if bot_status.get("status") == "error":
                 # Error state
@@ -249,39 +213,7 @@ def render_bot_card(bot_name):
                     
                     # Active Controllers
                     if active_controllers:
-                        st.markdown("""
-                        <div style="
-                            background: linear-gradient(135deg, #0f1a0f 0%, #141f14 100%);
-                            padding: 12px 16px;
-                            border-radius: 10px;
-                            margin: 20px 0 15px 0;
-                            border: 1px solid rgba(76, 175, 80, 0.2);
-                            position: relative;
-                        ">
-                        <div style="
-                            position: absolute;
-                            top: 0;
-                            left: 0;
-                            width: 4px;
-                            height: 100%;
-                            background: linear-gradient(180deg, #4caf50 0%, #2e7d32 100%);
-                            border-radius: 2px;
-                        "></div>
-                        <div style="display: flex; align-items: baseline; gap: 12px;">
-                            <h5 style="
-                                margin: 0; 
-                                color: #4caf50;
-                                font-weight: 600;
-                                font-size: 1.1rem;
-                            ">🚀 Active Controllers:</h5>
-                            <span style="
-                                color: #64748b;
-                                font-size: 0.85rem;
-                                font-weight: 400;
-                            ">Controllers currently running and trading</span>
-                        </div>
-                        </div>
-                        """, unsafe_allow_html=True)
+                        st.success("🚀 **Active Controllers:** Controllers currently running and trading")
                         active_df = pd.DataFrame(active_controllers)
                         
                         edited_active_df = st.data_editor(
@@ -316,39 +248,7 @@ def render_bot_card(bot_name):
                     
                     # Stopped Controllers
                     if stopped_controllers:
-                        st.markdown("""
-                        <div style="
-                            background: linear-gradient(135deg, #1a1a0f 0%, #1f1f14 100%);
-                            padding: 12px 16px;
-                            border-radius: 10px;
-                            margin: 20px 0 15px 0;
-                            border: 1px solid rgba(255, 193, 7, 0.2);
-                            position: relative;
-                        ">
-                        <div style="
-                            position: absolute;
-                            top: 0;
-                            left: 0;
-                            width: 4px;
-                            height: 100%;
-                            background: linear-gradient(180deg, #ffc107 0%, #ff8f00 100%);
-                            border-radius: 2px;
-                        "></div>
-                        <div style="display: flex; align-items: baseline; gap: 12px;">
-                            <h5 style="
-                                margin: 0; 
-                                color: #ffc107;
-                                font-weight: 600;
-                                font-size: 1.1rem;
-                            ">💤 Stopped Controllers:</h5>
-                            <span style="
-                                color: #64748b;
-                                font-size: 0.85rem;
-                                font-weight: 400;
-                            ">Controllers that are paused or stopped</span>
-                        </div>
-                        </div>
-                        """, unsafe_allow_html=True)
+                        st.warning("💤 **Stopped Controllers:** Controllers that are paused or stopped")
                         stopped_df = pd.DataFrame(stopped_controllers)
                         
                         edited_stopped_df = st.data_editor(
@@ -383,39 +283,7 @@ def render_bot_card(bot_name):
                     
                     # Error Controllers
                     if error_controllers:
-                        st.markdown("""
-                        <div style="
-                            background: linear-gradient(135deg, #1a0f0f 0%, #211414 100%);
-                            padding: 12px 16px;
-                            border-radius: 10px;
-                            margin: 20px 0 15px 0;
-                            border: 1px solid rgba(255, 107, 107, 0.2);
-                            position: relative;
-                        ">
-                        <div style="
-                            position: absolute;
-                            top: 0;
-                            left: 0;
-                            width: 4px;
-                            height: 100%;
-                            background: linear-gradient(180deg, #ff6b6b 0%, #ee5a24 100%);
-                            border-radius: 2px;
-                        "></div>
-                        <div style="display: flex; align-items: baseline; gap: 12px;">
-                            <h5 style="
-                                margin: 0; 
-                                color: #ff6b6b;
-                                font-weight: 600;
-                                font-size: 1.1rem;
-                            ">💀 Controllers with Errors:</h5>
-                            <span style="
-                                color: #64748b;
-                                font-size: 0.85rem;
-                                font-weight: 400;
-                            ">Controllers that encountered errors</span>
-                        </div>
-                        </div>
-                        """, unsafe_allow_html=True)
+                        st.error("💀 **Controllers with Errors:** Controllers that encountered errors")
                         error_df = pd.DataFrame(error_controllers)
                         st.dataframe(error_df, use_container_width=True, hide_index=True)
                     
@@ -446,47 +314,9 @@ def render_bot_card(bot_name):
             st.error(f"An error occurred while fetching bot status: {str(e)}")
 
 
-# Page Header with dark futuristic styling
-st.markdown("""
-<div style="
-    background: linear-gradient(135deg, #0f1419 0%, #1a1d23 50%, #2d3748 100%);
-    padding: 40px;
-    border-radius: 20px;
-    margin-bottom: 30px;
-    text-align: center;
-    color: #e2e8f0;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-    border: 1px solid rgba(100, 255, 218, 0.1);
-    position: relative;
-    overflow: hidden;
-">
-<div style="
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 2px;
-    background: linear-gradient(90deg, #64ffda 0%, #00bcd4 50%, #64ffda 100%);
-"></div>
-<h1 style="
-    margin: 0; 
-    font-size: 3rem; 
-    font-weight: 800;
-    background: linear-gradient(135deg, #64ffda 0%, #00bcd4 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    text-shadow: 0 0 30px rgba(100, 255, 218, 0.5);
-">🏠 Hummingbot Instances</h1>
-<p style="
-    margin: 15px 0 0 0; 
-    font-size: 1.3rem; 
-    opacity: 0.8;
-    color: #94a3b8;
-    font-weight: 300;
-">Monitor and manage your active trading bot instances</p>
-</div>
-""", unsafe_allow_html=True)
+# Page Header
+st.title("🏠 Hummingbot Instances")
+st.subheader("Monitor and manage your active trading bot instances")
 
 # Auto-refresh controls
 col1, col2, col3 = st.columns([3, 1, 1])

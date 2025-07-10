@@ -61,34 +61,9 @@ def download_csv_button(df: pd.DataFrame, filename: str, key: str):
     )
 
 
-def style_metric_cards(
-        background_color: str = "linear-gradient(135deg, #1a1d23 0%, #2d3748 100%)",
-        border_size_px: int = 1,
-        border_color: str = "rgba(100, 255, 218, 0.3)",
-        border_radius_px: int = 15,
-        border_left_color: str = "#64ffda",
-        box_shadow: bool = True,
-):
-    box_shadow_str = (
-        "box-shadow: 0 0 15px rgba(100, 255, 218, 0.2) !important;"
-        if box_shadow
-        else "box-shadow: none !important;"
-    )
-    st.markdown(
-        f"""
-        <style>
-            div[data-testid="metric-container"] {{
-                background: {background_color};
-                border: {border_size_px}px solid {border_color};
-                padding: 1rem;
-                border-radius: {border_radius_px}px;
-                border-left: 5px solid {border_left_color} !important;
-                {box_shadow_str}
-            }}
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
+def style_metric_cards():
+    # Removed custom metric styling to use default Streamlit styling
+    pass
 
 
 def get_backend_api_client():

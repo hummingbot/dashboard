@@ -48,9 +48,7 @@ if get_data_button:
         open=candles_df['open'],
         high=candles_df['high'],
         low=candles_df['low'],
-        close=candles_df['close'],
-        increasing_line_color='#2ECC71',
-        decreasing_line_color='#E74C3C'
+        close=candles_df['close']
     )])
     fig.update_layout(
         height=1000,
