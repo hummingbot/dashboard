@@ -53,6 +53,8 @@ if "trade_analysis" not in st.session_state:
     st.session_state.trade_analysis = {}
 if "historical_candles" not in st.session_state:
     st.session_state.historical_candles = []
+if "bot_runs" not in st.session_state:
+    st.session_state.bot_runs = []
 
 # Get backend client
 backend_client = get_backend_api_client()
@@ -256,6 +258,167 @@ def get_trade_analysis(db_path: str):
     except Exception as e:
         st.error(f"Failed to analyze trades: {str(e)}")
         return {"exchanges": [], "trading_pairs": [], "start_time": None, "end_time": None}
+
+def load_bot_runs():
+    """Load bot runs data"""
+    try:
+        bot_runs = backend_client.bot_orchestration.get_bot_runs(limit=1000, offset=0)
+        if bot_runs and "data" in bot_runs:
+            st.session_state.bot_runs = bot_runs["data"]
+            return bot_runs["data"]
+        else:
+            st.session_state.bot_runs = []
+            return []
+    except Exception as e:
+        st.warning(f"Could not load bot runs: {str(e)}")
+        return []
+
+def find_matching_bot_run(db_path: str, bot_runs: List[Dict]):
+    """Find the bot run that matches the database file"""
+    if not bot_runs:
+        return None
+    
+    # Extract bot name from database path
+    # Format: "bots/archived/askarabuuut-20250710-0013/data/askarabuuut-20250710-0013-20250710-001318.sqlite"
+    try:
+        filename = db_path.split("/")[-1]  # Get filename
+        bot_name = filename.split("-20")[0]  # Extract bot name before timestamp
+        
+        # Find matching bot run
+        for run in bot_runs:
+            if run.get("bot_name", "").startswith(bot_name):
+                return run
+        
+        return None
+    except Exception:
+        return None
+
+def create_bot_runs_scatterplot(bot_runs: List[Dict], healthy_databases: List[str]):
+    """Create a scatterplot visualization of bot runs with performance data"""
+    if not bot_runs:
+        return None
+    
+    # Prepare data for plotting
+    plot_data = []
+    
+    for run in bot_runs:
+        try:
+            # Parse final status to get performance data
+            final_status = json.loads(run.get("final_status", "{}"))
+            performance = final_status.get("performance", {})
+            
+            # Extract performance metrics
+            global_pnl = 0
+            volume_traded = 0
+            realized_pnl = 0
+            unrealized_pnl = 0
+            
+            for controller_name, controller_perf in performance.items():
+                if isinstance(controller_perf, dict) and "performance" in controller_perf:
+                    perf_data = controller_perf["performance"]
+                    global_pnl += perf_data.get("global_pnl_quote", 0)
+                    volume_traded += perf_data.get("volume_traded", 0)
+                    realized_pnl += perf_data.get("realized_pnl_quote", 0)
+                    unrealized_pnl += perf_data.get("unrealized_pnl_quote", 0)
+            
+            # Calculate duration
+            deployed_at = pd.to_datetime(run.get("deployed_at", ""))
+            stopped_at = pd.to_datetime(run.get("stopped_at", ""))
+            duration_hours = (stopped_at - deployed_at).total_seconds() / 3600 if deployed_at and stopped_at else 0
+            
+            # Check if database is available
+            has_database = any(run.get("bot_name", "") in db for db in healthy_databases)
+            
+            plot_data.append({
+                "bot_name": run.get("bot_name", "Unknown"),
+                "strategy": run.get("strategy_name", "Unknown"),
+                "global_pnl": global_pnl,
+                "volume_traded": volume_traded,
+                "realized_pnl": realized_pnl,
+                "unrealized_pnl": unrealized_pnl,
+                "duration_hours": duration_hours,
+                "deployed_at": deployed_at,
+                "stopped_at": stopped_at,
+                "run_status": run.get("run_status", "Unknown"),
+                "deployment_status": run.get("deployment_status", "Unknown"),
+                "account": run.get("account_name", "Unknown"),
+                "has_database": has_database,
+                "bot_id": run.get("id", 0)
+            })
+            
+        except Exception as e:
+            continue
+    
+    if not plot_data:
+        return None
+    
+    df = pd.DataFrame(plot_data)
+    
+    # Create scatter plot
+    fig = go.Figure()
+    
+    # Add traces for runs with and without databases
+    for has_db, label, color, symbol in [(True, "With Database", "#4CAF50", "circle"), 
+                                         (False, "No Database", "#9E9E9E", "circle-open")]:
+        subset = df[df["has_database"] == has_db]
+        if not subset.empty:
+            fig.add_trace(go.Scatter(
+                x=subset["volume_traded"],
+                y=subset["global_pnl"],
+                mode="markers",
+                name=label,
+                marker=dict(
+                    size=subset["duration_hours"].apply(lambda x: max(8, min(x * 2, 50))),
+                    color=color,
+                    symbol=symbol,
+                    line=dict(width=2, color="white"),
+                    opacity=0.8
+                ),
+                hovertemplate=(
+                    "<b>%{customdata[0]}</b><br>" +
+                    "Strategy: %{customdata[1]}<br>" +
+                    "Global PnL: $%{y:.4f}<br>" +
+                    "Volume: $%{x:,.0f}<br>" +
+                    "Realized PnL: $%{customdata[2]:.4f}<br>" +
+                    "Unrealized PnL: $%{customdata[3]:.4f}<br>" +
+                    "Duration: %{customdata[4]:.1f}h<br>" +
+                    "Deployed: %{customdata[5]}<br>" +
+                    "Stopped: %{customdata[6]}<br>" +
+                    "Status: %{customdata[7]} / %{customdata[8]}<br>" +
+                    "Account: %{customdata[9]}<br>" +
+                    "<extra></extra>"
+                ),
+                customdata=subset[["bot_name", "strategy", "realized_pnl", "unrealized_pnl", 
+                                 "duration_hours", "deployed_at", "stopped_at", "run_status", 
+                                 "deployment_status", "account"]].values
+            ))
+    
+    # Update layout
+    fig.update_layout(
+        title="Bot Runs Performance Overview",
+        xaxis_title="Volume Traded ($)",
+        yaxis_title="Global PnL ($)",
+        template="plotly_dark",
+        plot_bgcolor='rgba(0, 0, 0, 0)',
+        paper_bgcolor='rgba(0, 0, 0, 0.1)',
+        font=dict(color='white', size=12),
+        height=600,
+        hovermode="closest",
+        showlegend=True,
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1
+        )
+    )
+    
+    # Add quadrant lines
+    fig.add_hline(y=0, line=dict(color="gray", width=1, dash="dash"), opacity=0.5)
+    fig.add_vline(x=0, line=dict(color="gray", width=1, dash="dash"), opacity=0.5)
+    
+    return fig, df
 
 def get_historical_candles(connector_name: str, trading_pair: str, start_time: datetime, end_time: datetime, interval: str = "5m"):
     """Get historical candle data for the specified period"""
@@ -659,11 +822,12 @@ def create_comprehensive_dashboard(candles_data: List[Dict[str, Any]], trades_da
 # Page header
 st.title("🗃️ Archived Bots")
 
-# Load databases on first run
+# Load databases and bot runs on first run
 if not st.session_state.databases_list:
     with st.spinner("Loading databases..."):
         load_databases()
         load_all_databases_status()
+        load_bot_runs()
 
 # Database selection
 col1, col2 = st.columns([3, 1])
@@ -711,6 +875,7 @@ with col2:
         with st.spinner("Refreshing..."):
             load_databases()
             load_all_databases_status()
+            load_bot_runs()
             st.rerun()
 
 # Main content - only show if database is selected
@@ -721,6 +886,9 @@ if st.session_state.selected_database:
     if not st.session_state.db_summary:
         with st.spinner("Loading database summary..."):
             load_database_summary(db_path)
+    
+    # Find matching bot run
+    matching_bot_run = find_matching_bot_run(db_path, st.session_state.bot_runs)
     
     # Single Load button and summary metrics
     col1, col2 = st.columns([3, 1])
@@ -738,6 +906,54 @@ if st.session_state.selected_database:
             with subcol4:
                 st.metric("Pair", summary.get("trading_pairs", ["N/A"])[0])
     
+    # Bot run information section
+    if matching_bot_run:
+        st.divider()
+        st.subheader("🤖 Bot Run Information")
+        
+        # Parse deployment config and final status
+        import json
+        deployment_config = json.loads(matching_bot_run.get("deployment_config", "{}"))
+        final_status = json.loads(matching_bot_run.get("final_status", "{}"))
+        
+        # Bot run details
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("Bot Name", matching_bot_run.get("bot_name", "N/A"))
+            st.metric("Strategy", matching_bot_run.get("strategy_name", "N/A"))
+            st.metric("Account", matching_bot_run.get("account_name", "N/A"))
+        
+        with col2:
+            deployed_at = matching_bot_run.get("deployed_at", "")
+            if deployed_at:
+                deployed_date = pd.to_datetime(deployed_at).strftime("%Y-%m-%d %H:%M")
+                st.metric("Deployed", deployed_date)
+            
+            stopped_at = matching_bot_run.get("stopped_at", "")
+            if stopped_at:
+                stopped_date = pd.to_datetime(stopped_at).strftime("%Y-%m-%d %H:%M")
+                st.metric("Stopped", stopped_date)
+            
+            st.metric("Status", f"{matching_bot_run.get('run_status', 'N/A')} / {matching_bot_run.get('deployment_status', 'N/A')}")
+        
+        with col3:
+            # Extract controllers from deployment config
+            controllers = deployment_config.get("controllers_config", [])
+            if controllers:
+                st.metric("Controllers", ", ".join(controllers))
+            
+            # Extract final performance if available
+            performance = final_status.get("performance", {})
+            if performance:
+                for controller_name, controller_perf in performance.items():
+                    if isinstance(controller_perf, dict) and "performance" in controller_perf:
+                        perf_data = controller_perf["performance"]
+                        global_pnl = perf_data.get("global_pnl_quote", 0)
+                        st.metric(f"{controller_name} PnL", f"${global_pnl:.4f}")
+                        break
+    
+    # Load Dashboard button
+    col1, col2 = st.columns([3, 1])
     with col2:
         if st.button("🔄 Load Dashboard", use_container_width=True, type="primary"):
             with st.spinner("Loading comprehensive dashboard..."):
@@ -766,25 +982,25 @@ if st.session_state.selected_database:
         
         with col1:
             net_pnl = summary.get('final_net_pnl_quote', 0)
-            realized_pnl = summary.get('final_realized_pnl_quote', 0)
             st.metric(
-                "Net PnL",
+                "Net PnL (Quote)",
                 value=f"${net_pnl:,.6f}",
-                delta=f"Realized: ${realized_pnl:,.6f}"
+                delta=f"{net_pnl:+.6f}" if net_pnl != 0 else None
             )
         
         with col2:
             fees = summary.get('total_fees_quote', 0)
             st.metric(
-                "Total Fees",
+                "Total Fees (Quote)",
                 value=f"${fees:,.4f}"
             )
         
         with col3:
-            position = summary.get('final_net_position', 0)
+            realized_pnl = summary.get('final_realized_pnl_quote', 0)
             st.metric(
-                "Final Position",
-                value=f"{position:,.2f}"
+                "Realized PnL",
+                value=f"${realized_pnl:,.6f}",
+                delta=f"{realized_pnl:+.6f}" if realized_pnl != 0 else None
             )
         
         with col4:

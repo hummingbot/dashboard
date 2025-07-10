@@ -34,9 +34,6 @@ def accounts_section():
     # Get fresh accounts list
     accounts = client.accounts.list_accounts()
 
-    # Display accounts and credentials
-    st.header("Available Accounts and Credentials")
-
     if accounts:
         n_accounts = len(accounts)
         # Ensure master_account is first, but handle if it doesn't exist
