@@ -11,7 +11,7 @@ dependencies:
       - hummingbot-api-client
       - nest_asyncio
       - pydantic
-      - streamlit
+      - streamlit>=1.36.0
       - watchdog
       - python-dotenv
       - plotly==5.24.1
