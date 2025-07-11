@@ -290,26 +290,26 @@ def render_bot_card(bot_name):
                         error_df = pd.DataFrame(error_controllers)
                         st.dataframe(error_df, use_container_width=True, hide_index=True)
 
-                    # Logs sections
-                    with st.expander("📋 Error Logs"):
-                        if error_logs:
-                            for log in error_logs[:50]:
-                                timestamp = log.get("timestamp", "")
-                                message = log.get("msg", "")
-                                logger_name = log.get("logger_name", "")
-                                st.text(f"{timestamp} - {logger_name}: {message}")
-                        else:
-                            st.info("No error logs available.")
+                # Logs sections (available for both running and stopped bots)
+                with st.expander("📋 Error Logs"):
+                    if error_logs:
+                        for log in error_logs[:50]:
+                            timestamp = log.get("timestamp", "")
+                            message = log.get("msg", "")
+                            logger_name = log.get("logger_name", "")
+                            st.text(f"{timestamp} - {logger_name}: {message}")
+                    else:
+                        st.info("No error logs available.")
 
-                    with st.expander("📝 General Logs"):
-                        if general_logs:
-                            for log in general_logs[:50]:
-                                timestamp = pd.to_datetime(int(log.get("timestamp", 0)), unit="s")
-                                message = log.get("msg", "")
-                                logger_name = log.get("logger_name", "")
-                                st.text(f"{timestamp} - {logger_name}: {message}")
-                        else:
-                            st.info("No general logs available.")
+                with st.expander("📝 General Logs"):
+                    if general_logs:
+                        for log in general_logs[:50]:
+                            timestamp = pd.to_datetime(int(log.get("timestamp", 0)), unit="s")
+                            message = log.get("msg", "")
+                            logger_name = log.get("logger_name", "")
+                            st.text(f"{timestamp} - {logger_name}: {message}")
+                    else:
+                        st.info("No general logs available.")
 
     except Exception as e:
         with st.container(border=True):
