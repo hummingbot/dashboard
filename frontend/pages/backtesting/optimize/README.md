@@ -1,1 +1,0 @@
-Deploy and manage backtests of directional strategies

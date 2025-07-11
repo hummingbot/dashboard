@@ -1,10 +1,16 @@
 import streamlit as st
 
+from frontend.components.config_loader import get_controller_config
 
-def get_market_making_general_inputs(custom_candles=False):
+
+def get_market_making_general_inputs(custom_candles=False, controller_name: str = None):
     with st.expander("General Settings", expanded=True):
         c1, c2, c3, c4, c5, c6, c7 = st.columns(7)
-        default_config = st.session_state.get("default_config", {})
+        if controller_name:
+            default_config = get_controller_config(controller_name)
+        else:
+            # Fallback for backward compatibility
+            default_config = st.session_state.get("default_config", {})
         connector_name = default_config.get("connector_name", "kucoin")
         trading_pair = default_config.get("trading_pair", "WLD-USDT")
         leverage = default_config.get("leverage", 20)
