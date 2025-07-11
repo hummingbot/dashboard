@@ -1,9 +1,11 @@
 import copy
 import streamlit as st
+import nest_asyncio
 
 from frontend.st_utils import get_backend_api_client
 from frontend.utils import generate_random_name
 
+nest_asyncio.apply()
 backend_api_client = get_backend_api_client()
 
 
