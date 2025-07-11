@@ -10,8 +10,14 @@ def create_executors_distribution_traces(buy_spreads, sell_spreads, buy_amounts_
 
     buy_spread_distributions = [spread * 100 for spread in buy_spreads]
     sell_spread_distributions = [spread * 100 for spread in sell_spreads]
-    buy_order_amounts_quote = [amount * total_amount_quote for amount in buy_amounts_pct]
-    sell_order_amounts_quote = [amount * total_amount_quote for amount in sell_amounts_pct]
+    
+    # Normalize amounts across both buy and sell sides (matching controller logic)
+    total_pct = sum(buy_amounts_pct) + sum(sell_amounts_pct)
+    normalized_buy_amounts_pct = [amt_pct / total_pct for amt_pct in buy_amounts_pct]
+    normalized_sell_amounts_pct = [amt_pct / total_pct for amt_pct in sell_amounts_pct]
+    
+    buy_order_amounts_quote = [amount * total_amount_quote for amount in normalized_buy_amounts_pct]
+    sell_order_amounts_quote = [amount * total_amount_quote for amount in normalized_sell_amounts_pct]
     buy_order_levels = len(buy_spread_distributions)
     sell_order_levels = len(sell_spread_distributions)
 
