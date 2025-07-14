@@ -1,7 +1,9 @@
 import streamlit as st
+import nest_asyncio
 
 from frontend.st_utils import get_backend_api_client
 
+nest_asyncio.apply()
 
 def render_save_config(config_base_default: str, config_data: dict):
     st.write("### Upload Config to BackendAPI")
@@ -15,14 +17,14 @@ def render_save_config(config_base_default: str, config_data: dict):
     # Handle both old and new config format
     config_bases = set()
     for config in all_configs:
-        config_name = config.get("config_name", config.get("id", ""))
+        config_name = config.get("id")
         if config_name:
             config_bases.add(config_name.split("_")[0])
     config_base = config_base_default.split("_")[0]
     if config_base in config_bases:
         config_tags = []
         for config in all_configs:
-            config_name = config.get("config_name", config.get("id", ""))
+            config_name = config.get("id")
             if config_name and config_base in config_name:
                 try:
                     config_tags.append(float(config_name.split("_")[-1]))
