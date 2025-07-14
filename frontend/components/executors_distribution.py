@@ -10,11 +10,11 @@ def get_executors_distribution_inputs(use_custom_spread_units=False):
         buy_spreads = [spread / 100 for spread in default_config.get("buy_spreads", [1, 2])]
         sell_spreads = [spread / 100 for spread in default_config.get("sell_spreads", [1, 2])]
     else:
-        buy_spreads = default_config.get("buy_spreads", [0.01, 0.02])
-        sell_spreads = default_config.get("sell_spreads", [0.01, 0.02])
+        buy_spreads = list(default_config.get("buy_spreads", [0.01, 0.02]))
+        sell_spreads = list(default_config.get("sell_spreads", [0.01, 0.02]))
 
-    buy_amounts_pct = default_config.get("buy_amounts_pct", default_amounts)
-    sell_amounts_pct = default_config.get("sell_amounts_pct", default_amounts)
+    buy_amounts_pct = default_config.get("buy_amounts_pct", default_amounts.copy())
+    sell_amounts_pct = default_config.get("sell_amounts_pct", default_amounts.copy())
     buy_order_levels_def = len(buy_spreads)
     sell_order_levels_def = len(sell_spreads)
     with st.expander("Executors Configuration", expanded=True):
@@ -73,10 +73,9 @@ def get_executors_distribution_inputs(use_custom_spread_units=False):
                                                  sell_amount_scaling, sell_amount_step, sell_amount_ratio,
                                                  sell_manual_amounts)
 
-    # Normalize and calculate order amounts
-    all_orders_amount_normalized = normalize(buy_amount_distributions + sell_amount_distributions)
-    buy_order_amounts_pct = [amount for amount in all_orders_amount_normalized[:buy_order_levels]]
-    sell_order_amounts_pct = [amount for amount in all_orders_amount_normalized[buy_order_levels:]]
+    # Normalize buy and sell amounts separately to prevent cross-scaling
+    buy_order_amounts_pct = normalize(buy_amount_distributions)
+    sell_order_amounts_pct = normalize(sell_amount_distributions)
     buy_spread_distributions = [spread / 100 for spread in buy_spread_distributions]
     sell_spread_distributions = [spread / 100 for spread in sell_spread_distributions]
     return buy_spread_distributions, sell_spread_distributions, buy_order_amounts_pct, sell_order_amounts_pct

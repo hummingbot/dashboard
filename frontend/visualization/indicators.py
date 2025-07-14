@@ -39,9 +39,7 @@ def get_macd_traces(df, macd_fast, macd_slow, macd_signal):
                    name='MACD Line'),
         go.Scatter(x=df.index, y=df[macd_s], line=dict(color=tech_colors['macd_signal']),
                    name='MACD Signal'),
-        go.Bar(x=df.index, y=df[macd_hist], name='MACD Histogram',
-               marker_color=df[f"MACDh_{macd_fast}_{macd_slow}_{macd_signal}"].apply(
-                   lambda x: '#FF6347' if x < 0 else '#32CD32'))
+        go.Bar(x=df.index, y=df[macd_hist], name='MACD Histogram')
     ]
     return traces
 

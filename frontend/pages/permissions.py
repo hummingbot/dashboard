@@ -21,9 +21,7 @@ def public_pages():
             st.Page("frontend/pages/data/download_candles/app.py", title="Download Candles", icon="💹", url_path="download_candles"),
         ],
         "Community Pages": [
-            st.Page("frontend/pages/data/token_spreads/app.py", title="Token Spreads", icon="🧙", url_path="token_spreads"),
             st.Page("frontend/pages/data/tvl_vs_mcap/app.py", title="TVL vs Market Cap", icon="🦉", url_path="tvl_vs_mcap"),
-            st.Page("frontend/pages/performance/bot_performance/app.py", title="Strategy Performance", icon="📈", url_path="bot_performance"),
         ]
     }
 
@@ -35,5 +33,7 @@ def private_pages():
             st.Page("frontend/pages/orchestration/launch_bot_v2/app.py", title="Deploy V2", icon="🚀", url_path="launch_bot_v2"),
             st.Page("frontend/pages/orchestration/credentials/app.py", title="Credentials", icon="🔑", url_path="credentials"),
             st.Page("frontend/pages/orchestration/portfolio/app.py", title="Portfolio", icon="💰", url_path="portfolio"),
+            st.Page("frontend/pages/orchestration/trading/app.py", title="Trading", icon="🪄", url_path="trading"),
+            st.Page("frontend/pages/orchestration/archived_bots/app.py", title="Archived Bots", icon="🗃️", url_path="archived_bots"),
         ]
     }

@@ -1,5 +1,5 @@
 - ccxt
-- streamlit
+- streamlit>=1.36.0
 - watchdog
 - plotly
 - pycoingecko

@@ -25,7 +25,7 @@ def backtesting_section(inputs, backend_api_client):
         start_datetime = datetime.combine(start_date, datetime.min.time())
         end_datetime = datetime.combine(end_date, datetime.max.time())
         try:
-            backtesting_results = backend_api_client.run_backtesting(
+            backtesting_results = backend_api_client.backtesting.run_backtesting(
                 start_time=int(start_datetime.timestamp()),
                 end_time=int(end_datetime.timestamp()),
                 backtesting_resolution=backtesting_resolution,

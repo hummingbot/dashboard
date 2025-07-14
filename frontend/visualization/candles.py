@@ -15,6 +15,9 @@ def get_candlestick_trace(df):
 
 
 def get_bt_candlestick_trace(df):
+    # Convert dict to DataFrame if needed
+    if isinstance(df, dict):
+        df = pd.DataFrame(df)
     df.index = pd.to_datetime(df.timestamp, unit='s')
     return go.Scatter(x=df.index,
                       y=df['close'],

@@ -225,5 +225,12 @@ with c3:
 
 if upload_config_to_backend:
     backend_api_client = get_backend_api_client()
-    backend_api_client.add_controller_config(config)
-    st.success("Config uploaded successfully!")
+    try:
+        config_name = config.get("id", id)
+        backend_api_client.controllers.create_or_update_controller_config(
+            config_name=config_name,
+            config=config
+        )
+        st.success("Config uploaded successfully!")
+    except Exception as e:
+        st.error(f"Failed to upload config: {e}")

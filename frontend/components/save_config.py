@@ -1,18 +1,41 @@
 import streamlit as st
+import nest_asyncio
 
 from frontend.st_utils import get_backend_api_client
 
+nest_asyncio.apply()
 
 def render_save_config(config_base_default: str, config_data: dict):
     st.write("### Upload Config to BackendAPI")
     backend_api_client = get_backend_api_client()
-    all_configs = backend_api_client.get_all_controllers_config()
-    config_bases = set(config_name["id"].split("_")[0] for config_name in all_configs)
+    try:
+        all_configs = backend_api_client.controllers.list_controller_configs()
+    except Exception as e:
+        st.error(f"Failed to fetch controller configs: {e}")
+        return
+    
+    # Handle both old and new config format
+    config_bases = set()
+    for config in all_configs:
+        config_name = config.get("id")
+        if config_name:
+            config_bases.add(config_name.split("_")[0])
     config_base = config_base_default.split("_")[0]
     if config_base in config_bases:
-        config_tag = max(float(config["id"].split("_")[-1]) for config in all_configs if config_base in config["id"])
-        version, tag = str(config_tag).split(".")
-        config_tag = f"{version}.{int(tag) + 1}"
+        config_tags = []
+        for config in all_configs:
+            config_name = config.get("id")
+            if config_name and config_base in config_name:
+                try:
+                    config_tags.append(float(config_name.split("_")[-1]))
+                except (ValueError, IndexError):
+                    continue
+        if config_tags:
+            config_tag = max(config_tags)
+            version, tag = str(config_tag).split(".")
+            config_tag = f"{version}.{int(tag) + 1}"
+        else:
+            config_tag = "0.1"
     else:
         config_tag = "0.1"
     c1, c2, c3 = st.columns([1, 1, 0.5])
@@ -23,7 +46,14 @@ def render_save_config(config_base_default: str, config_data: dict):
     with c3:
         upload_config_to_backend = st.button("Upload")
     if upload_config_to_backend:
-        config_data["id"] = f"{config_base}_{config_tag}"
-        backend_api_client.add_controller_config(config_data)
-        st.session_state.pop("default_config")
-        st.success("Config uploaded successfully!")
+        config_name = f"{config_base}_{config_tag}"
+        config_data["id"] = config_name
+        try:
+            backend_api_client.controllers.create_or_update_controller_config(
+                config_name=config_name,
+                config=config_data
+            )
+            st.session_state.pop("default_config", None)
+            st.success("Config uploaded successfully!")
+        except Exception as e:
+            st.error(f"Failed to upload config: {e}")

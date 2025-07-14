@@ -8,8 +8,10 @@ dependencies:
   - pip
   - pip:
       - hummingbot
+      - hummingbot-api-client
+      - nest_asyncio
       - pydantic
-      - streamlit==1.40.0
+      - streamlit>=1.36.0
       - watchdog
       - python-dotenv
       - plotly==5.24.1
@@ -20,8 +22,6 @@ dependencies:
       - pandas_ta==0.3.14b
       - pyyaml
       - pathlib
-      - st_pages
-      - streamlit-elements==0.1.*
       - streamlit-authenticator==0.3.2
       - flake8
       - isort
