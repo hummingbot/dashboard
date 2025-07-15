@@ -204,7 +204,7 @@ with st.container(border=True):
             continue
 
         # Handle both old and new config format
-        config_name = config.get("config_name", config.get("id", "Unknown"))
+        config_name = config.get("id")
         config_data = config.get("config", config)  # New format has config nested
 
         connector_name = config_data.get("connector_name", "Unknown")
