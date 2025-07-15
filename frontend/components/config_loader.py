@@ -77,7 +77,8 @@ def get_default_config_loader(controller_name: str):
                         # Use deep copy to prevent shared references
                         config_data = selected_config.get("config", selected_config)
                         st.session_state[config_key] = copy.deepcopy(config_data)
-                        st.session_state[config_key]["id"] = selected_config_name.split("_")[0]
+                        # Keep the original config ID
+                        st.session_state[config_key]["id"] = selected_config_name
                         st.session_state[config_key]["controller_name"] = controller_name
                 else:
                     st.warning("No existing configs found for this controller.")
