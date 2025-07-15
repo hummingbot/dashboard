@@ -58,7 +58,7 @@ def launch_new_bot(bot_name, image_name, credentials, selected_controllers, max_
         deploy_config = {
             "instance_name": full_bot_name,
             "credentials_profile": credentials,
-            "controllers_config": [config.replace(".yml", "") for config in selected_controllers],
+            "controllers_config": selected_controllers,
             "image": image_name,
         }
 
@@ -205,6 +205,11 @@ with st.container(border=True):
 
         # Handle both old and new config format
         config_name = config.get("id")
+        if not config_name:
+            # Skip configs without an ID
+            st.warning(f"Config missing 'id' field: {config}")
+            continue
+            
         config_data = config.get("config", config)  # New format has config nested
 
         connector_name = config_data.get("connector_name", "Unknown")
