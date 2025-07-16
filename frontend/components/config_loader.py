@@ -27,7 +27,7 @@ def get_default_config_loader(controller_name: str):
     # Handle both old and new config format
     existing_configs = []
     for config in all_configs:
-        config_name = config.get("config_name", config.get("id", ""))
+        config_name = config.get("id")
         if config_name:
             existing_configs.append(config_name.split("_")[0])
     
@@ -59,7 +59,7 @@ def get_default_config_loader(controller_name: str):
                         configs.append(config)
                 
                 if len(configs) > 0:
-                    config_names = [config.get("config_name", config.get("id", "Unknown")) for config in configs]
+                    config_names = [config.get("id") for config in configs]
                     selected_config_name = st.selectbox(
                         "Select a config", 
                         config_names,
@@ -69,7 +69,7 @@ def get_default_config_loader(controller_name: str):
                     # Find the selected config
                     selected_config = None
                     for config in configs:
-                        if config.get("config_name", config.get("id", "")) == selected_config_name:
+                        if config.get("id") == selected_config_name:
                             selected_config = config
                             break
                     
@@ -77,7 +77,8 @@ def get_default_config_loader(controller_name: str):
                         # Use deep copy to prevent shared references
                         config_data = selected_config.get("config", selected_config)
                         st.session_state[config_key] = copy.deepcopy(config_data)
-                        st.session_state[config_key]["id"] = selected_config_name.split("_")[0]
+                        # Keep the original config ID
+                        st.session_state[config_key]["id"] = selected_config_name
                         st.session_state[config_key]["controller_name"] = controller_name
                 else:
                     st.warning("No existing configs found for this controller.")
@@ -99,7 +100,7 @@ def get_controller_config(controller_name: str) -> dict:
         try:
             all_configs = backend_api_client.controllers.list_controller_configs()
             for config in all_configs:
-                config_name = config.get("config_name", config.get("id", ""))
+                config_name = config.get("id")
                 if config_name:
                     existing_configs.append(config_name.split("_")[0])
         except Exception:
