@@ -183,6 +183,13 @@ def user_inputs():
                     format="%.4f",
                     help="Price movement percentage for stop loss (0 for none)"
                 )
+                
+                # Keep position parameter
+                keep_position = st.checkbox(
+                    "Keep Position",
+                    value=False,
+                    help="Keep the position open after grid execution"
+                )
         # Chart configuration
         with st.expander("Chart Configuration", expanded=True):
             c1, c2, c3 = st.columns(3)
@@ -244,5 +251,6 @@ def user_inputs():
         "order_frequency": order_frequency,
         "activation_bounds": activation_bounds,
         "triple_barrier_config": triple_barrier_config,
+        "keep_position": keep_position,
         "candles_config": []
     } 
