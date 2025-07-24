@@ -6,7 +6,7 @@ from frontend.st_utils import get_backend_api_client
 nest_asyncio.apply()
 
 def render_save_config(config_base_default: str, config_data: dict):
-    st.write("### Upload Config to BackendAPI")
+    st.write("### Upload Config to Hummingbot-API")
     backend_api_client = get_backend_api_client()
     try:
         all_configs = backend_api_client.controllers.list_controller_configs()
