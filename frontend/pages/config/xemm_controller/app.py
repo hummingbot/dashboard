@@ -126,7 +126,7 @@ config = {
 yaml_config = yaml.dump(config, default_flow_style=False)
 
 with c3:
-    upload_config_to_backend = st.button("Upload Config to BackendAPI")
+    upload_config_to_backend = st.button("Upload Config to Hummingbot-API")
 
 if upload_config_to_backend:
     backend_api_client = get_backend_api_client()
