@@ -26,6 +26,11 @@ def portfolio_state_to_df(portfolio_state):
                     "value": info["value"],
                     "available_units": info["available_units"],
                 })
+    if not data:
+        return pd.DataFrame(columns=[
+            "account", "exchange", "token", "price",
+            "units", "value", "available_units"
+        ])
     return pd.DataFrame(data)
 
 
@@ -47,6 +52,11 @@ def portfolio_history_to_df(history):
                         "value": info["value"],
                         "available_units": info["available_units"],
                     })
+    if not data:
+        return pd.DataFrame(columns=[
+            "timestamp", "account", "exchange", "token",
+            "price", "units", "value", "available_units"
+        ])
     return pd.DataFrame(data)
 
 
