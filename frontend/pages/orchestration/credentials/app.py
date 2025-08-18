@@ -173,7 +173,7 @@ def add_credentials_section():
         if st.button("Submit Credentials"):
             response = client.accounts.add_credential(account_name, connector_name, config_inputs)
             if response:
-                st.success(response)
+                st.success(f"✅ Successfully added {connector_name} connector to {account_name}!")
                 try:
                     st.rerun(scope="fragment")
                 except Exception:
@@ -189,7 +189,7 @@ def add_credentials_section():
             if st.button("Submit Credentials"):
                 response = client.accounts.add_credential(account_name, connector_name, config_inputs)
                 if response:
-                    st.success(response)
+                    st.success(f"✅ Successfully added {connector_name} connector to {account_name}!")
                     try:
                         st.rerun(scope="fragment")
                     except Exception:
