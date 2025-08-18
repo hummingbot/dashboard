@@ -31,8 +31,9 @@ def get_directional_trading_general_inputs():
                                                  help="Enter the trading pair to get candles for (e.g., WLD-USDT).")
         with c3:
             leverage = st.number_input("Leverage", value=leverage,
+                                       min_value=1,
                                        help="Set the leverage to use for trading (e.g., 20 for 20x leverage)."
-                                            "Set it to 1 for spot trading.")
+                                            "Set it to 1 for spot trading. Value must be greater than 0.")
             interval = st.selectbox("Candles Interval", ("1m", "3m", "5m", "15m", "1h", "4h", "1d"),
                                     index=interval_index,
                                     help="Enter the interval for candles (e.g., 1m).")

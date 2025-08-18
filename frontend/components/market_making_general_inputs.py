@@ -29,8 +29,9 @@ def get_market_making_general_inputs(custom_candles=False, controller_name: str 
                                          help="Enter the trading pair to trade on (e.g., WLD-USDT).")
         with c3:
             leverage = st.number_input("Leverage", value=leverage,
+                                       min_value=1,
                                        help="Set the leverage to use for trading (e.g., 20 for 20x leverage). "
-                                            "Set it to 1 for spot trading.")
+                                            "Set it to 1 for spot trading. Value must be greater than 0.")
         with c4:
             total_amount_quote = st.number_input("Total amount of quote", value=total_amount_quote,
                                                  help="Enter the total amount in quote asset to use for "
