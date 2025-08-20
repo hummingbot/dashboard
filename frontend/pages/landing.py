@@ -257,23 +257,26 @@ st.divider()
 # Quick Actions
 st.markdown("## ⚡ Quick Actions")
 
+# Alert for mocked navigation
+st.info("ℹ️ **Note**: This is a mocked landing page. The Quick Actions buttons below are for demonstration purposes and the page navigation is not functional.")
+
 col1, col2, col3, col4 = st.columns(4)
 
 with col1:
     if st.button("🚀 Deploy Strategy", use_container_width=True, type="primary"):
-        st.switch_page("frontend/pages/orchestration/deploy_v2_with_controllers/app.py")
+        st.error("🚫 Navigation unavailable - This is a mocked landing page for demonstration purposes.")
 
 with col2:
     if st.button("📊 View Performance", use_container_width=True):
-        st.switch_page("frontend/pages/performance/app.py")
+        st.error("🚫 Navigation unavailable - This is a mocked landing page for demonstration purposes.")
 
 with col3:
     if st.button("🔍 Backtesting", use_container_width=True):
-        st.switch_page("frontend/pages/backtesting/app.py")
+        st.error("🚫 Navigation unavailable - This is a mocked landing page for demonstration purposes.")
 
 with col4:
     if st.button("🗃️ Archived Bots", use_container_width=True):
-        st.switch_page("frontend/pages/orchestration/archived_bots/app.py")
+        st.error("🚫 Navigation unavailable - This is a mocked landing page for demonstration purposes.")
 
 st.divider()
 
