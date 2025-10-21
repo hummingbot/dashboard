@@ -7,7 +7,7 @@ from frontend.visualization import theme
 
 def get_bbands_traces(df, bb_length, bb_std):
     tech_colors = theme.get_color_scheme()
-    df.ta.bbands(length=bb_length, std=bb_std, append=True)
+    df.ta.bbands(length=bb_length, lower_std=bb_std, upper_std=bb_std, append=True)
     bb_lower = f'BBL_{bb_length}_{bb_std}_{bb_std}'
     bb_middle = f'BBM_{bb_length}_{bb_std}_{bb_std}'
     bb_upper = f'BBU_{bb_length}_{bb_std}_{bb_std}'
