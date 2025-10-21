@@ -8,9 +8,9 @@ from frontend.visualization import theme
 def get_bbands_traces(df, bb_length, bb_std):
     tech_colors = theme.get_color_scheme()
     df.ta.bbands(length=bb_length, std=bb_std, append=True)
-    bb_lower = f'BBL_{bb_length}_{bb_std}'
-    bb_middle = f'BBM_{bb_length}_{bb_std}'
-    bb_upper = f'BBU_{bb_length}_{bb_std}'
+    bb_lower = f'BBL_{bb_length}_{bb_std}_{bb_std}'
+    bb_middle = f'BBM_{bb_length}_{bb_std}_{bb_std}'
+    bb_upper = f'BBU_{bb_length}_{bb_std}_{bb_std}'
     traces = [
         go.Scatter(x=df.index, y=df[bb_upper], line=dict(color=tech_colors['upper_band']),
                    name='Upper Band'),
