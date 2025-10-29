@@ -120,6 +120,7 @@ def get_backend_api_client():
 
     return st.session_state.backend_api_client
 
+global_login_attempts = 0
 
 def auth_system():
     if not AUTH_SYSTEM_ENABLED:
@@ -131,6 +132,16 @@ def auth_system():
     else:
         with open('credentials.yml') as file:
             config = yaml.load(file, Loader=SafeLoader)
+
+        max_attempts = config.get('credentials', {}).get('max_login_attempts', 3)
+        global global_login_attempts
+
+        if global_login_attempts >= max_attempts:
+            st.error(f"You are banned for {max_attempts} login attempts.")
+            return {
+                "Main": main_page(),
+            }
+
         if "authenticator" not in st.session_state or "authentication_status" not in st.session_state or not st.session_state.get(
                 "authentication_status", False):
             st.session_state.authenticator = stauth.Authenticate(
@@ -142,6 +153,7 @@ def auth_system():
             # Show only public pages for non-authenticated users
             st.session_state.authenticator.login()
             if st.session_state["authentication_status"] is False:
+                global_login_attempts += 1
                 st.error('Username/password is incorrect')
             elif st.session_state["authentication_status"] is None:
                 st.warning('Please enter your username and password')
@@ -150,6 +162,7 @@ def auth_system():
                 **public_pages()
             }
         else:
+            global_login_attempts = 0
             st.session_state.authenticator.logout(location="sidebar")
             st.sidebar.write(f'Welcome *{st.session_state["name"]}*')
             # Show all pages for authenticated users
