@@ -1,7 +1,9 @@
 import inspect
 import os.path
+import socket
 from pathlib import Path
 from typing import Optional, Union
+from urllib.parse import urlparse
 
 import pandas as pd
 import streamlit as st
@@ -73,16 +75,35 @@ def get_backend_api_client():
 
     from CONFIG import BACKEND_API_HOST, BACKEND_API_PASSWORD, BACKEND_API_PORT, BACKEND_API_USERNAME
 
+    if not BACKEND_API_HOST.startswith(('http://', 'https://')):
+        base_url = f"http://{BACKEND_API_HOST}:{BACKEND_API_PORT}"
+    else:
+        base_url = BACKEND_API_HOST.rstrip('/')
+
+    def get_resolution_hint() -> str:
+        parsed = urlparse(base_url)
+        hostname = parsed.hostname
+        if not hostname:
+            return ""
+
+        try:
+            socket.getaddrinfo(hostname, parsed.port or (443 if parsed.scheme == "https" else 80))
+        except socket.gaierror:
+            return (
+                f" Host '{hostname}' is not resolvable from the dashboard runtime. "
+                "Set BACKEND_API_HOST to a reachable URL such as "
+                "'https://api.metallorum.duckdns.org', or run the dashboard and API "
+                "on the same Docker network."
+            )
+        except OSError:
+            return ""
+
+        return ""
+
     # Use Streamlit session state to store singleton instance
     if 'backend_api_client' not in st.session_state or st.session_state.backend_api_client is None:
         try:
             # Create and enter the client context
-            # Ensure URL has proper protocol
-            if not BACKEND_API_HOST.startswith(('http://', 'https://')):
-                base_url = f"http://{BACKEND_API_HOST}:{BACKEND_API_PORT}"
-            else:
-                base_url = f"{BACKEND_API_HOST}:{BACKEND_API_PORT}"
-
             client = SyncHummingbotAPIClient(
                 base_url=base_url,
                 username=BACKEND_API_USERNAME,
@@ -115,7 +136,7 @@ def get_backend_api_client():
 
             st.session_state.backend_api_client = client
         except Exception as e:
-            st.error(f"Failed to initialize API client: {str(e)}")
+            st.error(f"Failed to initialize API client at {base_url}: {e}.{get_resolution_hint()}")
             st.stop()
 
     return st.session_state.backend_api_client

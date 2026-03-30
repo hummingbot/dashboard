@@ -5,10 +5,13 @@ services:
     ports:
       - "8501:8501"
     environment:
-        - AUTH_SYSTEM_ENABLED=False
-        - BACKEND_API_HOST=backend-api
-        - BACKEND_API_PORT=8000
-        - BACKEND_API_USERNAME=admin
-        - BACKEND_API_PASSWORD=admin
+        - AUTH_SYSTEM_ENABLED=True
+        - BACKEND_API_HOST=https://api.metallorum.duckdns.org
+        # If you are running the API directly on the Docker host instead of via
+        # the public reverse proxy, swap the line above for the host alias below.
+        # - BACKEND_API_HOST=host.docker.internal
+        # - BACKEND_API_PORT=8000
+        - BACKEND_API_USERNAME=metal
+        - BACKEND_API_PASSWORD=Sk:6z77oN7-/BCo}19R
     volumes:
       - .:/home/dashboard

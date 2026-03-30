@@ -1,4 +1,9 @@
+import json
+import re
 import time
+from datetime import datetime, timezone
+from pathlib import Path
+from urllib.parse import quote
 
 import pandas as pd
 import streamlit as st
@@ -83,6 +88,74 @@ def start_controllers(bot_name, controllers):
     return success_count > 0
 
 
+def parse_bot_launch_time(bot_name):
+    """Extract launch datetime from bot name pattern …-YYYYMMDD-HHMMSS."""
+    match = re.search(r'(\d{8})-(\d{6})$', bot_name)
+    if match:
+        try:
+            return datetime.strptime(
+                f"{match.group(1)}-{match.group(2)}", "%Y%m%d-%H%M%S"
+            ).replace(tzinfo=timezone.utc)
+        except ValueError:
+            return None
+    return None
+
+
+def is_simulated_connector(connector_name: str) -> bool:
+    return connector_name.endswith("_paper_trade") or "testnet" in connector_name
+
+
+def get_price_connector(connector_name: str) -> str:
+    """Normalize simulated connectors to their live market-data equivalent."""
+    normalized = connector_name.replace("_paper_trade", "")
+    normalized = re.sub(r"(^|[_-])testnet(?=$|[_-])", r"\1", normalized)
+    normalized = re.sub(r"[_-]{2,}", "_", normalized).strip("_-")
+    return normalized or connector_name
+
+
+BNH_PRICES_FILE = Path(__file__).parents[4] / "data" / "bnh_entry_prices.json"
+
+
+def _load_bnh_prices() -> dict:
+    if BNH_PRICES_FILE.exists():
+        try:
+            return json.loads(BNH_PRICES_FILE.read_text())
+        except Exception:
+            pass
+    return {}
+
+
+def _save_bnh_prices(data: dict):
+    BNH_PRICES_FILE.parent.mkdir(parents=True, exist_ok=True)
+    BNH_PRICES_FILE.write_text(json.dumps(data, indent=2))
+
+
+def get_bnh_entry_price(bot_name: str, controller_id: str, current_price: float):
+    """Return the stored entry price, writing it the first time it is seen."""
+    key = f"{bot_name}_{controller_id}"
+    prices = _load_bnh_prices()
+    if key not in prices and current_price is not None:
+        prices[key] = current_price
+        _save_bnh_prices(prices)
+    return prices.get(key)
+
+
+def fetch_current_price(connector_name: str, trading_pair: str):
+    try:
+        response = backend_api_client.market_data.get_prices(
+            get_price_connector(connector_name), trading_pair
+        )
+        if isinstance(response, dict):
+            if response.get("status") == "success":
+                return response.get("data", {}).get(trading_pair)
+            if "prices" in response:
+                return response.get("prices", {}).get(trading_pair)
+            return response.get(trading_pair)
+    except Exception:
+        pass
+    return None
+
+
 def render_bot_card(bot_name):
     """Render a bot performance card using native Streamlit components."""
     try:
@@ -115,14 +188,19 @@ def render_bot_card(bot_name):
                 bot_data = bot_status.get("data", {})
                 is_running = bot_data.get("status") == "running"
                 performance = bot_data.get("performance", {})
-                error_logs = bot_data.get("error_logs", [])
-                general_logs = bot_data.get("general_logs", [])
+                simulated = bool(controller_configs) and all(
+                    is_simulated_connector(c.get("connector_name", ""))
+                    for c in controller_configs
+                )
 
                 # Bot header
                 col1, col2, col3 = st.columns([2, 1, 1])
                 with col1:
                     if is_running:
-                        st.success(f"🤖 **{bot_name}** - Running")
+                        if simulated:
+                            st.info(f"📄 **{bot_name}** - Running (Paper/Testnet)")
+                        else:
+                            st.success(f"🤖 **{bot_name}** - Running")
                     else:
                         st.warning(f"🤖 **{bot_name}** - Stopped")
 
@@ -168,6 +246,16 @@ def render_bot_card(bot_name):
                         global_pnl_quote = controller_performance.get("global_pnl_quote", 0)
                         volume_traded = controller_performance.get("volume_traded", 0)
 
+                        # Buy-and-hold benchmark
+                        current_price = None
+                        entry_price = None
+                        bnh_return = None
+                        if connector_name != "N/A" and trading_pair != "N/A":
+                            current_price = fetch_current_price(connector_name, trading_pair)
+                            entry_price = get_bnh_entry_price(bot_name, controller, current_price)
+                            if entry_price and current_price and entry_price != 0:
+                                bnh_return = (current_price - entry_price) / entry_price
+
                         close_types = controller_performance.get("close_type_counts", {})
                         tp = close_types.get("CloseType.TAKE_PROFIT", 0)
                         sl = close_types.get("CloseType.STOP_LOSS", 0)
@@ -188,6 +276,9 @@ def render_bot_card(bot_name):
                             "NET PNL ($)": round(global_pnl_quote, 2),
                             "Volume ($)": round(volume_traded, 2),
                             "Close Types": close_types_str,
+                            "B&H Entry ($)": round(entry_price, 4) if entry_price is not None else "—",
+                            "B&H Current ($)": round(current_price, 4) if current_price is not None else "—",
+                            "B&H Return (%)": f"{bnh_return:.2%}" if bnh_return is not None else "—",
                             "_controller_id": controller
                         }
 
@@ -202,8 +293,16 @@ def render_bot_card(bot_name):
 
                     total_global_pnl_pct = total_global_pnl_quote / total_volume_traded if total_volume_traded > 0 else 0
 
+                    # Per-bot 7D PNL%: if bot launched within last 7 days, current session = 7D window
+                    launch_time = parse_bot_launch_time(bot_name)
+                    if launch_time is not None:
+                        bot_age_days = (datetime.now(timezone.utc) - launch_time).total_seconds() / 86400
+                        seven_day_pnl_pct = total_global_pnl_pct if bot_age_days <= 7 else None
+                    else:
+                        seven_day_pnl_pct = None
+
                     # Display metrics
-                    col1, col2, col3, col4 = st.columns(4)
+                    col1, col2, col3, col4, col5 = st.columns(5)
 
                     with col1:
                         st.metric("🏦 NET PNL", f"${total_global_pnl_quote:.2f}")
@@ -213,6 +312,11 @@ def render_bot_card(bot_name):
                         st.metric("📊 NET PNL (%)", f"{total_global_pnl_pct:.2%}")
                     with col4:
                         st.metric("💸 Volume Traded", f"${total_volume_traded:.2f}")
+                    with col5:
+                        if seven_day_pnl_pct is not None:
+                            st.metric("📅 7D PNL (%)", f"{seven_day_pnl_pct:.2%}")
+                        else:
+                            st.metric("📅 7D PNL (%)", "N/A")
 
                     # Active Controllers
                     if active_controllers:
@@ -249,6 +353,13 @@ def render_bot_card(bot_name):
                                     stop_controllers(bot_name, selected_active)
                                     time.sleep(1)
 
+                        with st.expander("🔧 Active Controller Parameters"):
+                            for ctrl_info in active_controllers:
+                                ctrl_id = ctrl_info["_controller_id"]
+                                config = next((c for c in controller_configs if c.get("id") == ctrl_id), {})
+                                st.markdown(f"**{ctrl_info['Controller']}** — `{ctrl_id}`")
+                                st.json(config, expanded=False)
+
                     # Stopped Controllers
                     if stopped_controllers:
                         st.warning("💤 **Stopped Controllers:** Controllers that are paused or stopped")
@@ -284,32 +395,23 @@ def render_bot_card(bot_name):
                                     start_controllers(bot_name, selected_stopped)
                                     time.sleep(1)
 
+                        with st.expander("🔧 Stopped Controller Parameters"):
+                            for ctrl_info in stopped_controllers:
+                                ctrl_id = ctrl_info["_controller_id"]
+                                config = next((c for c in controller_configs if c.get("id") == ctrl_id), {})
+                                st.markdown(f"**{ctrl_info['Controller']}** — `{ctrl_id}`")
+                                st.json(config, expanded=False)
+
                     # Error Controllers
                     if error_controllers:
                         st.error("💀 **Controllers with Errors:** Controllers that encountered errors")
                         error_df = pd.DataFrame(error_controllers)
                         st.dataframe(error_df, use_container_width=True, hide_index=True)
 
-                # Logs sections (available for both running and stopped bots)
-                with st.expander("📋 Error Logs"):
-                    if error_logs:
-                        for log in error_logs[:50]:
-                            timestamp = log.get("timestamp", "")
-                            message = log.get("msg", "")
-                            logger_name = log.get("logger_name", "")
-                            st.text(f"{timestamp} - {logger_name}: {message}")
-                    else:
-                        st.info("No error logs available.")
-
-                with st.expander("📝 General Logs"):
-                    if general_logs:
-                        for log in general_logs[:50]:
-                            timestamp = pd.to_datetime(int(log.get("timestamp", 0)), unit="s")
-                            message = log.get("msg", "")
-                            logger_name = log.get("logger_name", "")
-                            st.text(f"{timestamp} - {logger_name}: {message}")
-                    else:
-                        st.info("No general logs available.")
+                # Datadog logs link
+                datadog_query = quote(f"@bot_name:{bot_name}")
+                datadog_url = f"https://app.us5.datadoghq.com/logs?query={datadog_query}"
+                st.markdown(f"📋 [View Logs in Datadog ↗]({datadog_url})")
 
     except Exception as e:
         with st.container(border=True):

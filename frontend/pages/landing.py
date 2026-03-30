@@ -1,11 +1,27 @@
-import random
-from datetime import datetime, timedelta
-
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
-from frontend.st_utils import initialize_st_page
+from CONFIG import AUTH_SYSTEM_ENABLED
+from frontend.st_utils import get_backend_api_client, initialize_st_page
+
+
+def _portfolio_value(state: dict) -> float:
+    """Sum portfolio value, excluding paper-trading accounts, testnet exchanges,
+    and duplicate wallets (same exchange + identical token holdings)."""
+    seen = set()
+    total = 0.0
+    for account, exchanges in state.items():
+        for exchange, tokens_info in exchanges.items():
+            if "testnet" in exchange:
+                continue
+            # Deduplicate: same exchange + same token set = same wallet under different credentials
+            fingerprint = (exchange, frozenset((t.get("token"), round(t.get("value", 0), 4)) for t in tokens_info))
+            if fingerprint in seen:
+                continue
+            seen.add(fingerprint)
+            total += sum(t.get("value", 0) for t in tokens_info)
+    return total
 
 initialize_st_page(
     layout="wide",
@@ -22,37 +38,18 @@ st.markdown("""
         color: white;
         margin: 0.5rem 0;
     }
-    
-    .feature-card {
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 15px;
-        padding: 1.5rem;
-        backdrop-filter: blur(10px);
-        margin: 1rem 0;
-    }
-    
+
     .stat-number {
         font-size: 2rem;
         font-weight: bold;
         color: #4CAF50;
     }
-    
-    .pulse {
-        animation: pulse 2s infinite;
-    }
-    
-    @keyframes pulse {
-        0% { opacity: 1; }
-        50% { opacity: 0.7; }
-        100% { opacity: 1; }
-    }
-    
+
     .status-active {
         color: #4CAF50;
         font-weight: bold;
     }
-    
+
     .status-inactive {
         color: #ff6b6b;
         font-weight: bold;
@@ -70,259 +67,262 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# Generate sample data for demonstration
-def generate_sample_data():
-    """Generate sample trading data for visualization"""
-    dates = pd.date_range(start=datetime.now() - timedelta(days=30), end=datetime.now(), freq='D')
-    
-    # Sample portfolio performance
-    portfolio_values = []
-    base_value = 10000
-    for i in range(len(dates)):
-        change = random.uniform(-0.02, 0.03)  # -2% to +3% daily change
-        base_value *= (1 + change)
-        portfolio_values.append(base_value)
-    
-    return pd.DataFrame({
-        'date': dates,
-        'portfolio_value': portfolio_values,
-        'daily_return': [random.uniform(-0.05, 0.08) for _ in range(len(dates))]
-    })
+# Require authentication when auth system is enabled
+if AUTH_SYSTEM_ENABLED and not st.session_state.get("authentication_status"):
+    st.info("Please log in to view the dashboard.")
+    st.stop()
 
-# Quick Stats Dashboard
+# Initialize backend client
+backend_api_client = get_backend_api_client()
+
+# Fetch data from API
+active_bots_count = 0
+total_portfolio = 0.0
+total_net_pnl = 0.0
+total_volume = 0.0
+total_tp = 0
+total_sl = 0
+total_ts = 0
+total_tl = 0
+total_es = 0
+controllers_data = []
+api_error = None
+
+try:
+    response = backend_api_client.bot_orchestration.get_active_bots_status()
+    if response.get("status") == "success":
+        active_bots = response.get("data", {})
+        for bot_name in active_bots.keys():
+            try:
+                bot_status = backend_api_client.bot_orchestration.get_bot_status(bot_name)
+                if bot_status.get("status") == "success":
+                    bot_data = bot_status.get("data", {})
+                    if bot_data.get("status") == "running":
+                        active_bots_count += 1
+                        performance = bot_data.get("performance", {})
+                        controller_configs = []
+                        try:
+                            controller_configs = backend_api_client.controllers.get_bot_controller_configs(bot_name) or []
+                        except Exception:
+                            pass
+                        for controller_id, inner_dict in performance.items():
+                            if inner_dict.get("status") == "error":
+                                continue
+                            controller_config = next(
+                                (c for c in controller_configs if c.get("id") == controller_id), {}
+                            )
+                            if "testnet" in controller_config.get("connector_name", ""):
+                                continue
+                            cp = inner_dict.get("performance", {})
+                            total_net_pnl += cp.get("global_pnl_quote", 0)
+                            total_volume += cp.get("volume_traded", 0)
+                            close_types = cp.get("close_type_counts", {})
+                            total_tp += close_types.get("CloseType.TAKE_PROFIT", 0)
+                            total_sl += close_types.get("CloseType.STOP_LOSS", 0)
+                            total_ts += close_types.get("CloseType.TRAILING_STOP", 0)
+                            total_tl += close_types.get("CloseType.TIME_LIMIT", 0)
+                            total_es += close_types.get("CloseType.EARLY_STOP", 0)
+                            controllers_data.append({
+                                "bot": bot_name,
+                                "name": controller_config.get("controller_name", controller_id),
+                                "connector": controller_config.get("connector_name", "N/A"),
+                                "pair": controller_config.get("trading_pair", "N/A"),
+                                "pnl": cp.get("global_pnl_quote", 0),
+                                "active": not controller_config.get("manual_kill_switch", False),
+                            })
+            except Exception:
+                continue
+except Exception as e:
+    api_error = str(e)
+
+try:
+    portfolio_state = backend_api_client.portfolio.get_state()
+    total_portfolio = _portfolio_value(portfolio_state)
+except Exception:
+    pass
+
+total_closed = total_tp + total_sl + total_ts + total_tl + total_es
+win_count = total_tp + total_ts
+win_rate = win_count / total_closed if total_closed > 0 else None
+
+# Compute 7-day portfolio PNL%
+# Per-(account, exchange): use value at 7-day cutoff if available, else first appearance.
+# This avoids the distortion of accounts that joined the tracker mid-window.
+seven_day_pnl_pct = None
+try:
+    history = backend_api_client.portfolio.get_history()
+    history_records = history.get("data", []) if isinstance(history, dict) else history
+    if history_records:
+        _sorted = sorted(history_records, key=lambda r: pd.to_datetime(r.get("timestamp")))
+        _cutoff = pd.to_datetime(_sorted[-1].get("timestamp")) - pd.Timedelta(days=7)
+
+        # For each (account, exchange) key: track the most-recent value at/before cutoff,
+        # falling back to the first appearance after cutoff.
+        _baseline = {}  # key -> value
+        for _rec in _sorted:
+            _ts = pd.to_datetime(_rec.get("timestamp"))
+            for _acct, _exs in _rec.get("state", {}).items():
+                for _ex, _toks in _exs.items():
+                    if "testnet" in _ex:
+                        continue
+                    _key = (_acct, _ex)
+                    _val = sum(t.get("value", 0) for t in _toks)
+                    if _ts <= _cutoff:
+                        _baseline[_key] = _val          # keep updating → most-recent pre-cutoff
+                    elif _key not in _baseline:
+                        _baseline[_key] = _val          # first appearance after cutoff
+
+        # Current values from latest record (with dedup)
+        _current_total = 0.0
+        _keys_seen = set()
+        for _acct, _exs in _sorted[-1].get("state", {}).items():
+            for _ex, _toks in _exs.items():
+                if "testnet" in _ex:
+                    continue
+                _key = (_acct, _ex)
+                if _key in _keys_seen:
+                    continue
+                _keys_seen.add(_key)
+                _current_total += sum(t.get("value", 0) for t in _toks)
+
+        _baseline_total = sum(_baseline.get(k, 0) for k in _keys_seen)
+        if _baseline_total > 0:
+            seven_day_pnl_pct = (_current_total - _baseline_total) / _baseline_total
+except Exception:
+    pass
+
+# Live Dashboard Overview
 st.markdown("## 📊 Live Dashboard Overview")
 
-# Mock data warning
-st.warning("""
-⚠️ **Demo Data Notice**: The metrics, charts, and statistics shown below are simulated/mocked data for demonstration purposes. 
-This showcases how real trading data would be presented in the dashboard once connected to live trading bots.
-""")
+if api_error:
+    st.error(f"Failed to connect to backend API: {api_error}")
 
-col1, col2, col3, col4 = st.columns(4)
+col1, col2, col3, col4, col5 = st.columns(5)
 
 with col1:
-    st.markdown("""
+    st.markdown(f"""
     <div class="metric-card">
         <h3>🔄 Active Bots</h3>
-        <div class="stat-number pulse">3</div>
-        <p>Currently Trading</p>
+        <div class="stat-number">{active_bots_count}</div>
+        <p>Currently Running</p>
     </div>
     """, unsafe_allow_html=True)
 
 with col2:
-    st.markdown("""
+    portfolio_display = f"${total_portfolio:,.2f}" if total_portfolio > 0 else "N/A"
+    st.markdown(f"""
     <div class="metric-card">
         <h3>💰 Total Portfolio</h3>
-        <div class="stat-number">$12,847</div>
-        <p style="color: #4CAF50;">+2.3% Today</p>
+        <div class="stat-number">{portfolio_display}</div>
+        <p>Across All Accounts</p>
     </div>
     """, unsafe_allow_html=True)
 
 with col3:
-    st.markdown("""
+    win_rate_display = f"{win_rate:.1%}" if win_rate is not None else "N/A"
+    win_rate_label = f"{total_closed} closed positions" if total_closed > 0 else "No closed positions"
+    st.markdown(f"""
     <div class="metric-card">
         <h3>📈 Win Rate</h3>
-        <div class="stat-number">74.2%</div>
-        <p>Last 30 Days</p>
+        <div class="stat-number">{win_rate_display}</div>
+        <p>{win_rate_label}</p>
     </div>
     """, unsafe_allow_html=True)
 
 with col4:
-    st.markdown("""
+    pnl_color = "#4CAF50" if total_net_pnl >= 0 else "#ff6b6b"
+    pnl_sign = "+" if total_net_pnl >= 0 else ""
+    st.markdown(f"""
     <div class="metric-card">
-        <h3>⚡ Total Trades</h3>
-        <div class="stat-number">1,247</div>
-        <p>This Month</p>
+        <h3>💹 NET PNL</h3>
+        <div class="stat-number" style="color: {pnl_color};">{pnl_sign}${total_net_pnl:,.2f}</div>
+        <p>${total_volume:,.2f} volume traded</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+with col5:
+    if seven_day_pnl_pct is not None:
+        _7d_color = "#4CAF50" if seven_day_pnl_pct >= 0 else "#ff6b6b"
+        _7d_sign = "+" if seven_day_pnl_pct >= 0 else ""
+        _7d_display = f"{_7d_sign}{seven_day_pnl_pct:.2%}"
+    else:
+        _7d_color = "#888"
+        _7d_display = "N/A"
+    st.markdown(f"""
+    <div class="metric-card">
+        <h3>📅 7D PNL (%)</h3>
+        <div class="stat-number" style="color: {_7d_color};">{_7d_display}</div>
+        <p>Portfolio 7-day change</p>
     </div>
     """, unsafe_allow_html=True)
 
 st.divider()
 
-# Performance Chart
+# Portfolio performance chart
 col1, col2 = st.columns([2, 1])
 
 with col1:
-    st.markdown("### 📈 Portfolio Performance (30 Days)")
-    
-    # Generate and display sample performance chart
-    df = generate_sample_data()
-    
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(
-        x=df['date'],
-        y=df['portfolio_value'],
-        mode='lines+markers',
-        line=dict(color='#4CAF50', width=3),
-        fill='tonexty',
-        fillcolor='rgba(76, 175, 80, 0.1)',
-        name='Portfolio Value'
-    ))
-    
-    fig.update_layout(
-        template='plotly_dark',
-        height=400,
-        showlegend=False,
-        margin=dict(l=0, r=0, t=0, b=0),
-        xaxis=dict(showgrid=False),
-        yaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.1)')
-    )
-    
-    st.plotly_chart(fig, use_container_width=True)
+    st.markdown("### 📈 Portfolio Value (History)")
+    try:
+        history = backend_api_client.portfolio.get_history()
+        history_records = history.get("data", []) if isinstance(history, dict) else history
+        if history_records:
+            data = []
+            for record in history_records:
+                timestamp = record.get("timestamp")
+                state = record.get("state", {})
+                data.append({"timestamp": timestamp, "value": _portfolio_value(state)})
+            if data:
+                df = pd.DataFrame(data)
+                df["timestamp"] = pd.to_datetime(df["timestamp"])
+                df = df.sort_values("timestamp")
+                fig = go.Figure()
+                fig.add_trace(go.Scatter(
+                    x=df["timestamp"],
+                    y=df["value"],
+                    mode="lines",
+                    line=dict(color="#4CAF50", width=2),
+                    fill="tozeroy",
+                    fillcolor="rgba(76, 175, 80, 0.1)",
+                    name="Portfolio Value"
+                ))
+                fig.update_layout(
+                    template="plotly_dark",
+                    height=350,
+                    showlegend=False,
+                    margin=dict(l=0, r=0, t=0, b=0),
+                    xaxis=dict(showgrid=False),
+                    yaxis=dict(showgrid=True, gridcolor="rgba(255,255,255,0.1)")
+                )
+                st.plotly_chart(fig, use_container_width=True)
+            else:
+                st.info("No portfolio history available.")
+        else:
+            st.info("No portfolio history available.")
+    except Exception as e:
+        st.info(f"Portfolio history unavailable: {e}")
 
 with col2:
-    st.markdown("### 🎯 Strategy Status")
-    
-    strategies = [
-        {"name": "Market Making", "status": "active", "pnl": "+$342"},
-        {"name": "Arbitrage", "status": "active", "pnl": "+$156"},
-        {"name": "Grid Trading", "status": "active", "pnl": "+$89"},
-        {"name": "DCA Bot", "status": "inactive", "pnl": "+$234"},
-    ]
-    
-    for strategy in strategies:
-        status_class = "status-active" if strategy["status"] == "active" else "status-inactive"
-        status_icon = "🟢" if strategy["status"] == "active" else "🔴"
-        
-        st.markdown(f"""
-        <div style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 8px; margin: 0.5rem 0;">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div>
-                    <strong>{strategy['name']}</strong><br>
-                    <span class="{status_class}">{status_icon} {strategy['status'].title()}</span>
-                </div>
-                <div style="text-align: right;">
-                    <span style="color: #4CAF50; font-weight: bold;">{strategy['pnl']}</span>
+    st.markdown("### 🎯 Controller Status")
+    if controllers_data:
+        for ctrl in controllers_data:
+            status_icon = "🟢" if ctrl["active"] else "🔴"
+            status_label = "Active" if ctrl["active"] else "Stopped"
+            pnl_color = "#4CAF50" if ctrl["pnl"] >= 0 else "#ff6b6b"
+            pnl_sign = "+" if ctrl["pnl"] >= 0 else ""
+            st.markdown(f"""
+            <div style="background: rgba(255,255,255,0.05); padding: 0.8rem; border-radius: 8px; margin: 0.4rem 0;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <strong>{ctrl['name']}</strong><br>
+                        <small>{ctrl['connector']} · {ctrl['pair']}</small><br>
+                        <span class="{'status-active' if ctrl['active'] else 'status-inactive'}">{status_icon} {status_label}</span>
+                    </div>
+                    <div style="text-align: right;">
+                        <span style="color: {pnl_color}; font-weight: bold;">{pnl_sign}${ctrl['pnl']:,.2f}</span>
+                    </div>
                 </div>
             </div>
-        </div>
-        """, unsafe_allow_html=True)
-
-st.divider()
-
-# Feature Showcase
-st.markdown("## 🚀 Platform Features")
-
-col1, col2, col3 = st.columns(3)
-
-with col1:
-    st.markdown("""
-    <div class="feature-card">
-        <div style="text-align: center; margin-bottom: 1rem;">
-            <div style="font-size: 3rem;">🎯</div>
-            <h3>Strategy Development</h3>
-        </div>
-        <ul style="list-style: none; padding: 0;">
-            <li>✨ Visual Strategy Builder</li>
-            <li>🔧 Advanced Configuration</li>
-            <li>📝 Custom Parameters</li>
-            <li>🧪 Testing Environment</li>
-        </ul>
-    </div>
-    """, unsafe_allow_html=True)
-
-with col2:
-    st.markdown("""
-    <div class="feature-card">
-        <div style="text-align: center; margin-bottom: 1rem;">
-            <div style="font-size: 3rem;">📊</div>
-            <h3>Analytics & Insights</h3>
-        </div>
-        <ul style="list-style: none; padding: 0;">
-            <li>📈 Real-time Performance</li>
-            <li>🔍 Advanced Backtesting</li>
-            <li>📋 Detailed Reports</li>
-            <li>🎨 Interactive Charts</li>
-        </ul>
-    </div>
-    """, unsafe_allow_html=True)
-
-with col3:
-    st.markdown("""
-    <div class="feature-card">
-        <div style="text-align: center; margin-bottom: 1rem;">
-            <div style="font-size: 3rem;">⚡</div>
-            <h3>Live Trading</h3>
-        </div>
-        <ul style="list-style: none; padding: 0;">
-            <li>🤖 Automated Execution</li>
-            <li>📡 Real-time Monitoring</li>
-            <li>🛡️ Risk Management</li>
-            <li>🔔 Smart Alerts</li>
-        </ul>
-    </div>
-    """, unsafe_allow_html=True)
-
-st.divider()
-
-# Quick Actions
-st.markdown("## ⚡ Quick Actions")
-
-# Alert for mocked navigation
-st.info("ℹ️ **Note**: This is a mocked landing page. The Quick Actions buttons below are for demonstration purposes and the page navigation is not functional.")
-
-col1, col2, col3, col4 = st.columns(4)
-
-with col1:
-    if st.button("🚀 Deploy Strategy", use_container_width=True, type="primary"):
-        st.error("🚫 Navigation unavailable - This is a mocked landing page for demonstration purposes.")
-
-with col2:
-    if st.button("📊 View Performance", use_container_width=True):
-        st.error("🚫 Navigation unavailable - This is a mocked landing page for demonstration purposes.")
-
-with col3:
-    if st.button("🔍 Backtesting", use_container_width=True):
-        st.error("🚫 Navigation unavailable - This is a mocked landing page for demonstration purposes.")
-
-with col4:
-    if st.button("🗃️ Archived Bots", use_container_width=True):
-        st.error("🚫 Navigation unavailable - This is a mocked landing page for demonstration purposes.")
-
-st.divider()
-
-# Community & Resources
-col1, col2 = st.columns([2, 1])
-
-with col1:
-    st.markdown("### 🎬 Learn & Explore")
-    
-    st.video("https://youtu.be/7eHiMPRBQLQ?si=PAvCq0D5QDZz1h1D")
-
-with col2:
-    st.markdown("### 💬 Join Our Community")
-    
-    st.markdown("""
-    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-                padding: 1.5rem; border-radius: 15px; color: white;">
-        <h4>🌟 Connect with Traders</h4>
-        <p>Join thousands of algorithmic traders sharing strategies and insights!</p>
-        <br>
-        <a href="https://discord.gg/hummingbot" target="_blank" 
-           style="background: rgba(255,255,255,0.2); padding: 0.5rem 1rem; 
-                  border-radius: 8px; text-decoration: none; color: white; font-weight: bold;">
-           💬 Join Discord
-        </a>
-        <br><br>
-        <a href="https://github.com/hummingbot/dashboard" target="_blank"
-           style="background: rgba(255,255,255,0.2); padding: 0.5rem 1rem; 
-                  border-radius: 8px; text-decoration: none; color: white; font-weight: bold;">
-           🐛 Report Issues
-        </a>
-    </div>
-    """, unsafe_allow_html=True)
-
-# Footer stats
-st.markdown("---")
-col1, col2, col3, col4 = st.columns(4)
-
-with col1:
-    st.metric("🌍 Global Users", "10,000+")
-
-with col2:
-    st.metric("💱 Exchanges", "20+")
-
-with col3:
-    st.metric("🔄 Daily Volume", "$2.5M+")
-
-with col4:
-    st.metric("⭐ GitHub Stars", "7,800+")
+            """, unsafe_allow_html=True)
+    else:
+        st.info("No active bots found.")
