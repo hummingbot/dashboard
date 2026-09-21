@@ -22,7 +22,26 @@ def get_price_range_defaults(connector_name: str, trading_pair: str, interval: s
         return 40000.0, 42000.0, 44000.0  # Fallback defaults
 
 
+def _enum_name(value, enum_cls, default: str) -> str:
+    """The name of a saved enum value, which the file carries as the enum's value (1, "HEDGE"),
+    or as the name when it was never round-tripped through a save."""
+    if value is None:
+        return default
+    if isinstance(value, str) and value in enum_cls.__members__:
+        return value
+    try:
+        return enum_cls(value).name
+    except ValueError:
+        return default
+
+
 def user_inputs():
+    # A config selected in the loader lands here; every widget takes its default from it, so
+    # selecting a saved grid_strike config shows that config rather than the page defaults (#231).
+    saved = st.session_state.get("default_config", {})
+    saved_barrier = saved.get("triple_barrier_config") or {}
+    order_type_options = ["LIMIT", "LIMIT_MAKER", "MARKET"]
+
     # Split the page into two columns for the expanders
     left_col, right_col = st.columns(2)
     with left_col:
@@ -31,28 +50,28 @@ def user_inputs():
             # Basic parameters
             c1, c2 = st.columns(2)
             with c1:
-                connector_name = st.text_input("Connector Name", value="binance_perpetual")
+                connector_name = st.text_input("Connector Name", value=saved.get("connector_name", "binance_perpetual"))
                 # Side selection
                 side = st.selectbox(
                     "Side",
                     options=["BUY", "SELL"],
-                    index=0,
+                    index=["BUY", "SELL"].index(_enum_name(saved.get("side"), TradeType, "BUY")),
                     help="Trading direction for the grid"
                 )
-                leverage = st.number_input("Leverage", min_value=1, value=20)
+                leverage = st.number_input("Leverage", min_value=1, value=int(saved.get("leverage", 20)))
             with c2:
-                trading_pair = st.text_input("Trading Pair", value="WLD-USDT")
+                trading_pair = st.text_input("Trading Pair", value=saved.get("trading_pair", "WLD-USDT"))
                 # Amount parameter
                 total_amount_quote = st.number_input(
                     "Total Amount (Quote)",
                     min_value=0.0,
-                    value=200.0,
+                    value=float(saved.get("total_amount_quote", 200.0)),
                     help="Total amount in quote currency to use for trading"
                 )
                 position_mode = st.selectbox(
                     "Position Mode",
                     options=["HEDGE", "ONEWAY"],
-                    index=0
+                    index=["HEDGE", "ONEWAY"].index(_enum_name(saved.get("position_mode"), PositionMode, "HEDGE"))
                 )
             # Grid price parameters
             with c1:
@@ -71,6 +90,10 @@ def user_inputs():
                     start_price = max(max_price, current_price)
                     end_price = min(current_price, min_price)
                     limit_price = start_price * 1.05
+                # a saved config's prices win over the ones derived from recent candles
+                start_price = float(saved.get("start_price", start_price))
+                end_price = float(saved.get("end_price", end_price))
+                limit_price = float(saved.get("limit_price", limit_price))
                 # Price configuration with meaningful defaults
                 start_price = st.number_input(
                     "Start Price",
@@ -98,7 +121,7 @@ def user_inputs():
                 min_spread = st.number_input(
                     "Min Spread Between Orders",
                     min_value=0.0000,
-                    value=0.0001,
+                    value=float(saved.get("min_spread_between_orders", 0.0001)),
                     format="%.4f",
                     help="Minimum price difference between orders",
                     step=0.0001
@@ -107,14 +130,14 @@ def user_inputs():
                 min_order_amount = st.number_input(
                     "Min Order Amount (Quote)",
                     min_value=1.0,
-                    value=6.0,
+                    value=float(saved.get("min_order_amount_quote", 6.0)),
                     help="Minimum amount for each order in quote currency"
                 )
                 
                 max_open_orders = st.number_input(
                     "Maximum Open Orders",
                     min_value=1,
-                    value=3,
+                    value=int(saved.get("max_open_orders", 3)),
                     help="Maximum number of active orders in the grid"
                 )
         
@@ -126,21 +149,21 @@ def user_inputs():
                 max_orders_per_batch = st.number_input(
                     "Max Orders Per Batch",
                     min_value=1,
-                    value=1,
+                    value=int(saved.get("max_orders_per_batch", 1)),
                     help="Maximum number of orders to place at once"
                 )
             with c2:
                 order_frequency = st.number_input(
                     "Order Frequency (s)",
                     min_value=1,
-                    value=2,
+                    value=int(saved.get("order_frequency", 2)),
                     help="Time between order placements in seconds"
                 )
             with c3:
                 activation_bounds = st.number_input(
                     "Activation Bounds",
                     min_value=0.0,
-                    value=0.01,
+                    value=float(saved.get("activation_bounds", 0.01)),
                     format="%.4f",
                     help="Price deviation to trigger updates"
                 )
@@ -150,19 +173,19 @@ def user_inputs():
             c1, c2 = st.columns(2)
             with c1:
                 # Order types
-                open_order_type_options = ["LIMIT", "LIMIT_MAKER", "MARKET"]
                 open_order_type = st.selectbox(
                     "Open Order Type",
-                    options=open_order_type_options,
-                    index=1,  # Default to MARKET
+                    options=order_type_options,
+                    index=order_type_options.index(
+                        _enum_name(saved_barrier.get("open_order_type"), OrderType, "LIMIT_MAKER")),
                     key="open_order_type"
                 )
                 
-                take_profit_order_type_options = ["LIMIT", "LIMIT_MAKER", "MARKET"]
                 take_profit_order_type = st.selectbox(
                     "Take Profit Order Type",
-                    options=take_profit_order_type_options,
-                    index=1,  # Default to MARKET
+                    options=order_type_options,
+                    index=order_type_options.index(
+                        _enum_name(saved_barrier.get("take_profit_order_type"), OrderType, "LIMIT_MAKER")),
                     key="tp_order_type"
                 )
 
@@ -171,7 +194,7 @@ def user_inputs():
                 take_profit = st.number_input(
                     "Take Profit",
                     min_value=0.0,
-                    value=0.0001,
+                    value=float(saved_barrier.get("take_profit") or 0.0001),
                     format="%.4f",
                     help="Price movement percentage for take profit"
                 )
@@ -179,7 +202,7 @@ def user_inputs():
                 stop_loss = st.number_input(
                     "Stop Loss",
                     min_value=0.0,
-                    value=0.1,
+                    value=float(saved_barrier["stop_loss"] or 0.0) if "stop_loss" in saved_barrier else 0.1,
                     format="%.4f",
                     help="Price movement percentage for stop loss (0 for none)"
                 )
@@ -187,7 +210,7 @@ def user_inputs():
                 # Keep position parameter
                 keep_position = st.checkbox(
                     "Keep Position",
-                    value=False,
+                    value=bool(saved.get("keep_position", False)),
                     help="Keep the position open after grid execution"
                 )
         # Chart configuration
