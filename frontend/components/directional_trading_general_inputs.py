@@ -12,7 +12,10 @@ def get_directional_trading_general_inputs():
         max_executors_per_side = default_config.get("max_executors_per_side", 5)
         cooldown_time = default_config.get("cooldown_time", 60 * 60) / 60
         position_mode = 0 if default_config.get("position_mode", "HEDGE") == "HEDGE" else 1
-        candles_connector_name = default_config.get("candles_connector_name", "kucoin")
+        # The three directional pages save this field as "candles_connector", the name the
+        # controller config carries; reading "candles_connector_name" here meant a reloaded
+        # config always showed the default candles connector (#250).
+        candles_connector_name = default_config.get("candles_connector", "kucoin")
         candles_trading_pair = default_config.get("candles_trading_pair", "WLD-USDT")
         interval = default_config.get("interval", "3m")
         intervals = ["1m", "3m", "5m", "15m", "1h", "4h", "1d", "1s"]
